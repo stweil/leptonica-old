@@ -2095,7 +2095,7 @@ SARRAY  *sa;
  *      (1) Interpret the first set of bytes as the object number,
  *          map to the new number, and write it out.
  *      (2) Find all occurrences of this 4-byte sequence: " 0 R"
- *      (3) Find the location and value of the integer preceeding this,
+ *      (3) Find the location and value of the integer preceding this,
  *          and map it to the new value.
  *      (4) Rewrite the object with new object numbers.
  */

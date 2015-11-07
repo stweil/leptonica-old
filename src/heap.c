@@ -58,7 +58,7 @@
  *    from the head of the array and added to the end of the array.
  *    When an item is removed from the head, the item at the end
  *    of the array is moved to the head.  When items are either
- *    added or removed, it is usually necesary to swap array items
+ *    added or removed, it is usually necessary to swap array items
  *    to restore the heap order.  It is guaranteed that the number
  *    of swaps does not exceed log(n).
  *

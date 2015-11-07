@@ -92,7 +92,7 @@
  *         of the subdivided dimensions and helps a low-count color
  *         far from the subdivision boundary to better express itself.
  *     (2a) One can also ask if the boundary should be moved even
- *         farther into the longer side.  This is feasable if we have
+ *         farther into the longer side.  This is feasible if we have
  *         a method for doing extra subdivisions on the high count
  *         vboxes.  And we do (see (3)).
  *     (3) To make sure that the boxes are subdivided toward equal

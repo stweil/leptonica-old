@@ -776,7 +776,7 @@ l_int32  ret;
  *          Default on Unix is xzgv.
  *      (2) Images with dimensions larger than MAX_DISPLAY_WIDTH or
  *          MAX_DISPLAY_HEIGHT are downscaled to fit those constraints.
- *          This is particulary important for displaying 1 bpp images
+ *          This is particularly important for displaying 1 bpp images
  *          with xv, because xv automatically downscales large images
  *          by subsampling, which looks poor.  For 1 bpp, we use
  *          scale-to-gray to get decent-looking anti-aliased images.

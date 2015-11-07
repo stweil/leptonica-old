@@ -787,7 +787,7 @@ l_int32   c, ignore;
  *      (1) This reads the next set of numeric chars, returning
  *          the value and swallowing the trailing whitespace character.
  *          This is needed to read the maxval in the header, which
- *          preceeds the binary data.
+ *          precedes the binary data.
  */
 static l_int32
 pnmReadNextNumber(FILE     *fp,

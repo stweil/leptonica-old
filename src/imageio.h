@@ -119,7 +119,7 @@ enum {
 };
 
 
-/* ------------------ Pdf formated encoding types --------------- */
+/* ------------------ Pdf formatted encoding types --------------- */
 enum {
     L_JPEG_ENCODE   = 1,    /* use dct encoding: 8 and 32 bpp, no cmap     */
     L_G4_ENCODE     = 2,    /* use ccitt g4 fax encoding: 1 bpp            */

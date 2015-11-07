@@ -84,7 +84,7 @@ static l_int32 getOffsetForMatchingRP(SARRAY *sa, l_int32 start,
  *              cpp -ansi <filein>
  *          Three plans were attempted, with success on the third.
  *      (2) Plan 1.  A cursory examination of the cpp output indicated that
- *          every function was preceeded by a cpp comment statement.
+ *          every function was preceded by a cpp comment statement.
  *          So we just need to look at statements beginning after comments.
  *          Unfortunately, this is NOT the case.  Some functions start
  *          without cpp comment lines, typically when there are no

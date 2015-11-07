@@ -1668,7 +1668,7 @@ FILE  *fp;
  *      (4) It is assumed that the page number is contained within
  *          the basename (the filename without directory or extension).
  *          @numpre is the number of characters in the basename
- *          preceeding the actual page number; @numpost is the number
+ *          preceding the actual page number; @numpost is the number
  *          following the page number, up to either the end of the
  *          basename or a ".", whichever comes first.
  *      (5) This is useful when all filenames contain numbers that are

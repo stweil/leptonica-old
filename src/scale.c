@@ -153,7 +153,7 @@ extern l_float32  AlphaMaskBorderVals[2];
  *  pixels.  Subsmpling removes entire columns and rows, so the edge is
  *  not blurred.  However, there are two reasons for not doing this.
  *  First, it moves edges, so that a straight line at a large angle to
- *  both horizontal and vertical will have noticable kinks where
+ *  both horizontal and vertical will have noticeable kinks where
  *  horizontal and vertical rasters are removed.  Second, although it
  *  is very fast, you get good results on sharp edges by applying
  *  a sharpening filter.

@@ -795,7 +795,7 @@ l_int32  *array;
  *          directly on the bare array of the l_dna.
  *      (2) Very important: for L_NOCOPY, any writes to the array
  *          will be in the l_dna.  Do not write beyond the size of
- *          the count field, because it will not be accessable
+ *          the count field, because it will not be accessible
  *          from the l_dna!  If necessary, be sure to set the count
  *          field to a larger number (such as the alloc size)
  *          BEFORE calling this function.  Creating with l_dnaMakeConstant()

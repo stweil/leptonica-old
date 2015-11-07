@@ -467,7 +467,7 @@ l_int32      format, retval;
  *      (7) It is assumed that the page number is contained within
  *          the basename (the filename without directory or extension).
  *          @page_numpre is the number of characters in the page basename
- *          preceeding the actual page number; @mask_numpre is likewise for
+ *          preceding the actual page number; @mask_numpre is likewise for
  *          the mask basename; @numpost is the number of characters
  *          following the page number.  For example, for mask name
  *          mask_006.tif, mask_numpre = 5 ("mask_).

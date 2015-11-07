@@ -680,7 +680,7 @@ pixcmapClear(PIXCMAP  *cmap)
  *      Input:  cmap
  *              index
  *              &rval, &gval, &bval (<return> each color value)
- *      Return: 0 if OK, 1 if not accessable (caller should check)
+ *      Return: 0 if OK, 1 if not accessible (caller should check)
  */
 l_int32
 pixcmapGetColor(PIXCMAP  *cmap,
@@ -715,7 +715,7 @@ RGBA_QUAD  *cta;
  *      Input:  cmap
  *              index
  *              &val32 (<return> 32-bit rgb color value)
- *      Return: 0 if OK, 1 if not accessable (caller should check)
+ *      Return: 0 if OK, 1 if not accessible (caller should check)
  *
  *  Notes:
  *      (1) The returned alpha channel value is 255.
@@ -746,7 +746,7 @@ l_int32  rval, gval, bval;
  *      Input:  cmap
  *              index
  *              &rval, &gval, &bval, &aval (<return> each color value)
- *      Return: 0 if OK, 1 if not accessable (caller should check)
+ *      Return: 0 if OK, 1 if not accessible (caller should check)
  */
 l_int32
 pixcmapGetRGBA(PIXCMAP  *cmap,
@@ -784,7 +784,7 @@ RGBA_QUAD  *cta;
  *      Input:  cmap
  *              index
  *              &val32 (<return> 32-bit rgba color value)
- *      Return: 0 if OK, 1 if not accessable (caller should check)
+ *      Return: 0 if OK, 1 if not accessible (caller should check)
  */
 l_int32
 pixcmapGetRGBA32(PIXCMAP   *cmap,
@@ -813,7 +813,7 @@ l_int32  rval, gval, bval, aval;
  *              index
  *              rval, gval, bval (colormap entry to be reset; each number
  *                                is in range [0, ... 255])
- *      Return: 0 if OK, 1 if not accessable (caller should check)
+ *      Return: 0 if OK, 1 if not accessible (caller should check)
  *
  *  Notes:
  *      (1) This resets sets the color of an entry that has already

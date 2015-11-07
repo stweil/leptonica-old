@@ -1602,7 +1602,7 @@ FPIX      *fpixd;
  *      Return: 0 if OK; 1 on error.
  *
  *  Notes:
- *      (1) This is similiar in structure to pixRasterop(), except
+ *      (1) This is similar in structure to pixRasterop(), except
  *          it only allows copying from the source into the destination.
  *          For that reason, no op code is necessary.  Additionally,
  *          all pixels are 32 bit words (float values), which makes

@@ -2979,7 +2979,7 @@ size_t  len;
  *      (8) Set @usetime = @usepid = 1 when
  *          (a) more than one process is writing and reading temp files, or
  *          (b) multiple threads from a single process call this function, or
- *          (c) there is the possiblity of an attack where the intruder
+ *          (c) there is the possibility of an attack where the intruder
  *              is logged onto the server and might try to guess filenames.
  */
 char *

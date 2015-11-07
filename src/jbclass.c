@@ -1359,7 +1359,7 @@ PIXA      *pixa, *pixat;
             pixt1 = pixReduceRankBinaryCascade(pixs, 1, 1, 0, 0);
         }
 
-            /* Estimate the word mask, at aproximately 150 ppi.
+            /* Estimate the word mask, at approximately 150 ppi.
              * This has both very large and very small components left in. */
         pixWordMaskByDilation(pixt1, 8, &pixt2, NULL);
 
