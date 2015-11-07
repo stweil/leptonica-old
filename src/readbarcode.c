@@ -1,18 +1,28 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 
 /*
@@ -34,7 +44,7 @@
  *          static PIX      *pixGenerateBarcodeMask()
  *
  *      Extraction and deskew
- *          PIXA            *pixDeskewBarcodes()  
+ *          PIXA            *pixDeskewBarcodes()
  *
  *      Process to get line widths
  *          NUMA            *pixExtractBarcodeWidths1()
@@ -42,7 +52,7 @@
  *          NUMA            *pixExtractBarcodeCrossings()
  *
  *      Average adjacent rasters
- *          static NUMA     *pixAverageRasterScans() 
+ *          static NUMA     *pixAverageRasterScans()
  *
  *      Signal processing for barcode widths
  *          NUMA            *numaQuantizeCrossingsByWidth()
@@ -68,8 +78,6 @@
  *  (image --> decoded data).
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "allheaders.h"
 #include "readbarcode.h"
@@ -140,7 +148,7 @@ SARRAY  *sad;
         return (SARRAY *)ERROR_PTR("unsupported format", procName, NULL);
     if (method != L_USE_WIDTHS && method != L_USE_WINDOWS)
         return (SARRAY *)ERROR_PTR("invalid method", procName, NULL);
-    
+
         /* Get an 8 bpp image, no cmap */
     if (pixGetDepth(pixs) == 8 && !pixGetColormap(pixs))
         pixg = pixClone(pixs);
@@ -152,7 +160,7 @@ SARRAY  *sad;
         return (SARRAY *)ERROR_PTR("no barcode(s) found", procName, NULL);
     }
 
-    sad = pixReadBarcodes(pixa, format, method, psaw, debugflag); 
+    sad = pixReadBarcodes(pixa, format, method, psaw, debugflag);
 
     pixDestroy(&pixg);
     pixaDestroy(&pixa);
@@ -187,7 +195,7 @@ PIXA      *pixa;
         /* Locate them; use small threshold for edges. */
     boxa = pixLocateBarcodes(pixs, 20, &pixb, &pixm);
     n = boxaGetCount(boxa);
-    L_INFO_INT("%d possible barcode(s) found", procName, n);
+    L_INFO("%d possible barcode(s) found\n", procName, n);
     if (n == 0) {
         boxaDestroy(&boxa);
         pixDestroy(&pixb);
@@ -206,12 +214,11 @@ PIXA      *pixa;
     for (i = 0; i < n; i++) {
         box = boxaGetBox(boxa, i, L_CLONE);
         pixt = pixDeskewBarcode(pixs, pixb, box, 15, 20, &angle, &conf);
-        L_INFO_FLOAT2("angle = %6.2f, conf = %6.2f", procName, angle, conf);
-	if (conf > 5.0) {
+        L_INFO("angle = %6.2f, conf = %6.2f\n", procName, angle, conf);
+        if (conf > 5.0) {
             pixaAddPix(pixa, pixt, L_INSERT);
             pixaAddBox(pixa, box, L_INSERT);
-        }
-        else {
+        } else {
             pixDestroy(&pixt);
             boxDestroy(&box);
         }
@@ -264,7 +271,7 @@ SARRAY    *saw, *sad;
         return (SARRAY *)ERROR_PTR("unsupported format", procName, NULL);
     if (method != L_USE_WIDTHS && method != L_USE_WINDOWS)
         return (SARRAY *)ERROR_PTR("invalid method", procName, NULL);
-    
+
     n = pixaGetCount(pixa);
     saw = sarrayCreate(n);
     sad = sarrayCreate(n);
@@ -274,9 +281,9 @@ SARRAY    *saw, *sad;
         na = pixReadBarcodeWidths(pixt, method, debugflag);
         pixDestroy(&pixt);
         if (!na) {
-	    ERROR_INT("valid barcode widths not returned", procName, 1);
+            ERROR_INT("valid barcode widths not returned", procName, 1);
             continue;
-	}
+        }
 
             /* Save the widths as a string */
         nbars = numaGetCount(na);
@@ -291,10 +298,10 @@ SARRAY    *saw, *sad;
             /* Decode the width strings */
         data = barcodeDispatchDecoder(barstr, format, debugflag);
         if (!data) {
-	    ERROR_INT("barcode not decoded", procName, 1);
+            ERROR_INT("barcode not decoded", procName, 1);
             sarrayAddString(sad, emptystring, L_COPY);
             continue;
-	}
+        }
         sarrayAddString(sad, data, L_INSERT);
     }
 
@@ -338,7 +345,7 @@ NUMA      *na;
         return (NUMA *)ERROR_PTR("pixs not 8 bpp", procName, NULL);
     if (method != L_USE_WIDTHS && method != L_USE_WINDOWS)
         return (NUMA *)ERROR_PTR("invalid method", procName, NULL);
-    
+
         /* Extract the widths of the lines in each barcode */
     if (method == L_USE_WIDTHS)
         na = pixExtractBarcodeWidths1(pixs, 120, 0.25, NULL, NULL,
@@ -384,7 +391,7 @@ PIX   *pix8, *pixe, *pixb, *pixm;
 
     if (!pixs)
         return (BOXA *)ERROR_PTR("pixs not defined", procName, NULL);
-    
+
         /* Get an 8 bpp image, no cmap */
     if (pixGetDepth(pixs) == 8 && !pixGetColormap(pixs))
         pix8 = pixClone(pixs);
@@ -506,7 +513,7 @@ PIX       *pixt1, *pixt2, *pixt3, *pixt4, *pixt5, *pixt6, *pixd;
         return (PIX *)ERROR_PTR("pixb undefined or not 1 bpp", procName, NULL);
     if (!box)
         return (PIX *)ERROR_PTR("box not defined or 1 bpp", procName, NULL);
-    
+
         /* Clip out */
     deg2rad = 3.1415926535 / 180.;
     boxGetGeometry(box, &x, &y, &w, &h);
@@ -526,30 +533,27 @@ PIX       *pixt1, *pixt2, *pixt3, *pixt4, *pixt5, *pixt6, *pixd;
         /* Because we're using the boundary pixels of the barcodes,
          * the peak can be sharper (and the confidence ratio higher)
          * from the signal across the top and bottom of the barcode.
-	 * However, the max score, which is the magnitude of the signal
-	 * at the optimum skew angle, will be smaller, so we use the
-	 * max score as the primary indicator of orientation. */
+         * However, the max score, which is the magnitude of the signal
+         * at the optimum skew angle, will be smaller, so we use the
+         * max score as the primary indicator of orientation. */
     if (score1 >= score2) {
         conf = conf1;
         if (conf1 > 6.0 && L_ABS(angle1) > 0.1) {
             angle = angle1;
             pixt5 = pixRotate(pixt2, deg2rad * angle1, L_ROTATE_AREA_MAP,
                               L_BRING_IN_WHITE, 0, 0);
-        }
-        else {
+        } else {
             angle = 0.0;
             pixt5 = pixClone(pixt2);
         }
-    }
-    else {  /* score2 > score1 */
+    } else {  /* score2 > score1 */
         conf = conf2;
         pixt6 = pixRotateOrth(pixt2, 1);
         if (conf2 > 6.0 && L_ABS(angle2) > 0.1) {
             angle = 90.0 + angle2;
             pixt5 = pixRotate(pixt6, deg2rad * angle2, L_ROTATE_AREA_MAP,
                               L_BRING_IN_WHITE, 0, 0);
-        }
-        else {
+        } else {
             angle = 90.0;
             pixt5 = pixClone(pixt6);
         }
@@ -561,10 +565,9 @@ PIX       *pixt1, *pixt2, *pixt3, *pixt4, *pixt5, *pixt6, *pixd;
         /* Extract barcode plus a margin around it */
     boxa = pixLocateBarcodes(pixt5, threshold, 0, 0);
     if ((n = boxaGetCount(boxa)) != 1) {
-        L_WARNING_INT("barcode mask in %d components", procName, n);
+        L_WARNING("barcode mask in %d components\n", procName, n);
         boxat = boxaSort(boxa, L_SORT_BY_AREA, L_SORT_DECREASING, NULL);
-    }
-    else {
+    } else {
         boxat = boxaCopy(boxa, L_CLONE);
     }
     boxt = boxaGetBox(boxat, 0, L_CLONE);
@@ -576,10 +579,10 @@ PIX       *pixt1, *pixt2, *pixt3, *pixt4, *pixt5, *pixt6, *pixd;
     boxDestroy(&boxe);
     boxaDestroy(&boxa);
     boxaDestroy(&boxat);
-    
+
     if (pangle) *pangle = angle;
     if (pconf) *pconf = conf;
-        
+
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
     pixDestroy(&pixt5);
@@ -615,8 +618,8 @@ NUMA *
 pixExtractBarcodeWidths1(PIX      *pixs,
                         l_float32  thresh,
                         l_float32  binfract,
-			NUMA     **pnaehist,
-			NUMA     **pnaohist,
+                        NUMA     **pnaehist,
+                        NUMA     **pnaohist,
                         l_int32    debugflag)
 {
 NUMA  *nac, *nad;
@@ -770,8 +773,7 @@ NUMA       *nad;
         first = 0;
         last = h - 1;
         nscans = h;
-    }
-    else {
+    } else {
         first = (h - nscans) / 2;
         last = first + nscans - 1;
     }
@@ -785,14 +787,14 @@ NUMA       *nad;
         for (i = first; i <= last; i++) {
             line = data + i * wpl;
             val = GET_DATA_BYTE(line, j);
-	    array[j] += val;
+            array[j] += val;
         }
         array[j] = array[j] / (l_float32)nscans;
     }
 
     return nad;
 }
-        
+
 
 /*------------------------------------------------------------------------*
  *                   Signal processing for barcode widths                 *
@@ -888,7 +890,7 @@ NUMA      *naerange, *naorange, *naelut, *naolut, *nad;
     ned = numaGetCount(naedist);
     nod = numaGetCount(naodist);
     if (nod != ned - 1)
-        L_WARNING("ned != nod + 1", procName);
+        L_WARNING("ned != nod + 1\n", procName);
     factor = 1.0 / (binfract * minsize);  /* for converting units */
     for (i = 0; i < ned - 1; i++) {
         numaGetFValue(naedist, i, &val);
@@ -908,7 +910,7 @@ NUMA      *naerange, *naorange, *naelut, *naolut, *nad;
     width = (l_int32)(factor * val);
     numaGetIValue(naelut, width, &iw);
     numaAddNumber(nad, iw);
-    
+
     if (debugflag) {
         fprintf(stderr, " ---- Black bar widths (pixels) ------ \n");
         numaWriteStream(stderr, naedist);
@@ -1003,15 +1005,15 @@ NUMA      *naedist, *naodist;
         return ERROR_INT("n < 2", procName, 1);
 
         /* Get numas of distances between crossings.  Separate these
-	 * into even (e.g., black) and odd (e.g., white) spans.
-	 * For barcodes, the black spans are 0, 2, etc.  These
+         * into even (e.g., black) and odd (e.g., white) spans.
+         * For barcodes, the black spans are 0, 2, etc.  These
          * distances are in pixel units.  */
     naedist = numaCreate(n / 2 + 1);
     naodist = numaCreate(n / 2);
     numaGetFValue(nas, 0, &val);
     for (i = 1; i < n; i++) {
         numaGetFValue(nas, i, &newval);
-        if (i % 2) 
+        if (i % 2)
             numaAddNumber(naedist, newval - val);
         else
             numaAddNumber(naodist, newval - val);
@@ -1025,8 +1027,7 @@ NUMA      *naedist, *naodist;
     numaGetMax(naedist, &maxdist, NULL);
     numaGetMax(naodist, &dist, NULL);
     maxdist = L_MAX(dist, maxdist);
-    L_INFO_FLOAT2("mindist = %7.3f, maxdist = %7.3f\n",
-                  procName, mindist, maxdist);
+    L_INFO("mindist = %7.3f, maxdist = %7.3f\n", procName, mindist, maxdist);
 
     if (pnaedist)
         *pnaedist = naedist;
@@ -1053,7 +1054,7 @@ NUMA      *naedist, *naodist;
  *
  *  Notes:
  *      (1) Units of @minsep are the index into nas.
- *          This puts useful constraints on peak-finding. 
+ *          This puts useful constraints on peak-finding.
  *      (2) If maxmin == 0.0, the value of nas[i] must go to 0.0 (or less)
  *          between peaks.
  *      (3) All calculations are done in units of the index into nas.
@@ -1092,16 +1093,14 @@ NUMA      *nad;
         if (inpeak == FALSE && val > maxmin) {
             inpeak = TRUE;
             left = i;
-        }
-        else if (inpeak == TRUE && val <= maxmin) {  /* end peak */
+        } else if (inpeak == TRUE && val <= maxmin) {  /* end peak */
             center = (left + i - 1.0) / 2.0;
             if (center - prevcenter >= minsep) {  /* save new peak */
                 inpeak = FALSE;
                 numaAddNumber(nad, left);
                 numaAddNumber(nad, i - 1);
                 prevcenter = center;
-            }
-            else {  /* attach to previous peak; revise the right edge */
+            } else {  /* attach to previous peak; revise the right edge */
                 numaSetValue(nad, numaGetCount(nad) - 1, i - 1);
             }
         }
@@ -1194,9 +1193,9 @@ NUMA       *nalut;
         return (NUMA *)ERROR_PTR("nc must be 1, 2, 3, or 4", procName, NULL);
 
         /* Check the peak centroids for consistency with bar widths.
-	 * The third peak can correspond to a width of either 3 or 4.
-	 * Use ratios 3/2 and 4/2 instead of 3/1 and 4/1 because the
-	 * former are more stable and closer to the expected ratio.  */
+         * The third peak can correspond to a width of either 3 or 4.
+         * Use ratios 3/2 and 4/2 instead of 3/1 and 4/1 because the
+         * former are more stable and closer to the expected ratio.  */
     if (nc > 1) {
         warray = numaGetFArray(nacent, L_NOCOPY);
         if (warray[0] == 0)
@@ -1204,16 +1203,16 @@ NUMA       *nalut;
                                      procName, NULL);
         rat21 = warray[1] / warray[0];
         if (rat21 < 1.5 || rat21 > 2.6)
-            L_WARNING_FLOAT("width ratio 2/1 = %f", procName, rat21);
+            L_WARNING("width ratio 2/1 = %f\n", procName, rat21);
         if (nc > 2) {
             rat32 = warray[2] / warray[1];
             if (rat32 < 1.3 || rat32 > 2.25)
-                L_WARNING_FLOAT("width ratio 3/2 = %f", procName, rat32);
+                L_WARNING("width ratio 3/2 = %f\n", procName, rat32);
         }
         if (nc == 4) {
             rat42 = warray[3] / warray[1];
             if (rat42 < 1.7 || rat42 > 2.3)
-                L_WARNING_FLOAT("width ratio 4/2 = %f", procName, rat42);
+                L_WARNING("width ratio 4/2 = %f\n", procName, rat42);
         }
     }
 
@@ -1265,10 +1264,10 @@ NUMA       *nalut;
  */
 NUMA *
 numaQuantizeCrossingsByWindow(NUMA       *nas,
-		              l_float32   ratio,
+                              l_float32   ratio,
                               l_float32  *pwidth,
                               l_float32  *pfirstloc,
-			      NUMA      **pnac,
+                              NUMA      **pnac,
                               l_int32     debugflag)
 {
 l_int32    i, nw, started, count, trans;
@@ -1295,8 +1294,8 @@ NUMA      *nac, *nad;
     numaEvalBestWidthAndShift(nas, 100, 10, 0.98 * minwidth, 1.02 * minwidth,
                               &minwidth, &minshift, NULL);
 
-    L_INFO_FLOAT2("best width = %7.3f, best shift = %7.3f\n",
-                  procName, minwidth, minshift);
+    L_INFO("best width = %7.3f, best shift = %7.3f\n",
+           procName, minwidth, minshift);
 
         /* Get the crossing array (0,1,2) for the best window width and shift */
     numaEvalSyncError(nas, 0, 0, minwidth, minshift, NULL, &nac);
@@ -1313,20 +1312,20 @@ NUMA      *nac, *nad;
     count = 0;  /* unnecessary init */
     for (i = 0; i < nw; i++) {
         numaGetIValue(nac, i, &trans);
-	if (trans > 2)
-            L_WARNING_INT("trans = %d > 2 !!!", procName, trans);
+        if (trans > 2)
+            L_WARNING("trans = %d > 2 !!!\n", procName, trans);
         if (started) {
             if (trans > 1) {  /* i.e., when trans == 2 */
                 numaAddNumber(nad, count);
                 trans--;
-		count = 1;
-            }
-	    if (trans == 1) {
-                numaAddNumber(nad, count);
                 count = 1;
             }
-            else
+            if (trans == 1) {
+                numaAddNumber(nad, count);
+                count = 1;
+            } else {
                 count++;
+            }
         }
         if (!started && trans) {
             started = TRUE;
@@ -1444,7 +1443,7 @@ numaEvalSyncError(NUMA       *nas,
 {
 l_int32    i, n, nc, nw, ival;
 l_int32    iw;  /* cell in which transition occurs */
-l_float32  score, xfirst, xlast, xleft, xc, xwc; 
+l_float32  score, xfirst, xlast, xleft, xc, xwc;
 NUMA      *nad;
 
     PROCNAME("numaEvalSyncError");
@@ -1460,7 +1459,7 @@ NUMA      *nad;
     nc = ilast - ifirst + 1;
 
         /* Set up an array corresponding to the (shifted) windows,
-	 * and fill in the crossings. */
+         * and fill in the crossings. */
     score = 0.0;
     numaGetFValue(nas, ifirst, &xfirst);
     numaGetFValue(nas, ilast, &xlast);
@@ -1470,11 +1469,11 @@ NUMA      *nad;
     xleft = xfirst - width / 2.0 + shift;  /* left edge of first window */
     for (i = ifirst; i <= ilast; i++) {
         numaGetFValue(nas, i, &xc);
-	iw = (l_int32)((xc - xleft) / width);
-	xwc = xleft + (iw + 0.5) * width;  /* center of cell iw */
-	score += (xwc - xc) * (xwc - xc);
-	numaGetIValue(nad, iw, &ival);
-	numaSetValue(nad, iw, ival + 1);
+        iw = (l_int32)((xc - xleft) / width);
+        xwc = xleft + (iw + 0.5) * width;  /* center of cell iw */
+        score += (xwc - xc) * (xwc - xc);
+        numaGetIValue(nad, iw, &ival);
+        numaSetValue(nad, iw, ival + 1);
     }
 
     if (pscore)
@@ -1486,4 +1485,3 @@ NUMA      *nad;
 
     return 0;
 }
-

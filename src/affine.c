@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 
@@ -22,7 +33,7 @@
  *           PIX        *pixAffineSampledPta()
  *           PIX        *pixAffineSampled()
  *
- *      Affine (3 pt) image transformation using interpolation 
+ *      Affine (3 pt) image transformation using interpolation
  *      (or area mapping) for anti-aliasing images that are
  *      2, 4, or 8 bpp gray, or colormapped, or 32 bpp RGB
  *           PIX        *pixAffinePta()
@@ -32,9 +43,8 @@
  *           PIX        *pixAffinePtaGray()
  *           PIX        *pixAffineGray()
  *
- *      Affine transform including alpha (blend) component and gamma transform
+ *      Affine transform including alpha (blend) component
  *           PIX        *pixAffinePtaWithAlpha()
- *           PIX        *pixAffinePtaGammaXform()
  *
  *      Affine coordinate transformation
  *           l_int32     getAffineXformCoeffs()
@@ -49,7 +59,7 @@
  *      Gauss-jordan linear equation solver
  *           l_int32     gaussjordan()
  *
- *      Affine image transformation using a sequence of 
+ *      Affine image transformation using a sequence of
  *      shear/scale/translation operations
  *           PIX        *pixAffineSequential()
  *
@@ -60,7 +70,7 @@
  *
  *      For the general case, we can define the affine transform using
  *      two sets of three (noncollinear) points in a plane.  One set
- *      corresponds to the input (src) coordinate space; the other to the 
+ *      corresponds to the input (src) coordinate space; the other to the
  *      transformed (dest) coordinate space.  Each point in the
  *      src corresponds to one of the points in the dest.  With two
  *      sets of three points, we get a set of 6 equations in 6 unknowns
@@ -125,7 +135,7 @@
  *      (2) horizontal and vertical shear about any horizontal and vertical
  *      line, respectively, and (3) non-isotropic scaling by two
  *      arbitrary x and y scaling factors.  We also have rotation
- *      about an arbitrary point, but this is equivalent to a set 
+ *      about an arbitrary point, but this is equivalent to a set
  *      of three shears so we do not need to use it.
  *
  *      Why might we do this?  For binary images, it is usually
@@ -204,7 +214,7 @@
  *              quality results result from using the pointwise
  *              interpolated function pixAffinePta() or pixAffine();
  *              the cost is less than a doubling of the computation time
- *              with respect to the sampled function.  If you use 
+ *              with respect to the sampled function.  If you use
  *              interpolation on colormapped images, the colormap will
  *              be removed, resulting in either a grayscale or color
  *              image, depending on the values in the colormap.
@@ -220,8 +230,6 @@
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -344,13 +352,13 @@ PIXCMAP    *cmap;
             color = 0;
         pixcmapAddBlackOrWhite(cmap, color, &cmapindex);
         pixSetAllArbitrary(pixd, cmapindex);
-    }
-    else {
+    } else {
         if ((d == 1 && incolor == L_BRING_IN_WHITE) ||
-            (d > 1 && incolor == L_BRING_IN_BLACK))
+            (d > 1 && incolor == L_BRING_IN_BLACK)) {
             pixClearAll(pixd);
-        else
+        } else {
             pixSetAll(pixd);
+        }
     }
 
         /* Scan over the dest pixels */
@@ -368,19 +376,15 @@ PIXCMAP    *cmap;
             if (d == 1) {
                 val = GET_DATA_BIT(lines, x);
                 SET_DATA_BIT_VAL(lined, j, val);
-            }
-            else if (d == 8) {
+            } else if (d == 8) {
                 val = GET_DATA_BYTE(lines, x);
                 SET_DATA_BYTE(lined, j, val);
-            }
-            else if (d == 32) {
+            } else if (d == 32) {
                 lined[j] = lines[x];
-            }
-            else if (d == 2) {
+            } else if (d == 2) {
                 val = GET_DATA_DIBIT(lines, x);
                 SET_DATA_DIBIT(lined, j, val);
-            }
-            else if (d == 4) {
+            } else if (d == 4) {
                 val = GET_DATA_QBIT(lines, x);
                 SET_DATA_QBIT(lined, j, val);
             }
@@ -452,7 +456,7 @@ PIX      *pixt1, *pixt2, *pixd;
         else  /* d == 32 */
             colorval = 0xffffff00;
     }
-    
+
     if (d == 8)
         pixd = pixAffinePtaGray(pixt2, ptad, ptas, colorval);
     else  /* d == 32 */
@@ -511,7 +515,7 @@ PIX      *pixt1, *pixt2, *pixd;
         else  /* d == 32 */
             colorval = 0xffffff00;
     }
-    
+
     if (d == 8)
         pixd = pixAffineGray(pixt2, vc, colorval);
     else  /* d == 32 */
@@ -581,7 +585,7 @@ l_int32    i, j, w, h, d, wpls, wpld;
 l_uint32   val;
 l_uint32  *datas, *datad, *lined;
 l_float32  x, y;
-PIX       *pixd;
+PIX       *pix1, *pix2, *pixd;
 
     PROCNAME("pixAffineColor");
 
@@ -610,6 +614,15 @@ PIX       *pixd;
                                         &val);
             *(lined + j) = val;
         }
+    }
+
+        /* If rgba, transform the pixs alpha channel and insert in pixd */
+    if (pixGetSpp(pixs) == 4) {
+        pix1 = pixGetRGBComponent(pixs, L_ALPHA_CHANNEL);
+        pix2 = pixAffineGray(pix1, vc, 255);  /* bring in opaque */
+        pixSetRGBComponent(pixd, pix2, L_ALPHA_CHANNEL);
+        pixDestroy(&pix1);
+        pixDestroy(&pix2);
     }
 
     return pixd;
@@ -710,7 +723,7 @@ PIX       *pixd;
 
 
 /*---------------------------------------------------------------------------*
- *   Affine transform including alpha (blend) component and gamma transform  *
+ *            Affine transform including alpha (blend) component             *
  *---------------------------------------------------------------------------*/
 /*!
  *  pixAffinePtaWithAlpha()
@@ -773,15 +786,15 @@ PTA     *ptad2, *ptas2;
     if (d != 32 && pixGetColormap(pixs) == NULL)
         return (PIX *)ERROR_PTR("pixs not cmapped or 32 bpp", procName, NULL);
     if (pixg && pixGetDepth(pixg) != 8) {
-        L_WARNING("pixg not 8 bpp; using @fract transparent alpha", procName);
+        L_WARNING("pixg not 8 bpp; using @fract transparent alpha\n", procName);
         pixg = NULL;
     }
     if (!pixg && (fract < 0.0 || fract > 1.0)) {
-        L_WARNING("invalid fract; using 1.0 (fully transparent)", procName);
+        L_WARNING("invalid fract; using 1.0 (fully transparent)\n", procName);
         fract = 1.0;
     }
     if (!pixg && fract == 0.0)
-        L_WARNING("fully opaque alpha; image will not be blended", procName);
+        L_WARNING("fully opaque alpha; image will not be blended\n", procName);
     if (!ptad)
         return (PIX *)ERROR_PTR("ptad not defined", procName, NULL);
     if (!ptas)
@@ -802,9 +815,9 @@ PTA     *ptad2, *ptas2;
             pixSetAll(pixg2);
         else
             pixSetAllArbitrary(pixg2, (l_int32)(255.0 * fract));
-    }
-    else
+    } else {
         pixg2 = pixResizeToMatch(pixg, NULL, ws, hs);
+    }
     if (ws > 10 && hs > 10) {  /* see note 7 */
         pixSetBorderRingVal(pixg2, 1,
                             (l_int32)(255.0 * fract * AlphaMaskBorderVals[0]));
@@ -815,6 +828,7 @@ PTA     *ptad2, *ptas2;
     pixb2 = pixAddBorder(pixg2, border, 0);  /* must be black border */
     pixga = pixAffinePtaGray(pixb2, ptad2, ptas2, 0);
     pixSetRGBComponent(pixd, pixga, L_ALPHA_CHANNEL);
+    pixSetSpp(pixd, 4);
 
     pixDestroy(&pixg2);
     pixDestroy(&pixb1);
@@ -822,58 +836,6 @@ PTA     *ptad2, *ptas2;
     pixDestroy(&pixga);
     ptaDestroy(&ptad2);
     ptaDestroy(&ptas2);
-    return pixd;
-}
-
-
-/*!
- *  pixAffinePtaGammaXform()
- *
- *      Input:  pixs (32 bpp rgb)
- *              gamma (gamma correction; must be > 0.0)
- *              ptad  (3 pts of final coordinate space)
- *              ptas  (3 pts of initial coordinate space)
- *              fract (between 0.0 and 1.0, with 1.0 fully transparent)
- *              border (of pixels to capture transformed source pixels)
- *      Return: pixd, or null on error
- *
- *  Notes:
- *      (1) This wraps a gamma/inverse-gamma photometric transform around
- *          pixAffinePtaWithAlpha().
- *      (2) For usage, see notes in pixAffinePtaWithAlpha() and
- *          pixGammaTRCWithAlpha().
- *      (3) The basic idea of a gamma/inverse-gamma transform is to remove
- *          any gamma correction before the affine transform, and restore
- *          it afterward.  The effects can be subtle, but important for
- *          some applications.  For example, using gamma > 1.0 will
- *          cause the dark areas to become somewhat lighter and slightly
- *          reduce aliasing effects when blending using the alpha channel.
- */
-PIX *
-pixAffinePtaGammaXform(PIX       *pixs,
-                       l_float32  gamma,
-                       PTA       *ptad,
-                       PTA       *ptas,
-                       l_float32  fract,
-                       l_int32    border)
-{
-PIX  *pixg, *pixd;
-
-    PROCNAME("pixAffinePtaGammaXform");
-
-    if (!pixs || (pixGetDepth(pixs) != 32))
-        return (PIX *)ERROR_PTR("pixs undefined or not 32 bpp", procName, NULL);
-    if (fract == 0.0)
-        L_WARNING("fully opaque alpha; image cannot be blended", procName);
-    if (gamma <= 0.0)  {
-        L_WARNING("gamma must be > 0.0; setting to 1.0", procName);
-        gamma = 1.0;
-    }
-
-    pixg = pixGammaTRCWithAlpha(NULL, pixs, 1.0 / gamma, 0, 255);
-    pixd = pixAffinePtaWithAlpha(pixg, ptad, ptas, NULL, fract, border);
-    pixGammaTRCWithAlpha(pixd, pixd, gamma, 0, 255);
-    pixDestroy(&pixg);
     return pixd;
 }
 
@@ -899,16 +861,16 @@ PIX  *pixg, *pixd;
  *          y2' = c[3]*x2 + c[4]*y2 + c[5]
  *          x3' = c[0]*x3 + c[1]*y3 + c[2]
  *          y3' = c[3]*x3 + c[4]*y3 + c[5]
- *    
+ *
  *  This can be represented as
  *
  *          AC = B
  *
  *  where B and C are column vectors
- *    
+ *
  *          B = [ x1' y1' x2' y2' x3' y3' ]
  *          C = [ c[0] c[1] c[2] c[3] c[4] c[5] c[6] ]
- *    
+ *
  *  and A is the 6x6 matrix
  *
  *          x1   y1   1   0    0    0
@@ -968,7 +930,7 @@ l_float32  *a[6];  /* 6x6 matrix A  */
         return ERROR_INT("ptad not defined", procName, 1);
     if (!pvc)
         return ERROR_INT("&vc not defined", procName, 1);
-        
+
     if ((b = (l_float32 *)CALLOC(6, sizeof(l_float32))) == NULL)
         return ERROR_INT("b not made", procName, 1);
     *pvc = b;
@@ -1193,7 +1155,7 @@ linearInterpolatePixelColor(l_uint32  *datas,
                             l_uint32   colorval,
                             l_uint32  *pval)
 {
-l_int32    xpm, ypm, xp, yp, xf, yf;
+l_int32    xpm, ypm, xp, xp2, yp, xf, yf;
 l_int32    rval, gval, bval;
 l_uint32   word00, word01, word10, word11;
 l_uint32  *lines;
@@ -1207,13 +1169,15 @@ l_uint32  *lines;
         return ERROR_INT("datas not defined", procName, 1);
 
         /* Skip if off the edge */
-    if (x < 0.0 || y < 0.0 || x > w - 2.0 || y > h - 2.0)
+    if (x < 0.0 || y < 0.0 || x >= w || y >= h)
         return 0;
 
-    xpm = (l_int32)(16.0 * x + 0.5);
-    ypm = (l_int32)(16.0 * y + 0.5);
+    xpm = (l_int32)(16.0 * x);
+    ypm = (l_int32)(16.0 * y);
     xp = xpm >> 4;
+    xp2 = xp + 1 < w ? xp + 1 : xp;
     yp = ypm >> 4;
+    if (yp + 1 >= h) wpls = 0;
     xf = xpm & 0x0f;
     yf = ypm & 0x0f;
 
@@ -1225,21 +1189,21 @@ l_uint32  *lines;
         /* Do area weighting (eqiv. to linear interpolation) */
     lines = datas + yp * wpls;
     word00 = *(lines + xp);
-    word10 = *(lines + xp + 1);
+    word10 = *(lines + xp2);
     word01 = *(lines + wpls + xp);
-    word11 = *(lines + wpls + xp + 1);
+    word11 = *(lines + wpls + xp2);
     rval = ((16 - xf) * (16 - yf) * ((word00 >> L_RED_SHIFT) & 0xff) +
         xf * (16 - yf) * ((word10 >> L_RED_SHIFT) & 0xff) +
         (16 - xf) * yf * ((word01 >> L_RED_SHIFT) & 0xff) +
-        xf * yf * ((word11 >> L_RED_SHIFT) & 0xff) + 128) / 256;
+        xf * yf * ((word11 >> L_RED_SHIFT) & 0xff)) / 256;
     gval = ((16 - xf) * (16 - yf) * ((word00 >> L_GREEN_SHIFT) & 0xff) +
         xf * (16 - yf) * ((word10 >> L_GREEN_SHIFT) & 0xff) +
         (16 - xf) * yf * ((word01 >> L_GREEN_SHIFT) & 0xff) +
-        xf * yf * ((word11 >> L_GREEN_SHIFT) & 0xff) + 128) / 256;
+        xf * yf * ((word11 >> L_GREEN_SHIFT) & 0xff)) / 256;
     bval = ((16 - xf) * (16 - yf) * ((word00 >> L_BLUE_SHIFT) & 0xff) +
         xf * (16 - yf) * ((word10 >> L_BLUE_SHIFT) & 0xff) +
         (16 - xf) * yf * ((word01 >> L_BLUE_SHIFT) & 0xff) +
-        xf * yf * ((word11 >> L_BLUE_SHIFT) & 0xff) + 128) / 256;
+        xf * yf * ((word11 >> L_BLUE_SHIFT) & 0xff)) / 256;
     *pval = (rval << L_RED_SHIFT) | (gval << L_GREEN_SHIFT) |
           (bval << L_BLUE_SHIFT);
     return 0;
@@ -1273,7 +1237,7 @@ linearInterpolatePixelGray(l_uint32  *datas,
                            l_int32    grayval,
                            l_int32   *pval)
 {
-l_int32    xpm, ypm, xp, yp, xf, yf, v00, v10, v01, v11;
+l_int32    xpm, ypm, xp, xp2, yp, xf, yf, v00, v10, v01, v11;
 l_uint32  *lines;
 
     PROCNAME("linearInterpolatePixelGray");
@@ -1284,14 +1248,16 @@ l_uint32  *lines;
     if (!datas)
         return ERROR_INT("datas not defined", procName, 1);
 
-        /* Skip if off the edge */
-    if (x < 0.0 || y < 0.0 || x > w - 2.0 || y > h - 2.0)
+        /* Skip if really off the edge */
+    if (x < 0.0 || y < 0.0 || x >= w || y >= h)
         return 0;
 
-    xpm = (l_int32)(16.0 * x + 0.5);
-    ypm = (l_int32)(16.0 * y + 0.5);
+    xpm = (l_int32)(16.0 * x);
+    ypm = (l_int32)(16.0 * y);
     xp = xpm >> 4;
+    xp2 = xp + 1 < w ? xp + 1 : xp;
     yp = ypm >> 4;
+    if (yp + 1 >= h) wpls = 0;
     xf = xpm & 0x0f;
     yf = ypm & 0x0f;
 
@@ -1303,10 +1269,10 @@ l_uint32  *lines;
         /* Interpolate by area weighting. */
     lines = datas + yp * wpls;
     v00 = (16 - xf) * (16 - yf) * GET_DATA_BYTE(lines, xp);
-    v10 = xf * (16 - yf) * GET_DATA_BYTE(lines, xp + 1);
+    v10 = xf * (16 - yf) * GET_DATA_BYTE(lines, xp2);
     v01 = (16 - xf) * yf * GET_DATA_BYTE(lines + wpls, xp);
-    v11 = xf * yf * GET_DATA_BYTE(lines + wpls, xp + 1);
-    *pval = (v00 + v01 + v10 + v11 + 128) / 256;
+    v11 = xf * yf * GET_DATA_BYTE(lines + wpls, xp2);
+    *pval = (v00 + v01 + v10 + v11) / 256;
     return 0;
 }
 
@@ -1320,27 +1286,29 @@ l_uint32  *lines;
 /*!
  *  gaussjordan()
  *
- *      Input:   a  (n x n matrix)
- *               b  (rhs column vector)
- *               n  (dimension)
- *      Return:  0 if ok, 1 on error
+ *      Input:  a  (n x n matrix)
+ *              b  (n x 1 right-hand side column vector)
+ *              n  (dimension)
+ *      Return: 0 if ok, 1 on error
  *
- *      Note side effects:
- *            (1) the matrix a is transformed to its inverse
- *            (2) the vector b is transformed to the solution X to the
- *                linear equation AX = B
- *
- *      Adapted from "Numerical Recipes in C, Second Edition", 1992
- *      pp. 36-41 (gauss-jordan elimination)
+ *  Notes:
+ *      (1) There are two side-effects:
+ *          * The matrix a is transformed to its inverse A
+ *          * The rhs vector b is transformed to the solution x
+ *            of the linear equation ax = b
+ *      (2) The inverse A can then be used to solve the same equation with
+ *          different rhs vectors c by multiplication: x = Ac
+ *      (3) Adapted from "Numerical Recipes in C, Second Edition", 1992,
+ *          pp. 36-41 (gauss-jordan elimination)
  */
 l_int32
 gaussjordan(l_float32  **a,
             l_float32   *b,
             l_int32      n)
 {
-l_int32    i, icol, irow, j, k, l, ll;
+l_int32    i, icol, irow, j, k, col, row;
 l_int32   *indexc, *indexr, *ipiv;
-l_float32  big, dum, pivinv, temp;
+l_float32  maxval, val, pivinv, temp;
 
     PROCNAME("gaussjordan");
 
@@ -1357,26 +1325,27 @@ l_float32  big, dum, pivinv, temp;
         return ERROR_INT("ipiv not made", procName, 1);
 
     for (i = 0; i < n; i++) {
-        big = 0.0;
+        maxval = 0.0;
         for (j = 0; j < n; j++) {
-            if (ipiv[j] != 1)
+            if (ipiv[j] != 1) {
                 for (k = 0; k < n; k++) {
                     if (ipiv[k] == 0) {
-                        if (fabs(a[j][k]) >= big) {
-                            big = fabs(a[j][k]);
+                        if (fabs(a[j][k]) >= maxval) {
+                            maxval = fabs(a[j][k]);
                             irow = j;
                             icol = k;
                         }
-                    }
-                    else if (ipiv[k] > 1)
+                    } else if (ipiv[k] > 1) {
                         return ERROR_INT("singular matrix", procName, 1);
+                    }
                 }
+            }
         }
         ++(ipiv[icol]);
-        
+
         if (irow != icol) {
-            for (l = 0; l < n; l++)
-                SWAP(a[irow][l], a[icol][l]);
+            for (col = 0; col < n; col++)
+                SWAP(a[irow][col], a[icol][col]);
             SWAP(b[irow], b[icol]);
         }
 
@@ -1386,24 +1355,26 @@ l_float32  big, dum, pivinv, temp;
             return ERROR_INT("singular matrix", procName, 1);
         pivinv = 1.0 / a[icol][icol];
         a[icol][icol] = 1.0;
-        for (l = 0; l < n; l++)
-            a[icol][l] *= pivinv;
+        for (col = 0; col < n; col++)
+            a[icol][col] *= pivinv;
         b[icol] *= pivinv;
 
-        for (ll = 0; ll < n; ll++) 
-            if (ll != icol) {
-                dum = a[ll][icol];
-                a[ll][icol] = 0.0;
-                for (l = 0; l < n; l++)
-                    a[ll][l] -= a[icol][l] * dum;
-                b[ll] -= b[icol] * dum;
+        for (row = 0; row < n; row++) {
+            if (row != icol) {
+                val = a[row][icol];
+                a[row][icol] = 0.0;
+                for (col = 0; col < n; col++)
+                    a[row][col] -= a[icol][col] * val;
+                b[row] -= b[icol] * val;
             }
+        }
     }
 
-    for (l = n - 1; l >= 0; l--) {
-        if (indexr[l] != indexc[l])
+    for (col = n - 1; col >= 0; col--) {
+        if (indexr[col] != indexc[col]) {
             for (k = 0; k < n; k++)
-                SWAP(a[k][indexr[l]], a[k][indexc[l]]);
+                SWAP(a[k][indexr[col]], a[k][indexc[col]]);
+        }
     }
 
     FREE(indexr);
@@ -1483,7 +1454,7 @@ PIX       *pixt1, *pixt2, *pixd;
         return (PIX *)ERROR_PTR("y1 == y3!", procName, NULL);
     if (y1p == y3p)
         return (PIX *)ERROR_PTR("y1p == y3p!", procName, NULL);
-        
+
     if (bw != 0 || bh != 0) {
             /* resize all points and add border to pixs */
         x1 = x1 + bw;
@@ -1501,9 +1472,9 @@ PIX       *pixt1, *pixt2, *pixd;
 
         if ((pixt1 = pixAddBorderGeneral(pixs, bw, bw, bh, bh, 0)) == NULL)
             return (PIX *)ERROR_PTR("pixt1 not made", procName, NULL);
-    }
-    else
+    } else {
         pixt1 = pixCopy(NULL, pixs);
+    }
 
     /*-------------------------------------------------------------*
         The horizontal shear is done to move the 3rd point to the
@@ -1556,7 +1527,7 @@ PIX       *pixt1, *pixt2, *pixd;
 #endif  /* DEBUG */
 
     /*-------------------------------------------------------------*
-        Scaling moves the 1st src point, which is the origin. 
+        Scaling moves the 1st src point, which is the origin.
         It must now be moved again to coincide with the origin
         (1st point) of the dest.  After this is done, the 2nd
         and 3rd points must be sheared back to the original
@@ -1578,13 +1549,11 @@ PIX       *pixt1, *pixt2, *pixd;
     if (bw != 0 || bh != 0) {
         if ((pixd = pixRemoveBorderGeneral(pixt2, bw, bw, bh, bh)) == NULL)
             return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
-    }
-    else
+    } else {
         pixd = pixClone(pixt2);
+    }
 
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
     return pixd;
 }
-
-

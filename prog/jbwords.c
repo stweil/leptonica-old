@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -30,8 +41,6 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
     /* Eliminate very large "words" */
@@ -45,37 +54,33 @@ static const l_int32  MAX_WORD_HEIGHT = 200;
 #define   RENDER_DEBUG              1
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char         filename[BUF_SIZE];
-char        *dirin, *rootname, *fname;
-l_int32      reduction, i, firstpage, npages, nfiles;
+char        *dirin, *rootname;
+l_int32      reduction, i, firstpage, npages;
 l_float32    thresh, weight;
 JBDATA      *data;
 JBCLASSER   *classer;
 NUMA        *natl;
-SARRAY      *safiles;
 PIX         *pix;
 PIXA        *pixa, *pixadb;
 static char  mainName[] = "jbwords";
 
     if (argc != 6 && argc != 8)
-	exit(ERROR_INT(
- " Syntax: jbwords dirin reduction thresh weight rootname [firstpage, npages]",
-	     mainName, 1));
+        return ERROR_INT(" Syntax: jbwords dirin reduction thresh "
+                         "weight rootname [firstpage, npages]", mainName, 1);
 
     dirin = argv[1];
     reduction = atoi(argv[2]);
     thresh = atof(argv[3]);
     weight = atof(argv[4]);
     rootname = argv[5];
-
     if (argc == 6) {
         firstpage = 0;
-	npages = 0;
-    }
-    else {
+        npages = 0;
+    } else {
         firstpage = atoi(argv[6]);
         npages = atoi(argv[7]);
     }
@@ -90,30 +95,30 @@ static char  mainName[] = "jbwords";
 
 #if  RENDER_PAGES
         /* Render the pages from the classifier data, and write to file.
-	 * Use debugflag == FALSE to omit outlines of each component. */
+         * Use debugflag == FALSE to omit outlines of each component. */
     pixa = jbDataRender(data, FALSE);
     npages = pixaGetCount(pixa);
     for (i = 0; i < npages; i++) {
         pix = pixaGetPix(pixa, i, L_CLONE);
-	snprintf(filename, BUF_SIZE, "%s.%05d", rootname, i);
-	fprintf(stderr, "filename: %s\n", filename);
-	pixWrite(filename, pix, IFF_PNG);
-	pixDestroy(&pix);
+        snprintf(filename, BUF_SIZE, "%s.%05d", rootname, i);
+        fprintf(stderr, "filename: %s\n", filename);
+        pixWrite(filename, pix, IFF_PNG);
+        pixDestroy(&pix);
     }
     pixaDestroy(&pixa);
 #endif  /* RENDER_PAGES */
 
 #if  RENDER_DEBUG
-	/* Use debugflag == TRUE to see outlines of each component. */
+        /* Use debugflag == TRUE to see outlines of each component. */
     pixadb = jbDataRender(data, TRUE);
         /* Write the debug pages out */
     npages = pixaGetCount(pixadb);
     for (i = 0; i < npages; i++) {
         pix = pixaGetPix(pixadb, i, L_CLONE);
-	snprintf(filename, BUF_SIZE, "%s.db.%05d", rootname, i);
-	fprintf(stderr, "filename: %s\n", filename);
-	pixWrite(filename, pix, IFF_PNG);
-	pixDestroy(&pix);
+        snprintf(filename, BUF_SIZE, "%s.db.%05d", rootname, i);
+        fprintf(stderr, "filename: %s\n", filename);
+        pixWrite(filename, pix, IFF_PNG);
+        pixDestroy(&pix);
     }
     pixaDestroy(&pixadb);
 #endif  /* RENDER_DEBUG */
@@ -121,7 +126,6 @@ static char  mainName[] = "jbwords";
     jbClasserDestroy(&classer);
     jbDataDestroy(&data);
     numaDestroy(&natl);
-
-    exit(0);
+    return 0;
 }
 

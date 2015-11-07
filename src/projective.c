@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -21,7 +32,7 @@
  *           PIX      *pixProjectiveSampledPta()
  *           PIX      *pixProjectiveSampled()
  *
- *      Projective (4 pt) image transformation using interpolation 
+ *      Projective (4 pt) image transformation using interpolation
  *      (or area mapping) for anti-aliasing images that are
  *      2, 4, or 8 bpp gray, or colormapped, or 32 bpp RGB
  *           PIX      *pixProjectivePta()
@@ -31,9 +42,8 @@
  *           PIX      *pixProjectivePtaGray()
  *           PIX      *pixProjectiveGray()
  *
- *      Projective transform including alpha (blend) component and gamma xform
+ *      Projective transform including alpha (blend) component
  *           PIX      *pixProjectivePtaWithAlpha()
- *           PIX      *pixProjectivePtaGammaXform()
  *
  *      Projective coordinate transformation
  *           l_int32   getProjectiveXformCoeffs()
@@ -71,12 +81,13 @@
  *
  *      where the eight coefficients have been computed from four
  *      sets of these equations, each for two corresponding data pts.
- *      In practice, for each point (x,y) in the dest image, this
- *      equation is used to compute the corresponding point (x',y')
- *      in the src.  That computed point in the src is then used
- *      to determine the dest value in one of two ways:
+ *      In practice, once the coefficients are known, we use the
+ *      equations "backwards": for each point (x,y) in the dest image,
+ *      these two equations are used to compute the corresponding point
+ *      (x',y') in the src.  That computed point in the src is then used
+ *      to determine the corresponding dest pixel value in one of two ways:
  *
- *       - sampling: take the value of the src pixel in which this
+ *       - sampling: simply take the value of the src pixel in which this
  *                   point falls
  *       - interpolation: take appropriate linear combinations of the
  *                        four src pixels that this dest pixel would
@@ -95,8 +106,6 @@
  *      for 8 bpp and 32 bpp, for both sampled and interpolated.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -204,13 +213,13 @@ PIXCMAP    *cmap;
             color = 0;
         pixcmapAddBlackOrWhite(cmap, color, &cmapindex);
         pixSetAllArbitrary(pixd, cmapindex);
-    }
-    else {
+    } else {
         if ((d == 1 && incolor == L_BRING_IN_WHITE) ||
-            (d > 1 && incolor == L_BRING_IN_BLACK))
+            (d > 1 && incolor == L_BRING_IN_BLACK)) {
             pixClearAll(pixd);
-        else
+        } else {
             pixSetAll(pixd);
+        }
     }
 
         /* Scan over the dest pixels */
@@ -228,19 +237,15 @@ PIXCMAP    *cmap;
             if (d == 1) {
                 val = GET_DATA_BIT(lines, x);
                 SET_DATA_BIT_VAL(lined, j, val);
-            }
-            else if (d == 8) {
+            } else if (d == 8) {
                 val = GET_DATA_BYTE(lines, x);
                 SET_DATA_BYTE(lined, j, val);
-            }
-            else if (d == 32) {
+            } else if (d == 32) {
                 lined[j] = lines[x];
-            }
-            else if (d == 2) {
+            } else if (d == 2) {
                 val = GET_DATA_DIBIT(lines, x);
                 SET_DATA_DIBIT(lined, j, val);
-            }
-            else if (d == 4) {
+            } else if (d == 4) {
                 val = GET_DATA_QBIT(lines, x);
                 SET_DATA_QBIT(lined, j, val);
             }
@@ -312,7 +317,7 @@ PIX      *pixt1, *pixt2, *pixd;
         else  /* d == 32 */
             colorval = 0xffffff00;
     }
-    
+
     if (d == 8)
         pixd = pixProjectivePtaGray(pixt2, ptad, ptas, colorval);
     else  /* d == 32 */
@@ -371,7 +376,7 @@ PIX      *pixt1, *pixt2, *pixd;
         else  /* d == 32 */
             colorval = 0xffffff00;
     }
-    
+
     if (d == 8)
         pixd = pixProjectiveGray(pixt2, vc, colorval);
     else  /* d == 32 */
@@ -441,7 +446,7 @@ l_int32    i, j, w, h, d, wpls, wpld;
 l_uint32   val;
 l_uint32  *datas, *datad, *lined;
 l_float32  x, y;
-PIX       *pixd;
+PIX       *pix1, *pix2, *pixd;
 
     PROCNAME("pixProjectiveColor");
 
@@ -470,6 +475,15 @@ PIX       *pixd;
                                         &val);
             *(lined + j) = val;
         }
+    }
+
+        /* If rgba, transform the pixs alpha channel and insert in pixd */
+    if (pixGetSpp(pixs) == 4) {
+        pix1 = pixGetRGBComponent(pixs, L_ALPHA_CHANNEL);
+        pix2 = pixProjectiveGray(pix1, vc, 255);  /* bring in opaque */
+        pixSetRGBComponent(pixd, pix2, L_ALPHA_CHANNEL);
+        pixDestroy(&pix1);
+        pixDestroy(&pix2);
     }
 
     return pixd;
@@ -570,7 +584,7 @@ PIX       *pixd;
 
 
 /*---------------------------------------------------------------------------*
- *   Projective transform including alpha (blend) component and gamma xform  *
+ *            Projective transform including alpha (blend) component         *
  *---------------------------------------------------------------------------*/
 /*!
  *  pixProjectivePtaWithAlpha()
@@ -634,15 +648,15 @@ PTA     *ptad2, *ptas2;
     if (d != 32 && pixGetColormap(pixs) == NULL)
         return (PIX *)ERROR_PTR("pixs not cmapped or 32 bpp", procName, NULL);
     if (pixg && pixGetDepth(pixg) != 8) {
-        L_WARNING("pixg not 8 bpp; using @fract transparent alpha", procName);
+        L_WARNING("pixg not 8 bpp; using @fract transparent alpha\n", procName);
         pixg = NULL;
     }
     if (!pixg && (fract < 0.0 || fract > 1.0)) {
-        L_WARNING("invalid fract; using 1.0 (fully transparent)", procName);
+        L_WARNING("invalid fract; using 1.0 (fully transparent)\n", procName);
         fract = 1.0;
     }
     if (!pixg && fract == 0.0)
-        L_WARNING("fully opaque alpha; image will not be blended", procName);
+        L_WARNING("fully opaque alpha; image will not be blended\n", procName);
     if (!ptad)
         return (PIX *)ERROR_PTR("ptad not defined", procName, NULL);
     if (!ptas)
@@ -664,9 +678,9 @@ PTA     *ptad2, *ptas2;
             pixSetAll(pixg2);
         else
             pixSetAllArbitrary(pixg2, (l_int32)(255.0 * fract));
-    }
-    else
+    } else {
         pixg2 = pixResizeToMatch(pixg, NULL, ws, hs);
+    }
     if (ws > 10 && hs > 10) {  /* see note 7 */
         pixSetBorderRingVal(pixg2, 1,
                             (l_int32)(255.0 * fract * AlphaMaskBorderVals[0]));
@@ -677,6 +691,7 @@ PTA     *ptad2, *ptas2;
     pixb2 = pixAddBorder(pixg2, border, 0);  /* must be black border */
     pixga = pixProjectivePtaGray(pixb2, ptad2, ptas2, 0);
     pixSetRGBComponent(pixd, pixga, L_ALPHA_CHANNEL);
+    pixSetSpp(pixd, 4);
 
     pixDestroy(&pixg2);
     pixDestroy(&pixb1);
@@ -686,59 +701,6 @@ PTA     *ptad2, *ptas2;
     ptaDestroy(&ptas2);
     return pixd;
 }
-
-
-/*!
- *  pixProjectivePtaGammaXform()
- *
- *      Input:  pixs (32 bpp rgb)
- *              gamma (gamma correction; must be > 0.0)
- *              ptad  (3 pts of final coordinate space)
- *              ptas  (3 pts of initial coordinate space)
- *              fract (between 0.0 and 1.0, with 1.0 fully transparent)
- *              border (of pixels to capture transformed source pixels)
- *      Return: pixd, or null on error
- *
- *  Notes:
- *      (1) This wraps a gamma/inverse-gamma photometric transform around
- *          pixProjectivePtaWithAlpha().
- *      (2) For usage, see notes in pixProjectivePtaWithAlpha() and
- *          pixGammaTRCWithAlpha().
- *      (3) The basic idea of a gamma/inverse-gamma transform is to remove
- *          any gamma correction before the projective transform, and restore
- *          it afterward.  The effects can be subtle, but important for
- *          some applications.  For example, using gamma > 1.0 will
- *          cause the dark areas to become somewhat lighter and slightly
- *          reduce aliasing effects when blending using the alpha channel.
- */
-PIX *
-pixProjectivePtaGammaXform(PIX       *pixs,
-                           l_float32  gamma,
-                           PTA       *ptad,
-                           PTA       *ptas,
-                           l_float32  fract,
-                           l_int32    border)
-{
-PIX  *pixg, *pixd;
-
-    PROCNAME("pixProjectivePtaGammaXform");
-
-    if (!pixs || (pixGetDepth(pixs) != 32))
-        return (PIX *)ERROR_PTR("pixs undefined or not 32 bpp", procName, NULL);
-    if (fract == 0.0)
-        L_WARNING("fully opaque alpha; image cannot be blended", procName);
-    if (gamma <= 0.0)  {
-        L_WARNING("gamma must be > 0.0; setting to 1.0", procName);
-        gamma = 1.0;
-    }
-
-    pixg = pixGammaTRCWithAlpha(NULL, pixs, 1.0 / gamma, 0, 255);
-    pixd = pixProjectivePtaWithAlpha(pixg, ptad, ptas, NULL, fract, border);
-    pixGammaTRCWithAlpha(pixd, pixd, gamma, 0, 255);
-    pixDestroy(&pixg);
-    return pixd;
-}
-
 
 
 /*-------------------------------------------------------------*
@@ -764,16 +726,16 @@ PIX  *pixg, *pixd;
  *          y3' = (c[3]*x3 + c[4]*y3 + c[5]) / (c[6]*x3 + c[7]*y3 + 1)
  *          x4' = (c[0]*x4 + c[1]*y4 + c[2]) / (c[6]*x4 + c[7]*y4 + 1)
  *          y4' = (c[3]*x4 + c[4]*y4 + c[5]) / (c[6]*x4 + c[7]*y4 + 1)
- *    
+ *
  *  Multiplying both sides of each eqn by the denominator, we get
  *
  *           AC = B
  *
  *  where B and C are column vectors
- *    
+ *
  *         B = [ x1' y1' x2' y2' x3' y3' x4' y4' ]
  *         C = [ c[0] c[1] c[2] c[3] c[4] c[5] c[6] c[7] ]
- *    
+ *
  *  and A is the 8x8 matrix
  *
  *             x1   y1     1     0   0    0   -x1*x1'  -y1*x1'
@@ -814,7 +776,7 @@ l_float32  *a[8];  /* 8x8 matrix A  */
         return ERROR_INT("ptad not defined", procName, 1);
     if (!pvc)
         return ERROR_INT("&vc not defined", procName, 1);
-        
+
     if ((b = (l_float32 *)CALLOC(8, sizeof(l_float32))) == NULL)
         return ERROR_INT("b not made", procName, 1);
     *pvc = b;
@@ -947,5 +909,3 @@ l_float32  factor;
     *pyp = factor * (vc[3] * x + vc[4] * y + vc[5]);
     return 0;
 }
-
-

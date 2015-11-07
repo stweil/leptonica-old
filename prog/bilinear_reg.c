@@ -1,24 +1,33 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
- * bilineartest.c
+ * bilinear_reg.c
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 static void MakePtas(l_int32 i, PTA **pptas, PTA **pptad);
@@ -48,22 +57,25 @@ static const l_int32  yp4[] = { 694,  624,  622};
 #define  ALL                        1
 #define  ADDED_BORDER_PIXELS      500
 
-
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-l_int32      i, d, h;
-l_float32    rat;
+l_int32      i;
 PIX         *pixs, *pixgb, *pixt1, *pixt2, *pixt3, *pixt4, *pixg, *pixd;
 PIXA        *pixa;
 PTA         *ptas, *ptad;
 static char  mainName[] = "bilinear_reg";
 
     if (argc != 1)
-	exit(ERROR_INT(" Syntax:  bilinear_reg", mainName, 1));
+        return ERROR_INT(" Syntax:  bilinear_reg", mainName, 1);
 
+#if 1
     pixs = pixRead("feyn.tif");
     pixg = pixScaleToGray3(pixs);
+#else
+    pixs = pixRead("marge.jpg");
+    pixg = pixConvertTo8(pixs, 0);
+#endif
 
 #if ALL
         /* Test non-invertability of sampling */
@@ -72,13 +84,13 @@ static char  mainName[] = "bilinear_reg";
         pixgb = pixAddBorder(pixg, ADDED_BORDER_PIXELS, 255);
         MakePtas(i, &ptas, &ptad);
         pixt1 = pixBilinearSampledPta(pixgb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 2, 1, 20, 8);
+        pixSaveTiled(pixt1, pixa, 0.5, 1, 20, 8);
         pixt2 = pixBilinearSampledPta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 2, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 0.5, 0, 20, 0);
         pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS);
         pixInvert(pixd, pixd);
         pixXor(pixd, pixd, pixg);
-        pixSaveTiled(pixd, pixa, 2, 0, 20, 0);
+        pixSaveTiled(pixd, pixa, 0.5, 0, 20, 0);
         if (i == 0) pixWrite("/tmp/junksamp.png", pixt1, IFF_PNG);
         pixDestroy(&pixgb);
         pixDestroy(&pixt1);
@@ -102,13 +114,13 @@ static char  mainName[] = "bilinear_reg";
         pixgb = pixAddBorder(pixg, ADDED_BORDER_PIXELS, 255);
         MakePtas(i, &ptas, &ptad);
         pixt1 = pixBilinearPta(pixgb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 2, 1, 20, 8);
+        pixSaveTiled(pixt1, pixa, 0.5, 1, 20, 8);
         pixt2 = pixBilinearPta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 2, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 0.5, 0, 20, 0);
         pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS);
         pixInvert(pixd, pixd);
         pixXor(pixd, pixd, pixg);
-        pixSaveTiled(pixd, pixa, 2, 0, 20, 0);
+        pixSaveTiled(pixd, pixa, 0.5, 0, 20, 0);
         if (i == 0) pixWrite("/tmp/junkinterp.png", pixt1, IFF_PNG);
         pixDestroy(&pixgb);
         pixDestroy(&pixt1);
@@ -132,18 +144,18 @@ static char  mainName[] = "bilinear_reg";
     startTimer();
     pixt1 = pixBilinearSampledPta(pixg, ptas, ptad, L_BRING_IN_WHITE);
     fprintf(stderr, " Time for pixBilinearSampled(): %6.2f sec\n", stopTimer());
-    pixSaveTiled(pixt1, pixa, 2, 1, 20, 8);
+    pixSaveTiled(pixt1, pixa, 0.5, 1, 20, 8);
 
     startTimer();
     pixt2 = pixBilinearPta(pixg, ptas, ptad, L_BRING_IN_WHITE);
     fprintf(stderr, " Time for pixBilinearInterpolated(): %6.2f sec\n",
            stopTimer());
-    pixSaveTiled(pixt2, pixa, 2, 0, 20, 8);
+    pixSaveTiled(pixt2, pixa, 0.5, 0, 20, 8);
 
     pixt3 = pixBilinearSampledPta(pixt1, ptad, ptas, L_BRING_IN_WHITE);
-    pixSaveTiled(pixt3, pixa, 2, 0, 20, 8);
+    pixSaveTiled(pixt3, pixa, 0.5, 0, 20, 8);
     pixt4 = pixBilinearPta(pixt2, ptad, ptas, L_BRING_IN_WHITE);
-    pixSaveTiled(pixt4, pixa, 2, 0, 20, 8);
+    pixSaveTiled(pixt4, pixa, 0.5, 0, 20, 8);
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
     pixDestroy(&pixt3);
@@ -182,4 +194,3 @@ MakePtas(l_int32  i,
     ptaAddPt(*pptad, xp4[i], yp4[i]);
     return;
 }
-

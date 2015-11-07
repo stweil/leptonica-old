@@ -1,21 +1,32 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  *  grayquant.c
- *                     
+ *
  *      Thresholding from 8 bpp to 1 bpp
  *
  *          Floyd-Steinberg dithering to binary
@@ -27,6 +38,10 @@
  *
  *          Binarization with variable threshold
  *              PIX    *pixVarThresholdToBinary()
+ *
+ *          Binarization by adaptive mapping
+ *              PIX    *pixAdaptThresholdToBinary()
+ *              PIX    *pixAdaptThresholdToBinaryGen()
  *
  *          Slower implementation of Floyd-Steinberg dithering, using LUTs
  *              PIX    *pixDitherToBinaryLUT()
@@ -74,8 +89,6 @@
  *              PIX      *pixGrayQuantFromCmap()
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -98,10 +111,10 @@ static l_int32 numaFillCmapFromHisto(NUMA *na, PIXCMAP *cmap,
  *  The Floyd-Steinberg error diffusion dithering algorithm
  *  binarizes an 8 bpp grayscale image to a threshold of 128.
  *  If a pixel has a value above 127, it is binarized to white
- *  and the excess (below 255) is subtracted from three 
+ *  and the excess (below 255) is subtracted from three
  *  neighboring pixels in the fractions 3/8 to (i, j+1),
  *  3/8 to (i+1, j) and 1/4 to (i+1,j+1), truncating to 0
- *  if necessary.  Likewise, if it the pixel has a value 
+ *  if necessary.  Likewise, if it the pixel has a value
  *  below 128, it is binarized to black and the excess above 0
  *  is added to the neighboring pixels, truncating to 255 if necessary.
  *
@@ -292,6 +305,7 @@ PIX       *pixd;
         return (PIX *)ERROR_PTR("pixs must be 8 bpp", procName, NULL);
 
     pixd = pixCreate(w, h, 1);
+    pixCopyResolution(pixd, pixs);
     datad = pixGetData(pixd);
     wpld = pixGetWpl(pixd);
     datas = pixGetData(pixs);
@@ -310,6 +324,95 @@ PIX       *pixd;
         }
     }
 
+    return pixd;
+}
+
+
+/*------------------------------------------------------------------*
+ *                  Binarization by adaptive mapping                *
+ *------------------------------------------------------------------*/
+/*!
+ *  pixAdaptThresholdToBinary()
+ *
+ *      Input:  pixs (8 bpp)
+ *              pixm (<optional> 1 bpp image mask; can be null)
+ *              gamma (gamma correction; must be > 0.0; typically ~1.0)
+ *      Return: pixd (1 bpp), or null on error
+ *
+ *  Notes:
+ *      (1) This is a simple convenience function for doing adaptive
+ *          thresholding on a grayscale image with variable background.
+ *          It uses default parameters appropriate for typical text images.
+ *      (2) @pixm is a 1 bpp mask over "image" regions, which are not
+ *          expected to have a white background.  The mask inhibits
+ *          background finding under the fg pixels of the mask.  For
+ *          images with both text and image, the image regions would
+ *          be binarized (or quantized) by a different set of operations.
+ *      (3) As @gamma is increased, the foreground pixels are reduced.
+ *      (4) Under the covers:  The default background value for normalization
+ *          is 200, so we choose 170 for 'maxval' in pixGammaTRC.  Likewise,
+ *          the default foreground threshold for normalization is 60,
+ *          so we choose 50 for 'minval' in pixGammaTRC.  Because
+ *          170 was mapped to 255, choosing 200 for the threshold is
+ *          quite safe for avoiding speckle noise from the background.
+ */
+PIX *
+pixAdaptThresholdToBinary(PIX       *pixs,
+                          PIX       *pixm,
+                          l_float32  gamma)
+{
+    PROCNAME("pixAdaptThresholdToBinary");
+
+    if (!pixs || pixGetDepth(pixs) != 8)
+        return (PIX *)ERROR_PTR("pixs undefined or not 8 bpp", procName, NULL);
+
+    return pixAdaptThresholdToBinaryGen(pixs, pixm, gamma, 50, 170, 200);
+}
+
+
+/*!
+ *  pixAdaptThresholdToBinaryGen()
+ *
+ *      Input:  pixs (8 bpp)
+ *              pixm (<optional> 1 bpp image mask; can be null)
+ *              gamma (gamma correction; must be > 0.0; typically ~1.0)
+ *              blackval (dark value to set to black (0))
+ *              whiteval (light value to set to white (255))
+ *              thresh (final threshold for binarization)
+ *      Return: pixd (1 bpp), or null on error
+ *
+ *  Notes:
+ *      (1) This is a convenience function for doing adaptive thresholding
+ *          on a grayscale image with variable background.  Also see notes
+ *          in pixAdaptThresholdToBinary().
+ *      (2) Reducing @gamma increases the foreground (text) pixels.
+ *          Use a low value (e.g., 0.5) for images with light text.
+ *      (3) For normal images, see default args in pixAdaptThresholdToBinary().
+ *          For images with very light text, these values are appropriate:
+ *             gamma     ~0.5
+ *             blackval  ~70
+ *             whiteval  ~190
+ *             thresh    ~200
+ */
+PIX *
+pixAdaptThresholdToBinaryGen(PIX       *pixs,
+                             PIX       *pixm,
+                             l_float32  gamma,
+                             l_int32    blackval,
+                             l_int32    whiteval,
+                             l_int32    thresh)
+{
+PIX  *pix1, *pixd;
+
+    PROCNAME("pixAdaptThresholdToBinaryGen");
+
+    if (!pixs || pixGetDepth(pixs) != 8)
+        return (PIX *)ERROR_PTR("pixs undefined or not 8 bpp", procName, NULL);
+
+    pix1 = pixBackgroundNormSimple(pixs, pixm, NULL);
+    pixGammaTRC(pix1, pix1, gamma, blackval, whiteval);
+    pixd = pixThresholdToBinary(pix1, thresh);
+    pixDestroy(&pix1);
     return pixd;
 }
 
@@ -396,15 +499,16 @@ PIX       *pixt, *pixd;
 /*!
  *  pixGenerateMaskByValue()
  *
- *      Input:  pixs (4 or 8 bpp, or colormapped)
+ *      Input:  pixs (2, 4 or 8 bpp, or colormapped)
  *              val (of pixels for which we set 1 in dest)
  *              usecmap (1 to retain cmap values; 0 to convert to gray)
  *      Return: pixd (1 bpp), or null on error
  *
  *  Notes:
- *      (1) @val is the gray value of the pixels that we are selecting.
+ *      (1) @val is the pixel value that we are selecting.  It can be
+ *          either a gray value or a colormap index.
  *      (2) If pixs is colormapped, @usecmap determines if the colormap
- *          values are used, or if the colormap is removed to gray and
+ *          index values are used, or if the colormap is removed to gray and
  *          the gray values are used.  For the latter, it generates
  *          an approximate grayscale value for each pixel, and then looks
  *          for gray pixels with the value @val.
@@ -423,21 +527,25 @@ PIX       *pixg, *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 4 && d != 8)
-        return (PIX *)ERROR_PTR("not 4 or 8 bpp", procName, NULL);
+    if (d != 2 && d != 4 && d != 8)
+        return (PIX *)ERROR_PTR("not 2, 4 or 8 bpp", procName, NULL);
 
     if (!usecmap && pixGetColormap(pixs))
         pixg = pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
     else
         pixg = pixClone(pixs);
     pixGetDimensions(pixg, &w, &h, &d);
+    if (d == 8 && (val < 0 || val > 255)) {
+        pixDestroy(&pixg);
+        return (PIX *)ERROR_PTR("val out of 8 bpp range", procName, NULL);
+    }
     if (d == 4 && (val < 0 || val > 15)) {
         pixDestroy(&pixg);
         return (PIX *)ERROR_PTR("val out of 4 bpp range", procName, NULL);
     }
-    if (d == 8 && (val < 0 || val > 255)) {
+    if (d == 2 && (val < 0 || val > 3)) {
         pixDestroy(&pixg);
-        return (PIX *)ERROR_PTR("val out of 8 bpp range", procName, NULL);
+        return (PIX *)ERROR_PTR("val out of 2 bpp range", procName, NULL);
     }
 
     pixd = pixCreate(w, h, 1);
@@ -450,12 +558,14 @@ PIX       *pixg, *pixd;
         lineg = datag + i * wplg;
         lined = datad + i * wpld;
         for (j = 0; j < w; j++) {
-            if (d == 4) {
+            if (d == 8) {
+                if (GET_DATA_BYTE(lineg, j) == val)
+                    SET_DATA_BIT(lined, j);
+            } else if (d == 4) {
                 if (GET_DATA_QBIT(lineg, j) == val)
                     SET_DATA_BIT(lined, j);
-            }
-            else {  /* d == 8 */
-                if (GET_DATA_BYTE(lineg, j) == val)
+            } else {  /* d == 2 */
+                if (GET_DATA_DIBIT(lineg, j) == val)
                     SET_DATA_BIT(lined, j);
             }
         }
@@ -469,7 +579,7 @@ PIX       *pixg, *pixd;
 /*!
  *  pixGenerateMaskByBand()
  *
- *      Input:  pixs (4 or 8 bpp, or colormapped)
+ *      Input:  pixs (2, 4 or 8 bpp, or colormapped)
  *              lower, upper (two pixel values from which a range, either
  *                            between (inband) or outside of (!inband),
  *                            determines which pixels in pixs cause us to
@@ -506,8 +616,8 @@ PIX       *pixg, *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 4 && d != 8)
-        return (PIX *)ERROR_PTR("not 4 or 8 bpp", procName, NULL);
+    if (d != 2 && d != 4 && d != 8)
+        return (PIX *)ERROR_PTR("not 2, 4 or 8 bpp", procName, NULL);
     if (lower < 0 || lower > upper)
         return (PIX *)ERROR_PTR("lower < 0 or lower > upper!", procName, NULL);
 
@@ -516,13 +626,17 @@ PIX       *pixg, *pixd;
     else
         pixg = pixClone(pixs);
     pixGetDimensions(pixg, &w, &h, &d);
+    if (d == 8 && upper > 255) {
+        pixDestroy(&pixg);
+        return (PIX *)ERROR_PTR("d == 8 and upper > 255", procName, NULL);
+    }
     if (d == 4 && upper > 15) {
         pixDestroy(&pixg);
         return (PIX *)ERROR_PTR("d == 4 and upper > 15", procName, NULL);
     }
-    if (d == 8 && upper > 255) {
+    if (d == 2 && upper > 3) {
         pixDestroy(&pixg);
-        return (PIX *)ERROR_PTR("d == 8 and upper > 255", procName, NULL);
+        return (PIX *)ERROR_PTR("d == 2 and upper > 3", procName, NULL);
     }
 
     pixd = pixCreate(w, h, 1);
@@ -535,15 +649,16 @@ PIX       *pixg, *pixd;
         lineg = datag + i * wplg;
         lined = datad + i * wpld;
         for (j = 0; j < w; j++) {
-            if (d == 4)
-                val = GET_DATA_QBIT(lineg, j);
-            else  /* d == 8 */
+            if (d == 8)
                 val = GET_DATA_BYTE(lineg, j);
+            else if (d == 4)
+                val = GET_DATA_QBIT(lineg, j);
+            else  /* d == 2 */
+                val = GET_DATA_DIBIT(lineg, j);
             if (inband) {
                 if (val >= lower && val <= upper)
                     SET_DATA_BIT(lined, j);
-            } 
-            else {  /* out of band */
+            } else {  /* out of band */
                 if (val < lower || val > upper)
                     SET_DATA_BIT(lined, j);
             }
@@ -977,7 +1092,7 @@ PIXCMAP   *cmap;
  *                    or null on error
  *
  *  Notes:
- *      (1) This function allows exact specification of the quantization bins.  
+ *      (1) This function allows exact specification of the quantization bins.
  *          The string @edgevals is a space-separated set of values
  *          specifying the dividing points between output quantization bins.
  *          These threshold values are assigned to the bin with higher
@@ -986,7 +1101,7 @@ PIXCMAP   *cmap;
  *          number of bins is the number of edgevals + 1.  The
  *          relation between outdepth and the number of bins is:
  *               outdepth = 2       nbins <= 4
- *               outdepth = 4       nbins <= 16 
+ *               outdepth = 4       nbins <= 16
  *               outdepth = 8       nbins <= 256
  *          With @outdepth == 0, the minimum required depth for the
  *          given number of bins is used.
@@ -1044,9 +1159,8 @@ PIXCMAP   *cmap;
             outdepth = 4;
         else
             outdepth = 8;
-    }
-    else if (n + 1 > (1 << outdepth)) {
-        L_WARNING("outdepth too small; setting to 8 bpp", procName);
+    } else if (n + 1 > (1 << outdepth)) {
+        L_WARNING("outdepth too small; setting to 8 bpp\n", procName);
         outdepth = 8;
     }
     numaSort(na, na, L_SORT_INCREASING);
@@ -1072,11 +1186,11 @@ PIXCMAP   *cmap;
     datat = pixGetData(pixt);
     wplt = pixGetWpl(pixt);
 
-    if (outdepth == 2)
+    if (outdepth == 2) {
         thresholdTo2bppLow(datad, h, wpld, datat, wplt, qtab);
-    else if (outdepth == 4)
+    } else if (outdepth == 4) {
         thresholdTo4bppLow(datad, h, wpld, datat, wplt, qtab);
-    else {
+    } else {
         for (i = 0; i < h; i++) {
             lined = datad + i * wpld;
             linet = datat + i * wplt;
@@ -1257,7 +1371,7 @@ PIXCMAP  *cmap;
         /* Last bin */
     ave = (jstart + 255) / 2;
     pixcmapAddColor(cmap, ave, ave, ave);
-    for (j = jstart; j < 256; j++) 
+    for (j = jstart; j < 256; j++)
         tab[j] = n;
 
     return 0;
@@ -1340,9 +1454,9 @@ l_uint32  *line, *data;
 	 * the center value of the bin. */
     *pcmap = pixcmapCreate(outdepth);
     for (i = 0; i < nbins; i++) {
-        if (bincount[i])
+        if (bincount[i]) {
             val = binave[i] / bincount[i];
-        else {  /* no samples in the bin */
+        } else {  /* no samples in the bin */
             if (i < nbins - 1)
                 val = (binstart[i] + binstart[i + 1]) / 2;
             else  /* last bin */
@@ -1356,7 +1470,7 @@ l_uint32  *line, *data;
     FREE(binstart);
     return 0;
 }
-	    
+
 
 /*--------------------------------------------------------------------*
  *                 Thresholding from 32 bpp rgb to 1 bpp              *
@@ -1368,21 +1482,34 @@ l_uint32  *line, *data;
  *              refval (reference rgb value)
  *              delm (max amount below the ref value for any component)
  *              delp (max amount above the ref value for any component)
+ *              fractm (fractional amount below ref value for all components)
+ *              fractp (fractional amount above ref value for all components)
  *      Return: pixd (1 bpp), or null on error
  *
  *  Notes:
  *      (1) Generates a 1 bpp mask pixd, the same size as pixs, where
- *          the fg pixels in the mask are those where each component
- *          is within -delm to +delp of the reference value.
+ *          the fg pixels in the mask within a band of rgb values
+ *          surrounding @refval.  The band can be chosen in two ways
+ *          for each component:
+ *          (a) Use (@delm, @delp) to specify how many levels down and up
+ *          (b) Use (@fractm, @fractp) to specify the fractional
+ *              distance toward 0 and 255, respectively.
+ *          Note that @delm and @delp must be in [0 ... 255], whereas
+ *          @fractm and @fractp must be in [0.0 - 1.0].
+ *      (2) Either (@delm, @delp) or (@fractm, @fractp) can be used.
+ *          Set each value in the other pair to 0.
  */
 PIX *
-pixGenerateMaskByBand32(PIX    *pixs,
-                        l_uint32  refval,
-                        l_int32   delm,
-                        l_int32   delp)
+pixGenerateMaskByBand32(PIX       *pixs,
+                        l_uint32   refval,
+                        l_int32    delm,
+                        l_int32    delp,
+                        l_float32  fractm,
+                        l_float32  fractp)
 {
 l_int32    i, j, w, h, d, wpls, wpld;
 l_int32    rref, gref, bref, rval, gval, bval;
+l_int32    rmin, gmin, bmin, rmax, gmax, bmax;
 l_uint32   pixel;
 l_uint32  *datas, *datad, *lines, *lined;
 PIX       *pixd;
@@ -1396,8 +1523,30 @@ PIX       *pixd;
         return (PIX *)ERROR_PTR("not 32 bpp", procName, NULL);
     if (delm < 0 || delp < 0)
         return (PIX *)ERROR_PTR("delm and delp must be >= 0", procName, NULL);
+    if (fractm < 0.0 || fractm > 1.0 || fractp < 0.0 || fractp > 1.0)
+        return (PIX *)ERROR_PTR("fractm and/or fractp invalid", procName, NULL);
 
     extractRGBValues(refval, &rref, &gref, &bref);
+    if (fractm == 0.0 && fractp == 0.0) {
+        rmin = rref - delm;
+        gmin = gref - delm;
+        bmin = bref - delm;
+        rmax = rref + delm;
+        gmax = gref + delm;
+        bmax = bref + delm;
+    } else if (delm == 0 && delp == 0) {
+        rmin = (l_int32)((1.0 - fractm) * rref);
+        gmin = (l_int32)((1.0 - fractm) * gref);
+        bmin = (l_int32)((1.0 - fractm) * bref);
+        rmax = rref + (l_int32)(fractp * (255 - rref));
+        gmax = gref + (l_int32)(fractp * (255 - gref));
+        bmax = bref + (l_int32)(fractp * (255 - bref));
+    } else {
+        L_ERROR("bad input: either (delm, delp) or (fractm, fractp) "
+                "must be 0\n", procName);
+        return NULL;
+    }
+
     pixd = pixCreate(w, h, 1);
     pixCopyResolution(pixd, pixs);
     datas = pixGetData(pixs);
@@ -1410,13 +1559,13 @@ PIX       *pixd;
         for (j = 0; j < w; j++) {
             pixel = lines[j];
             rval = (pixel >> L_RED_SHIFT) & 0xff;
-            if (rval < rref - delm || rval > rref + delp)
+            if (rval < rmin || rval > rmax)
                 continue;
             gval = (pixel >> L_GREEN_SHIFT) & 0xff;
-            if (gval < gref - delm || gval > gref + delp)
+            if (gval < gmin || gval > gmax)
                 continue;
             bval = (pixel >> L_BLUE_SHIFT) & 0xff;
-            if (bval < bref - delm || bval > bref + delp)
+            if (bval < bmin || bval > bmax)
                 continue;
             SET_DATA_BIT(lined, j);
         }
@@ -1488,8 +1637,7 @@ PIX       *pixd;
                 dist2 += L_ABS(gref2 - gval);
                 dist1 += L_ABS(bref1 - bval);
                 dist2 += L_ABS(bref2 - bval);
-            }
-            else {
+            } else {
                 dist1 = (rref1 - rval) * (rref1 - rval);
                 dist2 = (rref2 - rval) * (rref2 - rval);
                 dist1 += (gref1 - gval) * (gref1 - gval);
@@ -1577,11 +1725,11 @@ PIXCMAP   *cmap;
     if (!pixs || pixGetDepth(pixs) != 8)
         return (PIX *)ERROR_PTR("pixs undefined or not 8 bpp", procName, NULL);
     if (minfract < 0.01) {
-        L_WARNING("minfract < 0.01; setting to 0.05", procName);
+        L_WARNING("minfract < 0.01; setting to 0.05\n", procName);
         minfract = 0.05;
     }
     if (maxsize < 2) {
-        L_WARNING("maxsize < 2; setting to 10", procName);
+        L_WARNING("maxsize < 2; setting to 10\n", procName);
         maxsize = 10;
     }
     if ((pixd && !pixm) || (!pixd && pixm))
@@ -1593,28 +1741,27 @@ PIXCMAP   *cmap;
             return (PIX *)ERROR_PTR("pixm not 1 bpp", procName, NULL);
         if ((cmap = pixGetColormap(pixd)) == NULL)
             return (PIX *)ERROR_PTR("pixd not cmapped", procName, NULL);
-        pixGetDimensions(pixd, &wd, &hd, NULL); 
+        pixGetDimensions(pixd, &wd, &hd, NULL);
         if (w != wd || h != hd)
             return (PIX *)ERROR_PTR("pixs, pixd sizes differ", procName, NULL);
         nc = pixcmapGetCount(cmap);
         nestim = nc + (l_int32)(1.5 * 255 / maxsize);
         fprintf(stderr, "nestim = %d\n", nestim);
         if (nestim > 255) {
-            L_ERROR_INT("Estimate %d colors!", procName, nestim);
+            L_ERROR("Estimate %d colors!\n", procName, nestim);
             return (PIX *)ERROR_PTR("probably too many colors", procName, NULL);
         }
-        pixGetDimensions(pixm, &wm, &hm, NULL); 
+        pixGetDimensions(pixm, &wm, &hm, NULL);
         if (w != wm || h != hm) {  /* resize the mask */
-            L_WARNING("mask and dest sizes not equal", procName);
+            L_WARNING("mask and dest sizes not equal\n", procName);
             pixmr = pixCreateNoInit(w, h, 1);
             pixRasterop(pixmr, 0, 0, wm, hm, PIX_SRC, pixm, 0, 0);
             pixRasterop(pixmr, wm, 0, w - wm, h, PIX_SET, NULL, 0, 0);
             pixRasterop(pixmr, 0, hm, wm, h - hm, PIX_SET, NULL, 0, 0);
-        }
-        else
+        } else {
             pixmr = pixClone(pixm);
-    }
-    else {
+        }
+    } else {
         pixd = pixCreateTemplate(pixs);
         cmap = pixcmapCreate(8);
         pixSetColormap(pixd, cmap);
@@ -1626,7 +1773,7 @@ PIXCMAP   *cmap;
         /* Fill out the cmap with gray colors, and generate the lut
          * for pixel assignment.  Issue a warning on failure.  */
     if (numaFillCmapFromHisto(na, cmap, minfract, maxsize, &lut))
-        L_ERROR("ran out of colors in cmap!", procName);
+        L_ERROR("ran out of colors in cmap!\n", procName);
     numaDestroy(&na);
 
         /* Assign the gray pixels to their cmap indices */
@@ -1666,7 +1813,7 @@ PIXCMAP   *cmap;
     FREE(lut);
     return pixd;
 }
-                 
+
 
 /*!
  *  numaFillCmapFromHisto()
@@ -1706,7 +1853,7 @@ l_float32  total;
         return ERROR_INT("na not defined", procName, 1);
     if (!cmap)
         return ERROR_INT("cmap not defined", procName, 1);
-   
+
     numaGetSum(na, &total);
     mincount = (l_int32)(minfract * total);
     iahisto = numaGetIArray(na);
@@ -1734,7 +1881,7 @@ l_float32  total;
         wtsum += i * iahisto[i];
         span = i - istart + 1;
         if (sum < mincount && span < maxsize)
-            continue; 
+            continue;
 
         if (sum == 0) {  /* empty span; don't save */
             istart = i + 1;
@@ -1793,7 +1940,7 @@ PIX       *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     if (pixGetColormap(pixs) != NULL) {
-        L_WARNING("pixs already has a colormap; returning a copy", procName);
+        L_WARNING("pixs already has a colormap; returning a copy\n", procName);
         return pixCopy(NULL, pixs);
     }
     pixGetDimensions(pixs, &w, &h, &d);
@@ -1807,11 +1954,11 @@ PIX       *pixd;
         /* Make sure the colormap is gray */
     pixcmapHasColor(cmap, &hascolor);
     if (hascolor) {
-        L_WARNING("Converting colormap colors to gray", procName);
+        L_WARNING("Converting colormap colors to gray\n", procName);
         cmapd = pixcmapColorToGray(cmap, 0.3, 0.5, 0.2);
-    }
-    else
+    } else {
         cmapd = pixcmapCopy(cmap);
+    }
 
         /* Make LUT into colormap */
     if ((tab = (l_int32 *)CALLOC(256, sizeof(l_int32))) == NULL)
@@ -1823,7 +1970,7 @@ PIX       *pixd;
 
     pixcmapGetMinDepth(cmap, &depth);
     depth = L_MAX(depth, mindepth);
-    pixd = pixCreate(w, h, depth); 
+    pixd = pixCreate(w, h, depth);
     pixSetColormap(pixd, cmapd);
     pixCopyResolution(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
@@ -1849,5 +1996,3 @@ PIX       *pixd;
     FREE(tab);
     return pixd;
 }
-
-

@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 
@@ -49,6 +60,10 @@
 static const l_int32  L_BUF_SIZE = 32768;
 static const l_int32  ZLIB_COMPRESSION_LEVEL = 6;
 
+#ifndef  NO_CONSOLE_IO
+#define  DEBUG     0
+#endif  /* ~NO_CONSOLE_IO */
+
 
 /*!
  *  zlibCompress()
@@ -76,6 +91,7 @@ zlibCompress(l_uint8  *datain,
 {
 l_uint8  *dataout;
 l_int32   status;
+l_int32   flush;
 size_t    nbytes;
 l_uint8  *bufferin, *bufferout;
 BBUFFER  *bbin, *bbout;
@@ -107,28 +123,37 @@ z_stream  z;
     z.next_out = bufferout;
     z.avail_out = L_BUF_SIZE;
 
-    deflateInit(&z, ZLIB_COMPRESSION_LEVEL);
+    status = deflateInit(&z, ZLIB_COMPRESSION_LEVEL);
+    if (status != Z_OK)
+      return (l_uint8 *)ERROR_PTR("deflateInit failed", procName, NULL);
 
-    for ( ; ; ) {
+    do {
         if (z.avail_in == 0) {
             z.next_in = bufferin;
             bbufferWrite(bbin, bufferin, L_BUF_SIZE, &nbytes);
-/*            fprintf(stderr, " wrote %d bytes to bufferin\n", nbytes); */
+#if DEBUG
+            fprintf(stderr, " wrote %lu bytes to bufferin\n",
+                    (unsigned long)nbytes);
+#endif  /* DEBUG */
             z.avail_in = nbytes;
         }
-        if (z.avail_in == 0)
-            break;
-        status = deflate(&z, Z_SYNC_FLUSH);
-/*        fprintf(stderr, " status is %d, bytesleft = %d, totalout = %d\n",
-                  status, z.avail_out, z.total_out); */
+        flush = (bbin->n) ? Z_SYNC_FLUSH : Z_FINISH;
+        status = deflate(&z, flush);
+#if DEBUG
+        fprintf(stderr, " status is %d, bytesleft = %u, totalout = %lu\n",
+                  status, z.avail_out, z.total_out);
+#endif  /* DEBUG */
         nbytes = L_BUF_SIZE - z.avail_out;
         if (nbytes) {
             bbufferRead(bbout, bufferout, nbytes);
-/*            fprintf(stderr, " read %d bytes from bufferout\n", nbytes); */
+#if DEBUG
+            fprintf(stderr, " read %lu bytes from bufferout\n",
+                    (unsigned long)nbytes);
+#endif  /* DEBUG */
         }
         z.next_out = bufferout;
         z.avail_out = L_BUF_SIZE;
-    }
+    } while (flush != Z_FINISH);
 
     deflateEnd(&z);
 
@@ -139,7 +164,7 @@ z_stream  z;
     FREE(bufferout);
     return dataout;
 }
-        
+
 
 /*!
  *  zlibUncompress()
@@ -168,7 +193,7 @@ z_stream  z;
 
     if (!datain)
         return (l_uint8 *)ERROR_PTR("datain not defined", procName, NULL);
-    
+
     if ((bufferin = (l_uint8 *)CALLOC(L_BUF_SIZE, sizeof(l_uint8))) == NULL)
         return (l_uint8 *)ERROR_PTR("bufferin not made", procName, NULL);
     if ((bufferout = (l_uint8 *)CALLOC(L_BUF_SIZE, sizeof(l_uint8))) == NULL)
@@ -223,4 +248,3 @@ z_stream  z;
 /* --------------------------------------------*/
 #endif  /* HAVE_LIBZ */
 /* --------------------------------------------*/
-

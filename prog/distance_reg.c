@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -32,10 +43,9 @@ static void TestDistance(PIXA *pixa, PIX *pixs, l_int32 conn,
 #define  DEBUG    0
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-char          buf[256];
 l_int32       i, j, k, index, conn, depth, bc;
 BOX          *box;
 PIX          *pix, *pixs, *pixd;
@@ -49,7 +59,7 @@ L_REGPARAMS  *rp;
     box = boxCreate(383, 338, 1480, 1050);
     pixs = pixClipRectangle(pix, box, NULL);
     regTestWritePixAndCheck(rp, pixs, IFF_PNG);  /* 0 */
-	    
+
     for (i = 0; i < 2; i++) {
         conn = 4 + 4 * i;
         for (j = 0; j < 2; j++) {
@@ -63,7 +73,7 @@ L_REGPARAMS  *rp;
                             rp->index + 1, conn, depth, bc);
                 }
                 pixa = pixaCreate(0);
-                pixSaveTiled(pixs, pixa, 1, 1, 20, 8);
+                pixSaveTiled(pixs, pixa, 1.0, 1, 20, 8);
                 TestDistance(pixa, pixs, conn, depth, bc, rp);
                 pixd = pixaDisplay(pixa, 0, 0);
                 pixDisplayWithTitle(pixd, 0, 0, NULL, rp->display);
@@ -76,8 +86,7 @@ L_REGPARAMS  *rp;
     boxDestroy(&box);
     pixDestroy(&pix);
     pixDestroy(&pixs);
-    regTestCleanup(rp);
-    return 0;
+    return regTestCleanup(rp);
 }
 
 
@@ -95,37 +104,37 @@ PIX  *pixt1, *pixt2, *pixt3, *pixt4, *pixt5;
     pixInvert(pixs, pixs);
     pixt1 = pixDistanceFunction(pixs, conn, depth, bc);
     regTestWritePixAndCheck(rp, pixt1, IFF_PNG);  /* a + 1 */
-    pixSaveTiled(pixt1, pixa, 1, 1, 20, 0);
+    pixSaveTiled(pixt1, pixa, 1.0, 1, 20, 0);
     pixInvert(pixs, pixs);
     pixt2 = pixMaxDynamicRange(pixt1, L_LOG_SCALE);
     regTestWritePixAndCheck(rp, pixt2, IFF_JFIF_JPEG);  /* a + 2 */
-    pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
+    pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 0);
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
 
-	/* Test the distance function and display with contour rendering */
+        /* Test the distance function and display with contour rendering */
     pixInvert(pixs, pixs);
     pixt1 = pixDistanceFunction(pixs, conn, depth, bc);
     regTestWritePixAndCheck(rp, pixt1, IFF_PNG);  /* a + 3 */
-    pixSaveTiled(pixt1, pixa, 1, 1, 20, 0);
+    pixSaveTiled(pixt1, pixa, 1.0, 1, 20, 0);
     pixInvert(pixs, pixs);
     pixt2 = pixRenderContours(pixt1, 2, 4, 1);  /* binary output */
     regTestWritePixAndCheck(rp, pixt2, IFF_PNG);  /* a + 4 */
-    pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
+    pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 0);
     pixt3 = pixRenderContours(pixt1, 2, 4, depth);
     pixt4 = pixMaxDynamicRange(pixt3, L_LINEAR_SCALE);
     regTestWritePixAndCheck(rp, pixt4, IFF_JFIF_JPEG);  /* a + 5 */
-    pixSaveTiled(pixt4, pixa, 1, 0, 20, 0);
+    pixSaveTiled(pixt4, pixa, 1.0, 0, 20, 0);
     pixt5 = pixMaxDynamicRange(pixt3, L_LOG_SCALE);
     regTestWritePixAndCheck(rp, pixt5, IFF_JFIF_JPEG);  /* a + 6 */
-    pixSaveTiled(pixt5, pixa, 1, 0, 20, 0);
+    pixSaveTiled(pixt5, pixa, 1.0, 0, 20, 0);
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
     pixDestroy(&pixt3);
     pixDestroy(&pixt4);
     pixDestroy(&pixt5);
 
-	/* Label all pixels in each c.c. with a color equal to the
+        /* Label all pixels in each c.c. with a color equal to the
          * max distance of any pixel within that c.c. from the bg.
          * Note that we've normalized so the dynamic range extends
          * to 255.  For the image here, each unit of distance is
@@ -135,15 +144,15 @@ PIX  *pixt1, *pixt2, *pixt3, *pixt4, *pixt5;
         pixt1 = pixDistanceFunction(pixs, conn, depth, bc);
         pixt4 = pixMaxDynamicRange(pixt1, L_LOG_SCALE);
         regTestWritePixAndCheck(rp, pixt4, IFF_JFIF_JPEG);  /* b + 1 */
-        pixSaveTiled(pixt4, pixa, 1, 1, 20, 0);
+        pixSaveTiled(pixt4, pixa, 1.0, 1, 20, 0);
         pixt2 = pixCreateTemplate(pixt1);
         pixSetMasked(pixt2, pixs, 255);
         regTestWritePixAndCheck(rp, pixt2, IFF_JFIF_JPEG);  /* b + 2 */
-        pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 0);
         pixSeedfillGray(pixt1, pixt2, 4);
         pixt3 = pixMaxDynamicRange(pixt1, L_LINEAR_SCALE);
         regTestWritePixAndCheck(rp, pixt3, IFF_JFIF_JPEG);  /* b + 3 */
-        pixSaveTiled(pixt3, pixa, 1, 0, 20, 0);
+        pixSaveTiled(pixt3, pixa, 1.0, 0, 20, 0);
         pixDestroy(&pixt1);
         pixDestroy(&pixt2);
         pixDestroy(&pixt3);
@@ -152,5 +161,3 @@ PIX  *pixt1, *pixt2, *pixt3, *pixt4, *pixt5;
 
     return;
 }
-
-

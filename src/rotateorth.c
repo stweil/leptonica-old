@@ -1,43 +1,64 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 /*
  *  rotateorth.c
  *
  *      Top-level rotation by multiples of 90 degrees
- *            PIX     *pixRotateOrth()
+ *            PIX             *pixRotateOrth()
  *
  *      180-degree rotation
- *            PIX     *pixRotate180()
+ *            PIX             *pixRotate180()
  *
  *      90-degree rotation (both directions)
- *            PIX     *pixRotate90()
+ *            PIX             *pixRotate90()
  *
  *      Left-right flip
- *            PIX     *pixFlipLR()
+ *            PIX             *pixFlipLR()
  *
  *      Top-bottom flip
- *            PIX     *pixFlipTB()
+ *            PIX             *pixFlipTB()
+ *
+ *      Byte reverse tables
+ *            static l_uint8  *makeReverseByteTab1()
+ *            static l_uint8  *makeReverseByteTab2()
+ *            static l_uint8  *makeReverseByteTab4()
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 #include "allheaders.h"
 
+static l_uint8 *makeReverseByteTab1(void);
+static l_uint8 *makeReverseByteTab2(void);
+static l_uint8 *makeReverseByteTab4(void);
 
+
+/*------------------------------------------------------------------*
+ *           Top-level rotation by multiples of 90 degrees          *
+ *------------------------------------------------------------------*/
 /*!
  *  pixRotateOrth()
  *
@@ -53,10 +74,10 @@ pixRotateOrth(PIX     *pixs,
 
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
-    if (quads < 0 || quads > 4)
-        return (PIX *)ERROR_PTR("quads not in {0,1,2,3,4}", procName, NULL);
+    if (quads < 0 || quads > 3)
+        return (PIX *)ERROR_PTR("quads not in {0,1,2,3}", procName, NULL);
 
-    if (quads == 0 || quads == 4)
+    if (quads == 0)
         return pixCopy(NULL, pixs);
     else if (quads == 1)
         return pixRotate90(pixs, 1);
@@ -65,8 +86,11 @@ pixRotateOrth(PIX     *pixs,
     else /* quads == 3 */
         return pixRotate90(pixs, -1);
 }
-    
 
+
+/*------------------------------------------------------------------*
+ *                          180 degree rotation                     *
+ *------------------------------------------------------------------*/
 /*!
  *  pixRotate180()
  *
@@ -106,14 +130,17 @@ l_int32  d;
 
         /* Prepare pixd for in-place operation */
     if ((pixd = pixCopy(pixd, pixs)) == NULL)
-	return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
 
     pixFlipLR(pixd, pixd);
     pixFlipTB(pixd, pixd);
     return pixd;
 }
-    
 
+
+/*------------------------------------------------------------------*
+ *                           90 degree rotation                     *
+ *------------------------------------------------------------------*/
 /*!
  *  pixRotate90()
  *
@@ -131,22 +158,22 @@ pixRotate90(PIX     *pixs,
             l_int32  direction)
 {
 l_int32    wd, hd, d, wpls, wpld;
-l_uint32  *datas, *datad;
+l_int32    i, j, k, m, iend, nswords;
+l_uint32   val, word;
+l_uint32  *lines, *datas, *lined, *datad;
 PIX       *pixd;
 
     PROCNAME("pixRotate90");
 
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
-    d = pixGetDepth(pixs);
+    pixGetDimensions(pixs, &hd, &wd, &d);  /* note: reversed */
     if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 32)
         return (PIX *)ERROR_PTR("pixs not in {1,2,4,8,16,32} bpp",
                                 procName, NULL);
     if (direction != 1 && direction != -1)
         return (PIX *)ERROR_PTR("invalid direction", procName, NULL);
 
-    hd = pixGetWidth(pixs);
-    wd = pixGetHeight(pixs);
     if ((pixd = pixCreate(wd, hd, d)) == NULL)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     pixCopyColormap(pixd, pixs);
@@ -158,12 +185,191 @@ PIX       *pixd;
     datad = pixGetData(pixd);
     wpld = pixGetWpl(pixd);
 
-    rotate90Low(datad, wd, hd, d, wpld, datas, wpls, direction);
+    if (direction == 1) {  /* clockwise */
+        switch (d)
+        {
+            case 32:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas + (wd - 1) * wpls;
+                    for (j = 0; j < wd; j++) {
+                        lined[j] = lines[i];
+                        lines -= wpls;
+                    }
+                }
+                break;
+            case 16:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas + (wd - 1) * wpls;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_TWO_BYTES(lines, i)))
+                            SET_DATA_TWO_BYTES(lined, j, val);
+                        lines -= wpls;
+                    }
+                }
+                break;
+            case 8:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas + (wd - 1) * wpls;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_BYTE(lines, i)))
+                            SET_DATA_BYTE(lined, j, val);
+                        lines -= wpls;
+                    }
+                }
+                break;
+            case 4:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas + (wd - 1) * wpls;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_QBIT(lines, i)))
+                            SET_DATA_QBIT(lined, j, val);
+                        lines -= wpls;
+                    }
+                }
+                break;
+            case 2:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas + (wd - 1) * wpls;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_DIBIT(lines, i)))
+                            SET_DATA_DIBIT(lined, j, val);
+                        lines -= wpls;
+                    }
+                }
+                break;
+            case 1:
+                nswords = hd / 32;
+                for (j = 0; j < wd; j++) {
+                    lined = datad;
+                    lines = datas + (wd - 1 - j) * wpls;
+                    for (k = 0; k < nswords; k++) {
+                        word = lines[k];
+                        if (!word) {
+                            lined += 32 * wpld;
+                            continue;
+                        } else {
+                            iend = 32 * (k + 1);
+                            for (m = 0, i = 32 * k; i < iend; i++, m++) {
+                                if ((word << m) & 0x80000000)
+                                    SET_DATA_BIT(lined, j);
+                                lined += wpld;
+                            }
+                        }
+                    }
+                    for (i = 32 * nswords; i < hd; i++) {
+                        if (GET_DATA_BIT(lines, i))
+                            SET_DATA_BIT(lined, j);
+                        lined += wpld;
+                    }
+                }
+                break;
+            default:
+                pixDestroy(&pixd);
+                L_ERROR("illegal depth: %d\n", procName, d);
+                break;
+        }
+    } else  {     /* direction counter-clockwise */
+        switch (d)
+        {
+            case 32:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas;
+                    for (j = 0; j < wd; j++) {
+                        lined[j] = lines[hd - 1 - i];
+                        lines += wpls;
+                    }
+                }
+                break;
+            case 16:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_TWO_BYTES(lines, hd - 1 - i)))
+                            SET_DATA_TWO_BYTES(lined, j, val);
+                        lines += wpls;
+                    }
+                }
+                break;
+            case 8:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_BYTE(lines, hd - 1 - i)))
+                            SET_DATA_BYTE(lined, j, val);
+                        lines += wpls;
+                    }
+                }
+                break;
+            case 4:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_QBIT(lines, hd - 1 - i)))
+                            SET_DATA_QBIT(lined, j, val);
+                        lines += wpls;
+                    }
+                }
+                break;
+            case 2:
+                for (i = 0; i < hd; i++) {
+                    lined = datad + i * wpld;
+                    lines = datas;
+                    for (j = 0; j < wd; j++) {
+                        if ((val = GET_DATA_DIBIT(lines, hd - 1 - i)))
+                            SET_DATA_DIBIT(lined, j, val);
+                        lines += wpls;
+                    }
+                }
+                break;
+            case 1:
+                nswords = hd / 32;
+                for (j = 0; j < wd; j++) {
+                    lined = datad + (hd - 1) * wpld;
+                    lines = datas + (wd - 1 - j) * wpls;
+                    for (k = 0; k < nswords; k++) {
+                        word = lines[k];
+                        if (!word) {
+                            lined -= 32 * wpld;
+                            continue;
+                        } else {
+                            iend = 32 * (k + 1);
+                            for (m = 0, i = 32 * k; i < iend; i++, m++) {
+                                if ((word << m) & 0x80000000)
+                                    SET_DATA_BIT(lined, wd - 1 - j);
+                                lined -= wpld;
+                            }
+                        }
+                    }
+                    for (i = 32 * nswords; i < hd; i++) {
+                        if (GET_DATA_BIT(lines, i))
+                            SET_DATA_BIT(lined, wd - 1 - j);
+                        lined -= wpld;
+                    }
+                }
+                break;
+            default:
+                pixDestroy(&pixd);
+                L_ERROR("illegal depth: %d\n", procName, d);
+                break;
+        }
+    }
 
     return pixd;
 }
 
 
+/*------------------------------------------------------------------*
+ *                            Left-right flip                       *
+ *------------------------------------------------------------------*/
 /*!
  *  pixFlipLR()
  *
@@ -186,14 +392,34 @@ PIX       *pixd;
  *          (c) pixFlipLR(pixd, pixs);
  *      (4) If an existing pixd is not the same size as pixs, the
  *          image data will be reallocated.
+ *      (5) The pixel access routines allow a trivial implementation.
+ *          However, for d < 8, it is more efficient to right-justify
+ *          each line to a 32-bit boundary and then extract bytes and
+ *          do pixel reversing.   In those cases, as in the 180 degree
+ *          rotation, we right-shift the data (if necessary) to
+ *          right-justify on the 32 bit boundary, and then read the
+ *          bytes off each raster line in reverse order, reversing
+ *          the pixels in each byte using a table.  These functions
+ *          for 1, 2 and 4 bpp were tested against the "trivial"
+ *          version (shown here for 4 bpp):
+ *              for (i = 0; i < h; i++) {
+ *                  line = data + i * wpl;
+ *                  memcpy(buffer, line, bpl);
+ *                    for (j = 0; j < w; j++) {
+ *                      val = GET_DATA_QBIT(buffer, w - 1 - j);
+ *                        SET_DATA_QBIT(line, j, val);
+ *                  }
+ *              }
  */
 PIX *
 pixFlipLR(PIX  *pixd,
           PIX  *pixs)
 {
 l_uint8   *tab;
-l_int32    w, h, d, wpld;
-l_uint32  *datad, *buffer;
+l_int32    w, h, d, wpl;
+l_int32    extra, shift, databpl, bpl, i, j;
+l_uint32   val;
+l_uint32  *line, *data, *buffer;
 
     PROCNAME("pixFlipLR");
 
@@ -206,10 +432,10 @@ l_uint32  *datad, *buffer;
 
         /* Prepare pixd for in-place operation */
     if ((pixd = pixCopy(pixd, pixs)) == NULL)
-	return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
 
-    datad = pixGetData(pixd);
-    wpld = pixGetWpl(pixd);
+    data = pixGetData(pixd);
+    wpl = pixGetWpl(pixd);
     switch (d)
     {
     case 1:
@@ -226,10 +452,103 @@ l_uint32  *datad, *buffer;
         break;
     }
 
-    if ((buffer = (l_uint32 *)CALLOC(wpld, sizeof(l_uint32))) == NULL)
-        return (PIX *)ERROR_PTR("buffer not made", procName, NULL);
+        /* Possibly inplace assigning return val, so on failure return pixd */
+    if ((buffer = (l_uint32 *)CALLOC(wpl, sizeof(l_uint32))) == NULL)
+        return (PIX *)ERROR_PTR("buffer not made", procName, pixd);
 
-    flipLRLow(datad, w, h, d, wpld, tab, buffer);
+    bpl = 4 * wpl;
+    switch (d)
+    {
+        case 32:
+            for (i = 0; i < h; i++) {
+                line = data + i * wpl;
+                memcpy(buffer, line, bpl);
+                for (j = 0; j < w; j++)
+                    line[j] = buffer[w - 1 - j];
+            }
+            break;
+        case 16:
+            for (i = 0; i < h; i++) {
+                line = data + i * wpl;
+                memcpy(buffer, line, bpl);
+                for (j = 0; j < w; j++) {
+                    val = GET_DATA_TWO_BYTES(buffer, w - 1 - j);
+                    SET_DATA_TWO_BYTES(line, j, val);
+                }
+            }
+            break;
+        case 8:
+            for (i = 0; i < h; i++) {
+                line = data + i * wpl;
+                memcpy(buffer, line, bpl);
+                for (j = 0; j < w; j++) {
+                    val = GET_DATA_BYTE(buffer, w - 1 - j);
+                    SET_DATA_BYTE(line, j, val);
+                }
+            }
+            break;
+        case 4:
+            extra = (w * d) & 31;
+            if (extra)
+                shift = 8 - extra / 4;
+            else
+                shift = 0;
+            if (shift)
+                rasteropHipLow(data, h, d, wpl, 0, h, shift);
+
+            databpl = (w + 1) / 2;
+            for (i = 0; i < h; i++) {
+                line = data + i * wpl;
+                memcpy(buffer, line, bpl);
+                for (j = 0; j < databpl; j++) {
+                    val = GET_DATA_BYTE(buffer, bpl - 1 - j);
+                    SET_DATA_BYTE(line, j, tab[val]);
+                }
+            }
+            break;
+        case 2:
+            extra = (w * d) & 31;
+            if (extra)
+                shift = 16 - extra / 2;
+            else
+                shift = 0;
+            if (shift)
+                rasteropHipLow(data, h, d, wpl, 0, h, shift);
+
+            databpl = (w + 3) / 4;
+            for (i = 0; i < h; i++) {
+                line = data + i * wpl;
+                memcpy(buffer, line, bpl);
+                for (j = 0; j < databpl; j++) {
+                    val = GET_DATA_BYTE(buffer, bpl - 1 - j);
+                    SET_DATA_BYTE(line, j, tab[val]);
+                }
+            }
+            break;
+        case 1:
+            extra = (w * d) & 31;
+            if (extra)
+                shift = 32 - extra;
+            else
+                shift = 0;
+            if (shift)
+                rasteropHipLow(data, h, d, wpl, 0, h, shift);
+
+            databpl = (w + 7) / 8;
+            for (i = 0; i < h; i++) {
+                line = data + i * wpl;
+                memcpy(buffer, line, bpl);
+                for (j = 0; j < databpl; j++) {
+                    val = GET_DATA_BYTE(buffer, bpl - 1 - j);
+                    SET_DATA_BYTE(line, j, tab[val]);
+                }
+            }
+            break;
+        default:
+            pixDestroy(&pixd);
+            L_ERROR("illegal depth: %d\n", procName, d);
+            break;
+    }
 
     FREE(buffer);
     if (tab) FREE(tab);
@@ -237,6 +556,9 @@ l_uint32  *datad, *buffer;
 }
 
 
+/*------------------------------------------------------------------*
+ *                            Top-bottom flip                       *
+ *------------------------------------------------------------------*/
 /*!
  *  pixFlipTB()
  *
@@ -259,13 +581,17 @@ l_uint32  *datad, *buffer;
  *          (c) pixFlipTB(pixd, pixs);
  *      (4) If an existing pixd is not the same size as pixs, the
  *          image data will be reallocated.
+ *      (5) This is simple and fast.  We use the memcpy function
+ *          to do all the work on aligned data, regardless of pixel
+ *          depth.
  */
 PIX *
 pixFlipTB(PIX  *pixd,
           PIX  *pixs)
 {
-l_int32    h, d, wpld;
-l_uint32  *datad, *buffer;
+l_int32    h, d, wpl, i, k, h2, bpl;
+l_uint32  *linet, *lineb;
+l_uint32  *data, *buffer;
 
     PROCNAME("pixFlipTB");
 
@@ -278,16 +604,109 @@ l_uint32  *datad, *buffer;
 
         /* Prepare pixd for in-place operation */
     if ((pixd = pixCopy(pixd, pixs)) == NULL)
-	return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
 
-    datad = pixGetData(pixd);
-    wpld = pixGetWpl(pixd);
-    if ((buffer = (l_uint32 *)CALLOC(wpld, sizeof(l_uint32))) == NULL)
-        return (PIX *)ERROR_PTR("buffer not made", procName, NULL);
+    data = pixGetData(pixd);
+    wpl = pixGetWpl(pixd);
+    if ((buffer = (l_uint32 *)CALLOC(wpl, sizeof(l_uint32))) == NULL)
+        return (PIX *)ERROR_PTR("buffer not made", procName, pixd);
 
-    flipTBLow(datad, h, wpld, buffer);
+    h2 = h / 2;
+    bpl = 4 * wpl;
+    for (i = 0, k = h - 1; i < h2; i++, k--) {
+        linet = data + i * wpl;
+        lineb = data + k * wpl;
+        memcpy(buffer, linet, bpl);
+        memcpy(linet, lineb, bpl);
+        memcpy(lineb, buffer, bpl);
+    }
 
     FREE(buffer);
     return pixd;
 }
 
+
+/*------------------------------------------------------------------*
+ *                      Static byte reverse tables                  *
+ *------------------------------------------------------------------*/
+/*!
+ *  makeReverseByteTab1()
+ *
+ *  Notes:
+ *      (1) This generates an 8 bit lookup table for reversing
+ *          the order of eight 1-bit pixels.
+ */
+static l_uint8 *
+makeReverseByteTab1(void)
+{
+l_int32   i;
+l_uint8  *tab;
+
+    PROCNAME("makeReverseByteTab1");
+
+    if ((tab = (l_uint8 *)CALLOC(256, sizeof(l_uint8))) == NULL)
+        return (l_uint8 *)ERROR_PTR("calloc fail for tab", procName, NULL);
+
+    for (i = 0; i < 256; i++)
+        tab[i] = ((0x80 & i) >> 7) |
+                 ((0x40 & i) >> 5) |
+                 ((0x20 & i) >> 3) |
+                 ((0x10 & i) >> 1) |
+                 ((0x08 & i) << 1) |
+                 ((0x04 & i) << 3) |
+                 ((0x02 & i) << 5) |
+                 ((0x01 & i) << 7);
+
+    return tab;
+}
+
+
+/*!
+ *  makeReverseByteTab2()
+ *
+ *  Notes:
+ *      (1) This generates an 8 bit lookup table for reversing
+ *          the order of four 2-bit pixels.
+ */
+static l_uint8 *
+makeReverseByteTab2(void)
+{
+l_int32   i;
+l_uint8  *tab;
+
+    PROCNAME("makeReverseByteTab2");
+
+    if ((tab = (l_uint8 *)CALLOC(256, sizeof(l_uint8))) == NULL)
+        return (l_uint8 *)ERROR_PTR("calloc fail for tab", procName, NULL);
+
+    for (i = 0; i < 256; i++)
+        tab[i] = ((0xc0 & i) >> 6) |
+                 ((0x30 & i) >> 2) |
+                 ((0x0c & i) << 2) |
+                 ((0x03 & i) << 6);
+    return tab;
+}
+
+
+/*!
+ *  makeReverseByteTab4()
+ *
+ *  Notes:
+ *      (1) This generates an 8 bit lookup table for reversing
+ *          the order of two 4-bit pixels.
+ */
+static l_uint8 *
+makeReverseByteTab4(void)
+{
+l_int32   i;
+l_uint8  *tab;
+
+    PROCNAME("makeReverseByteTab4");
+
+    if ((tab = (l_uint8 *)CALLOC(256, sizeof(l_uint8))) == NULL)
+        return (l_uint8 *)ERROR_PTR("calloc fail for tab", procName, NULL);
+
+    for (i = 0; i < 256; i++)
+        tab[i] = ((0xf0 & i) >> 4) | ((0x0f & i) << 4);
+    return tab;
+}

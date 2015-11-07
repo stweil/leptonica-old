@@ -1,36 +1,46 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
- -  Author: krish@google.com (krish Chaudhury)
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  *  webpio.c
  *
- *    Read WebP from file
+ *    Reading WebP
  *          PIX             *pixReadStreamWebP()
- *          l_int32          readHeaderWebP()
+ *          PIX             *pixReadMemWebP()
  *
- *    Write WebP to file
+ *    Reading WebP header
+ *          l_int32          readHeaderWebP()
+ *          l_int32          readHeaderMemWebP()
+ *
+ *    Writing WebP
  *          l_int32          pixWriteWebP()  [ special top level ]
  *          l_int32          pixWriteStreamWebP()
- *
- *    Write WebP to file with target psnr
- *          l_int32          pixWriteWebPwithTargetPSNR
- *
+ *          l_int32          pixWriteMemWebP()
  */
 
-#include <math.h>
 #include "allheaders.h"
 
 #ifdef HAVE_CONFIG_H
@@ -44,28 +54,20 @@
 #include "webp/encode.h"
 
 /*---------------------------------------------------------------------*
- *                              Reading WebP                            *
+ *                             Reading WebP                            *
  *---------------------------------------------------------------------*/
-
 /*!
  *  pixReadStreamWebP()
  *
  *      Input:  stream corresponding to WebP image
  *      Return: pix (32 bpp), or null on error
- *
- *  Notes:
- *      (1) Use 'free', and not leptonica's 'FREE', for all heap data
- *          that is returned from the WebP library.
  */
 PIX *
 pixReadStreamWebP(FILE  *fp)
 {
-l_uint8   *filedata;
-l_uint8   *out = NULL;
-l_int32    w, h, wpl, stride;
-l_uint32  *data;
-size_t     nbytes, sz, out_size;
-PIX       *pix;
+l_uint8  *filedata;
+size_t    filesize;
+PIX      *pix;
 
     PROCNAME("pixReadStreamWebP");
 
@@ -74,30 +76,70 @@ PIX       *pix;
 
         /* Read data from file and decode into Y,U,V arrays */
     rewind(fp);
-    if ((filedata = l_binaryReadStream(fp, &nbytes)) == NULL)
+    if ((filedata = l_binaryReadStream(fp, &filesize)) == NULL)
         return (PIX *)ERROR_PTR("filedata not read", procName, NULL);
 
-    sz = WebPGetInfo(filedata, nbytes, &w, &h);
-    if (sz == 0) {
-        FREE(filedata);
-        return (PIX *)ERROR_PTR("Bad WebP: Can't find size", procName, NULL);
-    }
+    pix = pixReadMemWebP(filedata, filesize);
+    FREE(filedata);
+    return pix;
+}
 
-        /* Write from Y,U,V arrays to pix data */
+
+/*!
+ *  pixReadMemWebP()
+ *
+ *      Input:  filedata (webp compressed data in memory)
+ *              filesize (number of bytes in data)
+ *      Return: pix (32 bpp), or null on error
+ *
+ *  Notes:
+ *      (1) When the encoded data only has 3 channels (no alpha),
+ *          WebPDecodeRGBAInto() generates a raster of 32-bit pixels, with
+ *          the alpha channel set to opaque (255).
+ *      (2) We don't need to use the gnu runtime functions like fmemopen()
+ *          for redirecting data from a stream to memory, because
+ *          the webp library has been written with memory-to-memory
+ *          functions at the lowest level (which is good!).  And, in
+ *          any event, fmemopen() doesn't work with l_binaryReadStream().
+ */
+PIX *
+pixReadMemWebP(const l_uint8  *filedata,
+               size_t          filesize)
+{
+l_uint8   *out = NULL;
+l_int32    w, h, has_alpha, wpl, stride;
+l_uint32  *data;
+size_t     size;
+PIX       *pix;
+WebPBitstreamFeatures  features;
+
+    PROCNAME("pixReadMemWebP");
+
+    if (!filedata)
+        return (PIX *)ERROR_PTR("filedata not defined", procName, NULL);
+
+    if (WebPGetFeatures(filedata, filesize, &features))
+        return (PIX *)ERROR_PTR("Invalid WebP file", procName, NULL);
+    w = features.width;
+    h = features.height;
+    has_alpha = features.has_alpha;
+
+        /* Write from compressed Y,U,V arrays to pix raster data */
     pix = pixCreate(w, h, 32);
+    if (has_alpha) pixSetSpp(pix, 4);
     data = pixGetData(pix);
     wpl = pixGetWpl(pix);
     stride = wpl * 4;
-    out_size = stride * h;
-    out = WebPDecodeRGBAInto(filedata, nbytes, (uint8_t *)data, out_size,
+    size = stride * h;
+    out = WebPDecodeRGBAInto(filedata, filesize, (uint8_t *)data, size,
                              stride);
-    FREE(filedata);
-    if (out == NULL) {
+    if (out == NULL) {  /* error: out should also point to data */
         pixDestroy(&pix);
         return (PIX *)ERROR_PTR("WebP decode failed", procName, NULL);
     }
-    pixEndianByteSwap(pix);
 
+        /* WebP decoder emits opposite byte order for RGBA components */
+    pixEndianByteSwap(pix);
     return pix;
 }
 
@@ -106,54 +148,105 @@ PIX       *pix;
  *  readHeaderWebP()
  *
  *      Input:  filename
- *              &width (<return>)
- *              &height (<return>)
+ *              &w (<return> width)
+ *              &h (<return> height)
+ *              &spp (<return> spp (3 or 4))
  *      Return: 0 if OK, 1 on error
  */
 l_int32
 readHeaderWebP(const char *filename,
-               l_int32    *pwidth,
-               l_int32    *pheight)
+               l_int32    *pw,
+               l_int32    *ph,
+               l_int32    *pspp)
 {
-l_uint8  data[10];
-l_int32  sz;
+l_uint8  data[100];  /* expect size info within the first 50 bytes or so */
+l_int32  nbytes, bytesread;
+size_t   filesize;
 FILE    *fp;
 
     PROCNAME("readHeaderWebP");
 
+    if (!pw || !ph || !pspp)
+        return ERROR_INT("input ptr(s) not defined", procName, 1);
+    *pw = *ph = *pspp = 0;
     if (!filename)
         return ERROR_INT("filename not defined", procName, 1);
-    if (!pwidth || !pheight)
-        return ERROR_INT("input ptr(s) not defined", procName, 1);
+
+        /* Read no more than 100 bytes from the file */
+    if ((filesize = nbytesInFile(filename)) == 0)
+        return ERROR_INT("no file size found", procName, 1);
+    if (filesize < 100)
+        L_WARNING("very small webp file\n", procName);
+    nbytes = L_MIN(filesize, 100);
     if ((fp = fopenReadStream(filename)) == NULL)
         return ERROR_INT("image file not found", procName, 1);
-    if (fread((char *)data, 1, 10, fp) != 10)
-        return ERROR_INT("failed to read 10 bytes of file", procName, 1);
-
-    sz = WebPGetInfo(data, 10, pwidth, pheight);
-    if (sz == 0)
-        return ERROR_INT("Bad WebP: Can't find size", procName, 1);
-
+    bytesread = fread((char *)data, 1, nbytes, fp);
     fclose(fp);
+    if (bytesread != nbytes)
+        return ERROR_INT("failed to read requested data", procName, 1);
+
+    return readHeaderMemWebP(data, nbytes, pw, ph, pspp);
+}
+
+
+/*!
+ *  readHeaderMemWebP()
+ *
+ *      Input:  data
+ *              size (100 bytes is sufficient)
+ *              &w (<return> width)
+ *              &h (<return> height)
+ *              &spp (<return> spp (3 or 4))
+ *      Return: 0 if OK, 1 on error
+ */
+l_int32
+readHeaderMemWebP(const l_uint8  *data,
+                  size_t          size,
+                  l_int32        *pw,
+                  l_int32        *ph,
+                  l_int32        *pspp)
+{
+WebPBitstreamFeatures  features;
+
+    PROCNAME("readHeaderWebP");
+
+    if (pw) *pw = 0;
+    if (ph) *ph = 0;
+    if (pspp) *pspp = 0;
+    if (!data)
+        return ERROR_INT("data not defined", procName, 1);
+    if (!pw || !ph || !pspp)
+        return ERROR_INT("input ptr(s) not defined", procName, 1);
+
+    if (WebPGetFeatures(data, (l_int32)size, &features))
+        return ERROR_INT("invalid WebP file", procName, 1);
+    *pw = features.width;
+    *ph = features.height;
+    *pspp = (features.has_alpha) ? 4 : 3;
     return 0;
 }
 
 
 /*---------------------------------------------------------------------*
- *                             Writing WebP                             *
+ *                            Writing WebP                             *
  *---------------------------------------------------------------------*/
 /*!
  *  pixWriteWebP()
  *
  *      Input:  filename
  *              pixs
- *              quality (1 - 100; 75 is default)
+ *              quality (0 - 100; default ~80)
+ *              lossless (use 1 for lossless; 0 for lossy)
  *      Return: 0 if OK, 1 on error
+ *
+ *  Notes:
+ *      (1) Special top-level function allowing specification of quality.
  */
 l_int32
 pixWriteWebP(const char  *filename,
              PIX         *pixs,
-             l_int32      quality)
+             l_int32      quality,
+             l_int32      lossless)
 {
 FILE  *fp;
 
@@ -166,12 +259,10 @@ FILE  *fp;
 
     if ((fp = fopenWriteStream(filename, "wb+")) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
-
-    if (pixWriteStreamWebP(fp, pixs, quality) != 0) {
+    if (pixWriteStreamWebP(fp, pixs, quality, lossless) != 0) {
         fclose(fp);
-        return ERROR_INT("pixs not written to stream", procName, 1);
+        return ERROR_INT("pixs not compressed to stream", procName, 1);
     }
-
     fclose(fp);
     return 0;
 }
@@ -181,24 +272,24 @@ FILE  *fp;
  *  pixWriteStreampWebP()
  *
  *      Input:  stream
- *              pix  (all depths)
- *              quality (1 - 100; 75 is default)
+ *              pixs  (all depths)
+ *              quality (0 - 100; default ~80)
+ *              lossless (use 1 for lossless; 0 for lossy)
  *      Return: 0 if OK, 1 on error
  *
  *  Notes:
- *      (1) webp only encodes rgb images, so the input image is converted to rgb
- *          if necessary.
+ *      (1) See pixWriteMemWebP() for details.
+ *      (2) Use 'free', and not leptonica's 'FREE', for all heap data
+ *          that is returned from the WebP library.
  */
 l_int32
 pixWriteStreamWebP(FILE    *fp,
                    PIX     *pixs,
-                   l_int32  quality)
+                   l_int32  quality,
+                   l_int32  lossless)
 {
-l_int32    w, h, d, wpl, stride, ret;
-l_uint8   *filedata = NULL;
-l_uint32  *data;
-size_t     nbytes;
-PIX       *pix, *pixt, *pix32;
+l_uint8  *filedata;
+size_t    filebytes, nbytes;
 
     PROCNAME("pixWriteStreamWebP");
 
@@ -207,184 +298,96 @@ PIX       *pix, *pixt, *pix32;
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
 
-    if (quality < 1)
-        quality = 1;
-    if (quality > 100)
-        quality = 100;
-
-    if ((pixt = pixRemoveColormap(pixs, REMOVE_CMAP_TO_FULL_COLOR)) == NULL)
-        return ERROR_INT("failure to remove color map", procName, 1);
-    pix = pixEndianByteSwapNew(pixt);
-    pixDestroy(&pixt);
-    pixGetDimensions(pix, &w, &h, &d);
-
-        /* Convert to rgb if not 32 bpp */
-    if (d != 32) {
-        if ((pix32 = pixConvertTo32(pix)) != NULL) {
-            pixDestroy(&pix);
-            pix = pix32;
-            d = pixGetDepth(pix);
-        }
-    }
-
-    wpl = pixGetWpl(pix);
-    data = pixGetData(pix);
-    if (d != 32 || w <= 0 || h <= 0 || wpl <= 0 || !data) {
-        pixDestroy(&pix);
-        return ERROR_INT("bad or empty input pix", procName, 1);
-    }
-
-    stride = wpl * 4;
-    nbytes = WebPEncodeRGBA((uint8_t *)data, w, h, stride, quality, &filedata);
-
-    if (nbytes == 0) {
-        if (filedata) free(filedata);
-        pixDestroy(&pix);
-        return ERROR_INT("WebPEncode failed", procName, 1);
-    }
-
+    pixWriteMemWebP(&filedata, &filebytes, pixs, quality, lossless);
     rewind(fp);
-
-    ret = (fwrite(filedata, 1, nbytes, fp) != nbytes);
+    nbytes = fwrite(filedata, 1, filebytes, fp);
     free(filedata);
-    pixDestroy(&pix);
-    if (ret)
+    if (nbytes != filebytes)
         return ERROR_INT("Write error", procName, 1);
-
     return 0;
 }
 
 
 /*!
- *  pixWriteWebPwithTargetPSNR()
+ *  pixWriteMemWebP()
  *
- *      Input:  filename
- *              pix  (all depths)
- *              target_psnr (target psnr to control the quality [1 ... 100])
- *              pquality (<optional return> final quality value used to obtain
- *                   the target_psnr; can be null)
+ *      Input:  &encdata (<return> webp encoded data of pixs)
+ *              &encsize (<return> size of webp encoded data)
+ *              pixs (any depth, cmapped OK)
+ *              quality (0 - 100; default ~80)
+ *              lossless (use 1 for lossless; 0 for lossy)
  *      Return: 0 if OK, 1 on error
  *
  *  Notes:
- *      (1) The parameter to control quality while encoding WebP is quality.
- *          This function does a line search over the quality values between
- *          MIN_QUALITY and MAX_QUALITY to achieve the target PSNR as close as
- *          possible.
+ *      (1) Lossless and lossy encoding are entirely different in webp.
+ *          @quality applies to lossy, and is ignored for lossless.
+ *      (2) The input image is converted to RGB if necessary.  If spp == 3,
+ *          we set the alpha channel to fully opaque (255), and
+ *          WebPEncodeRGBA() then removes the alpha chunk when encoding,
+ *          setting the internal header field has_alpha to 0.
  */
 l_int32
-pixWriteWebPwithTargetPSNR(const char  *filename,
-                           PIX         *pixs,
-                           l_float64    target_psnr,
-                           l_int32     *pquality)
+pixWriteMemWebP(l_uint8  **pencdata,
+                size_t    *pencsize,
+                PIX       *pixs,
+                l_int32    quality,
+                l_int32    lossless)
 {
-l_uint8   *filedata = NULL;
-l_uint8   *tmp_filedata = NULL;
-l_int32    MIN_QUALITY = 1;    /* min allowed value of quality */
-l_int32    MAX_QUALITY = 100;  /* max allowed value of quality */
-l_int32    w, h, d, wpl, stride, ret;
-l_int32    quality, delta_quality, quality_test, accept;
+l_int32    w, h, d, wpl, stride;
 l_uint32  *data;
-l_float64  psnr, psnr_test;
-size_t     nbytes, tmp_nbytes = 0;
-FILE      *fp;
-PIX       *pix, *pix32;
+PIX       *pix1, *pix2;
 
-    PROCNAME("pixWriteWebPwithTargetPSNR");
+    PROCNAME("pixWriteMemWebP");
 
-    if (!filename)
-        return ERROR_INT("filename not defined", procName, 1);
+    if (!pencdata)
+        return ERROR_INT("&encdata not defined", procName, 1);
+    *pencdata = NULL;
+    if (!pencsize)
+        return ERROR_INT("&encsize not defined", procName, 1);
+    *pencsize = 0;
     if (!pixs)
-        return ERROR_INT("pixs not defined", procName, 1);
-    if (target_psnr <= 0 || target_psnr >= 100)
-        return ERROR_INT("Target psnr out of range", procName, 1);
+        return ERROR_INT("&pixs not defined", procName, 1);
+    if (lossless == 0 && (quality < 0 || quality > 100))
+        return ERROR_INT("quality not in [0 ... 100]", procName, 1);
 
-    if ((pix = pixRemoveColormap(pixs, REMOVE_CMAP_TO_FULL_COLOR)) == NULL)
-        return ERROR_INT("cannot remove color map", procName, 1);
-    pixGetDimensions(pix, &w, &h, &d);
+    if ((pix1 = pixRemoveColormap(pixs, REMOVE_CMAP_TO_FULL_COLOR)) == NULL)
+        return ERROR_INT("failure to remove color map", procName, 1);
 
-        /* Convert to rgb if not 32 bpp */
-    if (d != 32) {
-        if ((pix32 = pixConvertTo32(pix)) != NULL) {
-            pixDestroy(&pix);
-            pix = pix32;
-            d = pixGetDepth(pix);
-        }
+        /* Convert to rgb if not 32 bpp; pix2 must not be a clone of pixs. */
+    if (pixGetDepth(pix1) != 32)
+        pix2 = pixConvertTo32(pix1);
+    else
+        pix2 = pixCopy(NULL, pix1);
+    pixDestroy(&pix1);
+    pixGetDimensions(pix2, &w, &h, &d);
+    if (w <= 0 || h <= 0 || d != 32) {
+        pixDestroy(&pix2);
+        return ERROR_INT("pix2 not 32 bpp or of 0 size", procName, 1);
     }
 
-    wpl = pixGetWpl(pix);
-    data = pixGetData(pix);
-    if (d != 32 || w <= 0 || h <= 0 || wpl <= 0 || !data) {
-        pixDestroy(&pix);
-        return ERROR_INT("bad or empty input pix", procName, 1);
-    }
+        /* If spp == 3, need to set alpha layer to opaque (all 1s). */
+    if (pixGetSpp(pix2) == 3)
+        pixSetComponentArbitrary(pix2, L_ALPHA_CHANNEL, 255);
 
-        /* Set the initial value of the Quality parameter.  In each iteration
-         * it will then increase or decrease the Quality value, based on
-         * whether the achieved psnr is higher or lower than the target_psnr */
-    quality = 75;
+        /* Webp encoder assumes big-endian byte order for RGBA components */
+    pixEndianByteSwap(pix2);
+    wpl = pixGetWpl(pix2);
+    data = pixGetData(pix2);
     stride = wpl * 4;
-
-    nbytes = WebPEncodeRGBA((uint8_t *)data, w, h, stride, quality, &filedata);
-
-    if (nbytes == 0) {
-        if (filedata) free(filedata);
-        pixDestroy(&pix);
-        return ERROR_INT("WebPEncode failed", procName, 1);
+    if (lossless) {
+        *pencsize = WebPEncodeLosslessRGBA((uint8_t *)data, w, h,
+                                           stride, pencdata);
+    } else {
+        *pencsize = WebPEncodeRGBA((uint8_t *)data, w, h, stride,
+                                   quality, pencdata);
     }
+    pixDestroy(&pix2);
 
-        /* Rationale about the delta_quality being limited: we expect optimal
-         * quality to be not too far from target quality in practice.
-         * So instead of a full dichotomy for the whole range we cap
-         * |delta_quality| to only explore quickly around the starting value
-         * and maximize the return in investment. */
-    delta_quality = (psnr > target_psnr) ?
-        L_MAX((MAX_QUALITY - quality) / 4, 1) :
-        L_MIN((MIN_QUALITY - quality) / 4, -1);
-
-    while (delta_quality != 0) {
-            /* Advance quality and clip to valid range */
-        quality_test = L_MIN(L_MAX(quality + delta_quality, MIN_QUALITY),
-                             MAX_QUALITY);
-            /* Re-adjust delta value after Quality-clipping. */
-        delta_quality = quality_test - quality;
-
-        tmp_nbytes = WebPEncodeRGBA((uint8_t *)data, w, h, stride, quality_test,
-                                    &tmp_filedata);
-        if (tmp_nbytes == 0) {
-            free(filedata);
-            if (tmp_filedata) free(tmp_filedata);
-            pixDestroy(&pix);
-            return ERROR_INT("WebPEncode failed", procName, 1);
-        }
-
-            /* Accept or reject new settings */
-        accept = (psnr_test > target_psnr) ^ (delta_quality < 0);
-        if (accept) {
-            free(filedata);
-            filedata = tmp_filedata;
-            nbytes = tmp_nbytes;
-            quality = quality_test;
-            psnr = psnr_test;
-        }
-        else {
-            delta_quality /= 2;
-            free(tmp_filedata);
-        }
+    if (*pencsize == 0) {
+        free(pencdata);
+        *pencdata = NULL;
+        return ERROR_INT("webp encoding failed", procName, 1);
     }
-    if (pquality) *pquality = quality;
-
-    if ((fp = fopenWriteStream(filename, "wb+")) == NULL) {
-        free(filedata);
-        pixDestroy(&pix);
-        return ERROR_INT("stream not opened", procName, 1);
-    }
-
-    ret = (fwrite(filedata, 1, nbytes, fp) != nbytes);
-    fclose(fp);
-    free(filedata);
-    pixDestroy(&pix);
-    if (ret)
-        return ERROR_INT("Write error", procName, 1);
 
     return 0;
 }

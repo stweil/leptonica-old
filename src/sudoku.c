@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 
@@ -192,7 +203,7 @@ SARRAY   *saline, *sa1, *sa2;
     nlines = sarrayGetCount(sa2);
     if (nlines != 9) {
         sarrayDestroy(&sa2);
-        L_ERROR_INT("file has %d lines", procName, nlines);
+        L_ERROR("file has %d lines\n", procName, nlines);
         return (l_int32 *)ERROR_PTR("invalid file", procName, NULL);
     }
 
@@ -324,7 +335,7 @@ L_SUDOKU  *sud;
     PROCNAME("sudokuDestroy");
 
     if (psud == NULL) {
-        L_WARNING("ptr address is NULL", procName);
+        L_WARNING("ptr address is NULL\n", procName);
         return;
     }
     if ((sud = *psud) == NULL)
@@ -441,8 +452,7 @@ l_int32  *locs, *state;
         }
         state[index] = 0;
         sud->current--;
-    }
-    else {  /* increment current value and test */
+    } else {  /* increment current value and test */
         sud->nguess++;
         state[index]++;
         valid = sudokuTestState(state, index);
@@ -450,9 +460,9 @@ l_int32  *locs, *state;
             if (sud->current == sud->num - 1) {  /* we're done */
                 sud->finished = TRUE;
                 return 0;
-            }
-            else  /* advance to next position */
+            } else {  /* advance to next position */
                 sud->current++;
+            }
         }
     }
 
@@ -660,16 +670,14 @@ l_int32  *rarray;
                  rarray[dindex++] = array[sindex];
              }
         }
-    }
-    else if (quads == 2) {
+    } else if (quads == 2) {
         for (i = 8, dindex = 0; i >= 0; i--) {
              for (j = 8; j >= 0; j--) {
                  sindex = 9 * i + j;
                  rarray[dindex++] = array[sindex];
              }
         }
-    }
-    else {  /* quads == 3 */
+    } else {  /* quads == 3 */
         for (j = 8, dindex = 0; j >= 0; j--) {
              for (i = 0; i < 9; i++) {
                  sindex = 9 * i + j;
@@ -741,13 +749,13 @@ L_SUDOKU  *sud, *testsud;
     sudokuSolve(testsud);
     if (testsud->failure) {
         sudokuDestroy(&testsud);
-        L_ERROR("invalid initial solution", procName);
+        L_ERROR("invalid initial solution\n", procName);
         return NULL;
     }
     sudokuTestUniqueness(testsud->init, &unique);
     sudokuDestroy(&testsud);
     if (!unique) {
-        L_ERROR("non-unique result with 30 zeroes", procName);
+        L_ERROR("non-unique result with 30 zeroes\n", procName);
         return NULL;
     }
 
@@ -792,8 +800,7 @@ L_SUDOKU  *sud, *testsud;
         if (!unique) {  /* revert and try again */
             array[index] = oldval;
             tries++;
-        }
-        else {  /* accept this */
+        } else {  /* accept this */
             tries = 0;
             fprintf(stderr, "Have %d zeros\n", nzeros);
             nzeros++;
@@ -851,4 +858,3 @@ l_int32  *array;
 
     return 0;
 }
-

@@ -1,18 +1,28 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 /*
  *  classapp.c
@@ -40,11 +50,9 @@
 #include <string.h>
 #include "allheaders.h"
 
+static const l_int32  L_BUF_SIZE = 512;
 static const l_int32  JB_WORDS_MIN_WIDTH = 5;  /* pixels */
 static const l_int32  JB_WORDS_MIN_HEIGHT = 3;  /* pixels */
-
-    /* MSVC can't handle arrays dimensioned by static const integers */
-#define  L_BUF_SIZE  512
 
     /* Static comparison functions */
 static l_int32 testLineAlignmentX(NUMA *na1, NUMA *na2, l_int32 shiftx,
@@ -291,15 +299,14 @@ SARRAY     *safiles;
     for (i = 0; i < nfiles; i++) {
         fname = sarrayGetString(safiles, i, 0);
         if ((pix = pixRead(fname)) == NULL) {
-            L_WARNING_INT("image file %d not read", procName, i);
+            L_WARNING("image file %d not read\n", procName, i);
             continue;
         }
         pixGetDimensions(pix, &w, &h, NULL);
         if (reduction == 1) {
             classer->w = w;
             classer->h = h;
-        }
-        else {  /* reduction == 2 */
+        } else {  /* reduction == 2 */
             classer->w = w / 2;
             classer->h = h / 2;
         }
@@ -307,7 +314,7 @@ SARRAY     *safiles;
                                JB_WORDS_MIN_HEIGHT, maxwidth, maxheight,
                                &boxa, &pixa, &nai);
         jbAddPageComponents(classer, pix, boxa, pixa);
-        numaJoin(natl, nai, 0, 0);
+        numaJoin(natl, nai, 0, -1);
         pixDestroy(&pix);
         numaDestroy(&nai);
         boxaDestroy(&boxa);
@@ -322,8 +329,8 @@ SARRAY     *safiles;
 /*!
  *  pixGetWordsInTextlines()
  *
- *      Input:  pixs (1 bpp, 300 ppi)
- *              reduction (1 for full res; 2 for half-res)
+ *      Input:  pixs (1 bpp, typ. 300 ppi)
+ *              reduction (1 for input res; 2 for 2x reduction of input res)
  *              minwidth, minheight (of saved components; smaller are discarded)
  *              maxwidth, maxheight (of saved components; larger are discarded)
  *              &boxad (<return> word boxes sorted in textline line order)
@@ -333,19 +340,19 @@ SARRAY     *safiles;
  *
  *  Notes:
  *      (1) The input should be at a resolution of about 300 ppi.
- *          The word masks can be computed at either 150 ppi or 300 ppi.
- *          For the former, set reduction = 2.
+ *          The word masks and word images can be computed at either
+ *          150 ppi or 300 ppi.  For the former, set reduction = 2.
  *      (2) The four size constraints on saved components are all
- *          used at 2x reduction.
+ *          scaled by @reduction.
  *      (3) The result are word images (and their b.b.), extracted in
- *          textline order, all at 2x reduction, and with a numa giving
- *          the textline index for each word.
+ *          textline order, at either full res or 2x reduction,
+ *          and with a numa giving the textline index for each word.
  *      (4) The pixa and boxa interfaces should make this type of
  *          application simple to put together.  The steps are:
+ *           - optionally reduce by 2x
  *           - generate first estimate of word masks
  *           - get b.b. of these, and remove the small and big ones
- *           - extract pixa of the word mask from these boxes
- *           - extract pixa of the actual word images, using word masks
+ *           - extract pixa of the word images, using the b.b.
  *           - sort actual word images in textline order (2d)
  *           - flatten them to a pixa (1d), saving the textline index
  *             for each pix
@@ -376,13 +383,13 @@ pixGetWordsInTextlines(PIX     *pixs,
                        PIXA   **ppixad,
                        NUMA   **pnai)
 {
-l_int32  maxsize;
-BOXA    *boxa1, *boxa2, *boxa3, *boxad;
+l_int32  maxdil;
+BOXA    *boxa1, *boxad;
 BOXAA   *baa;
 NUMA    *nai;
 NUMAA   *naa;
-PIXA    *pixa1, *pixa2, *pixad;
-PIX     *pixt1, *pixt2;
+PIXA    *pixa1, *pixad;
+PIX     *pix1;
 PIXAA   *paa;
 
     PROCNAME("pixGetWordsInTextlines");
@@ -398,38 +405,26 @@ PIXAA   *paa;
         return ERROR_INT("reduction not in {1,2}", procName, 1);
 
     if (reduction == 1) {
-        pixt1 = pixClone(pixs);
-        maxsize = 14;
+        pix1 = pixClone(pixs);
+        maxdil = 18;
+    } else {  /* reduction == 2 */
+        pix1 = pixReduceRankBinaryCascade(pixs, 1, 0, 0, 0);
+        maxdil = 9;
     }
-    else {  /* reduction == 2 */
-        pixt1 = pixReduceRankBinaryCascade(pixs, 1, 0, 0, 0);
-        maxsize = 7;
-    }
 
-        /* First estimate of the word masks */
-    pixt2 = pixWordMaskByDilation(pixt1, maxsize, NULL);
+        /* Get the bounding boxes of the words from the word mask. */
+    pixWordBoxesByDilation(pix1, maxdil, minwidth, minheight,
+                           maxwidth, maxheight, &boxa1, NULL);
 
-        /* Get the bounding boxes of the words. First remove the
-         * small ones, which can be due to punctuation that was
-         * not joined to a word.  Then remove the large ones, which are
-         * also not likely to be words.  Here, pixa1 contains
-         * the masks over each word.  */
-    boxa1 = pixConnComp(pixt2, NULL, 8);
-    boxa2 = boxaSelectBySize(boxa1, minwidth, minheight, L_SELECT_IF_BOTH,
-                             L_SELECT_IF_GTE, NULL);
-    boxa3 = boxaSelectBySize(boxa2, maxwidth, maxheight, L_SELECT_IF_BOTH,
-                             L_SELECT_IF_LTE, NULL);
-    pixa1 = pixaCreateFromBoxa(pixt2, boxa3, NULL);
+        /* Generate a pixa of the word images */
+    pixa1 = pixaCreateFromBoxa(pix1, boxa1, NULL);  /* mask over each word */
 
-        /* Generate a pixa of the actual word images, not the mask images. */
-    pixa2 = pixaClipToPix(pixa1, pixt1);
+        /* Sort the bounding boxes of these words by line.  We use the
+         * index mapping to allow identical sorting of the pixa. */
+    baa = boxaSort2d(boxa1, &naa, -1, -1, 4);
+    paa = pixaSort2dByIndex(pixa1, naa, L_CLONE);
 
-        /* Sort the bounding boxes of these words, saving the
-         * index mapping that will allow us to sort the pixa identically. */
-    baa = boxaSort2d(boxa3, &naa, -1, -1, 4);
-    paa = pixaSort2dByIndex(pixa2, naa, L_CLONE);
-
-        /* Flatten the word pixa */
+        /* Flatten the word paa */
     pixad = pixaaFlattenToPixa(paa, &nai, L_CLONE);
     boxad = pixaGetBoxa(pixad, L_COPY);
 
@@ -437,13 +432,9 @@ PIXAA   *paa;
     *pboxad = boxad;
     *ppixad = pixad;
 
-    pixDestroy(&pixt1);
-    pixDestroy(&pixt2);
+    pixDestroy(&pix1);
     pixaDestroy(&pixa1);
-    pixaDestroy(&pixa2);
     boxaDestroy(&boxa1);
-    boxaDestroy(&boxa2);
-    boxaDestroy(&boxa3);
     boxaaDestroy(&baa);
     pixaaDestroy(&paa);
     numaaDestroy(&naa);
@@ -454,24 +445,22 @@ PIXAA   *paa;
 /*!
  *  pixGetWordBoxesInTextlines()
  *
- *      Input:  pixs (1 bpp, 300 ppi)
- *              reduction (1 for full res; 2 for half-res)
+ *      Input:  pixs (1 bpp, typ. 300 ppi)
+ *              reduction (1 for input res; 2 for 2x reduction of input res)
  *              minwidth, minheight (of saved components; smaller are discarded)
  *              maxwidth, maxheight (of saved components; larger are discarded)
  *              &boxad (<return> word boxes sorted in textline line order)
- *              &naindex (<return> index of textline for each word)
+ *              &naindex (<optional return> index of textline for each word)
  *      Return: 0 if OK, 1 on error
  *
  *  Notes:
  *      (1) The input should be at a resolution of about 300 ppi.
  *          The word masks can be computed at either 150 ppi or 300 ppi.
  *          For the former, set reduction = 2.
- *      (2) In an actual application, it may be desirable to pre-filter
- *          the input image to remove large components, to extract
- *          single columns of text, and to deskew them.
- *      (3) This is a special version that just finds the word boxes
- *          in line order, with a numa giving the textline index for
- *          each word.  See pixGetWordsInTextlines() for more details.
+ *      (2) This is a special version of pixGetWordsInTextlines(), that
+ *          just finds the word boxes in line order, with a numa
+ *          giving the textline index for each word.
+ *          See pixGetWordsInTextlines() for more details.
  */
 l_int32
 pixGetWordBoxesInTextlines(PIX     *pixs,
@@ -483,59 +472,47 @@ pixGetWordBoxesInTextlines(PIX     *pixs,
                            BOXA   **pboxad,
                            NUMA   **pnai)
 {
-l_int32  maxsize;
-BOXA    *boxa1, *boxa2, *boxa3, *boxad;
+l_int32  maxdil;
+BOXA    *boxa1;
 BOXAA   *baa;
 NUMA    *nai;
-PIX     *pixt1, *pixt2;
+PIX     *pix1;
 
     PROCNAME("pixGetWordBoxesInTextlines");
 
-    if (!pboxad || !pnai)
+    if (pnai) *pnai = NULL;
+    if (!pboxad)
         return ERROR_INT("&boxad and &nai not both defined", procName, 1);
     *pboxad = NULL;
-    *pnai = NULL;
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
     if (reduction != 1 && reduction != 2)
         return ERROR_INT("reduction not in {1,2}", procName, 1);
 
     if (reduction == 1) {
-        pixt1 = pixClone(pixs);
-        maxsize = 14;
-    }
-    else {  /* reduction == 2 */
-        pixt1 = pixReduceRankBinaryCascade(pixs, 1, 0, 0, 0);
-        maxsize = 7;
+        pix1 = pixClone(pixs);
+        maxdil = 18;
+    } else {  /* reduction == 2 */
+        pix1 = pixReduceRankBinaryCascade(pixs, 1, 0, 0, 0);
+        maxdil = 9;
     }
 
-        /* First estimate of the word masks */
-    pixt2 = pixWordMaskByDilation(pixt1, maxsize, NULL);
-
-        /* Get the bounding boxes of the words, and remove the
-         * small ones, which can be due to punctuation that was
-         * not joined to a word, and the large ones, which are
-         * also not likely to be words. */
-    boxa1 = pixConnComp(pixt2, NULL, 8);
-    boxa2 = boxaSelectBySize(boxa1, minwidth, minheight,
-                             L_SELECT_IF_BOTH, L_SELECT_IF_GTE, NULL);
-    boxa3 = boxaSelectBySize(boxa2, maxwidth, maxheight,
-                             L_SELECT_IF_BOTH, L_SELECT_IF_LTE, NULL);
+        /* Get the bounding boxes of the words from the word mask. */
+    pixWordBoxesByDilation(pix1, maxdil, minwidth, minheight,
+                           maxwidth, maxheight, &boxa1, NULL);
 
         /* 2D sort the bounding boxes of these words. */
-    baa = boxaSort2d(boxa3, NULL, 3, -5, 5);
+    baa = boxaSort2d(boxa1, NULL, 3, -5, 5);
 
         /* Flatten the boxaa, saving the boxa index for each box */
-    boxad = boxaaFlattenToBoxa(baa, &nai, L_CLONE);
+    *pboxad = boxaaFlattenToBoxa(baa, &nai, L_CLONE);
 
-    *pnai = nai;
-    *pboxad = boxad;
-
-    pixDestroy(&pixt1);
-    pixDestroy(&pixt2);
+    if (pnai)
+        *pnai = nai;
+    else
+        numaDestroy(&nai);
+    pixDestroy(&pix1);
     boxaDestroy(&boxa1);
-    boxaDestroy(&boxa2);
-    boxaDestroy(&boxa3);
     boxaaDestroy(&baa);
     return 0;
 }
@@ -555,7 +532,7 @@ PIX     *pixt1, *pixt2;
  *  Notes:
  *      (1) The input is expected to come from pixGetWordBoxesInTextlines().
  *      (2) Each numa in the output consists of an average y coordinate
- *          of the first box in the textline, followed by pairs of 
+ *          of the first box in the textline, followed by pairs of
  *          x coordinates representing the left and right edges of each
  *          of the boxes in the textline.
  */
@@ -883,7 +860,7 @@ l_int32  *ia1, *ia2, *iasx, *iasy, *index1, *index2;
             diffx = L_ABS(shiftx - iasx[j]);
             diffy = L_ABS(shifty - iasy[j]);
             if (diffx > delx || diffy > dely) continue;
-                /* We have a match */   
+                /* We have a match */
             nmatch++;
             index1[ia1[j]] = nmatch;  /* mark the rows */
             index2[ia2[j]] = nmatch;
@@ -895,7 +872,7 @@ l_int32  *ia1, *ia2, *iasx, *iasy, *index1, *index2;
             }
         }
     }
-        
+
     FREE(ia1);
     FREE(ia2);
     FREE(iasx);
@@ -931,5 +908,3 @@ l_int32  i;
     fprintf(stderr, "\n");
     return;
 }
-
-

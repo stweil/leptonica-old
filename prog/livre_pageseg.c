@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -29,8 +40,6 @@
  *    Hermes Scientific Publishing, Ltd, 2010.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
     /* Control the display output */
@@ -39,20 +48,20 @@
 
 l_int32 DoPageSegmentation(PIX *pixs, l_int32 which);
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *filein;
 l_int32      i;
-PIX         *pixs;   /* input image sould be at least 300 ppi */
+PIX         *pixs;   /* input image should be at least 300 ppi */
 static char  mainName[] = "livre_pageseg";
 
     if (argc != 2)
-	exit(ERROR_INT(" Syntax:  livre_pageseg filein", mainName, 1));
+        return ERROR_INT(" Syntax:  livre_pageseg filein", mainName, 1);
 
     filein = argv[1];
     if ((pixs = pixRead(filein)) == NULL)
-	exit(ERROR_INT("pix not made", mainName, 1));
+        return ERROR_INT("pix not made", mainName, 1);
 
     for (i = 1; i <= 4; i++)
         DoPageSegmentation(pixs, i);
@@ -66,7 +75,7 @@ DoPageSegmentation(PIX     *pixs,   /* should be at least 300 ppi */
                    l_int32  which)  /* 1, 2, 3, 4 */
 {
 char         buf[256];
-l_int32      index, zero;
+l_int32      zero;
 BOXA        *boxatm, *boxahm;
 PIX         *pixr;   /* image reduced to 150 ppi */
 PIX         *pixhs;  /* image of halftone seed, 150 ppi */
@@ -83,7 +92,7 @@ PIX         *pixtm3; /* image of refined text line mask, 300 ppi */
 PIX         *pixtb1; /* image of text block mask, 150 ppi */
 PIX         *pixtb2; /* image of text block mask, 300 ppi */
 PIX         *pixnon; /* image of non-text or halftone, 150 ppi */
-PIX         *pixt1, *pixt2, *pixt3, *pixt4, *pixt5;
+PIX         *pixt1, *pixt2, *pixt3;
 PIXA        *pixa;
 PIXCMAP     *cmap;
 PTAA        *ptaa;
@@ -102,7 +111,7 @@ l_int32      block_flag = 0;
         text_flag = 1;
     else if (which == 4)
         block_flag = 1;
-    else 
+    else
         return ERROR_INT("invalid parameter: not in [1...4]", procName, 1);
     pixDisplayWrite(NULL, -1);
 
@@ -114,7 +123,7 @@ l_int32      block_flag = 0;
     pixDestroy(&pixt1);
     pixr = pixReduceRankBinaryCascade(pixs, 1, 0, 0, 0);
 
-	/* Get seed for halftone parts */
+        /* Get seed for halftone parts */
     pixt1 = pixReduceRankBinaryCascade(pixr, 4, 4, 3, 0);
     pixt2 = pixOpenBrick(NULL, pixt1, 5, 5);
     pixhs = pixExpandBinaryPower2(pixt2, 8);
@@ -123,7 +132,7 @@ l_int32      block_flag = 0;
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
 
-	/* Get mask for connected regions */
+        /* Get mask for connected regions */
     pixm = pixCloseSafeBrick(NULL, pixr, 4, 4);
     pixDisplayWriteFormat(pixm, ht_flag, IFF_PNG);
     if (which == 1) pixWrite("/tmp/ccmask.150.png", pixm, IFF_PNG);
@@ -133,7 +142,7 @@ l_int32      block_flag = 0;
     pixDisplayWriteFormat(pixhm1, ht_flag, IFF_PNG);
     if (which == 1) pixWrite("/tmp/htmask.150.png", pixhm1, IFF_PNG);
     pixhm2 = pixExpandBinaryPower2(pixhm1, 2);
-    
+
         /* Extract halftone stuff */
     pixht = pixAnd(NULL, pixhm1, pixr);
     if (which == 1) pixWrite("/tmp/ht.150.png", pixht, IFF_PNG);
@@ -144,9 +153,9 @@ l_int32      block_flag = 0;
     if (which == 1) pixWrite("/tmp/text.150.png", pixnht, IFF_PNG);
     pixZero(pixht, &zero);
     if (zero)
-	fprintf(stderr, "No halftone parts found\n");
+        fprintf(stderr, "No halftone parts found\n");
     else
-	fprintf(stderr, "Halftone parts found\n");
+        fprintf(stderr, "Halftone parts found\n");
 
         /* Get bit-inverted image */
     pixi = pixInvert(NULL, pixnht);
@@ -165,7 +174,7 @@ l_int32      block_flag = 0;
     pixDisplayWriteFormat(pixt2, ws_flag, IFF_PNG);
     pixDestroy(&pixt1);
 
-	/* Identify vertical whitespace by opening inverted image */
+        /* Identify vertical whitespace by opening inverted image */
     pixt3 = pixOpenBrick(NULL, pixt2, 5, 1);  /* removes thin vertical lines */
     pixvws = pixOpenBrick(NULL, pixt3, 1, 200);  /* gets long vertical lines */
     pixDisplayWriteFormat(pixvws, L_MAX(text_flag, ws_flag), IFF_PNG);
@@ -174,16 +183,16 @@ l_int32      block_flag = 0;
     pixDestroy(&pixt3);
 
         /* Get proto (early processed) text line mask. */
-	/* First close the characters and words in the textlines */
+        /* First close the characters and words in the textlines */
     pixtm1 = pixCloseSafeBrick(NULL, pixnht, 30, 1);
     pixDisplayWriteFormat(pixtm1, text_flag, IFF_PNG);
     if (which == 1) pixWrite("/tmp/textmask1.150.png", pixtm1, IFF_PNG);
 
-	/* Next open back up the vertical whitespace corridors */
+        /* Next open back up the vertical whitespace corridors */
     pixtm2 = pixSubtract(NULL, pixtm1, pixvws);
     if (which == 1) pixWrite("/tmp/textmask2.150.png", pixtm2, IFF_PNG);
 
-	/* Do a small opening to remove noise */
+        /* Do a small opening to remove noise */
     pixOpenBrick(pixtm2, pixtm2, 3, 3);
     pixDisplayWriteFormat(pixtm2, text_flag, IFF_PNG);
     if (which == 1) pixWrite("/tmp/textmask3.150.png", pixtm2, IFF_PNG);
@@ -196,9 +205,9 @@ l_int32      block_flag = 0;
 
         /* Solidify the textblock mask and remove noise:
          *  (1) For each c.c., close the blocks and dilate slightly
-	 *      to form a solid mask.
+         *      to form a solid mask.
          *  (2) Small horizontal closing between components
-	 *  (3) Open the white space between columns, again
+         *  (3) Open the white space between columns, again
          *  (4) Remove small components */
     pixt1 = pixMorphSequenceByComponent(pixtb1, "c30.30 + d3.3", 8, 0, 0, NULL);
     pixCloseSafeBrick(pixt1, pixt1, 10, 1);
@@ -250,14 +259,14 @@ l_int32      block_flag = 0;
     if (which == 1) boxaWrite("/tmp/textmask.boxa", boxatm);
     if (which == 1) boxaWrite("/tmp/htmask.boxa", boxahm);
 
-    pixa = pixaReadFiles("/tmp", "junk_write_display");
+    pixa = pixaReadFiles("/tmp/display", "file");
     pixt1 = pixaDisplayTiledAndScaled(pixa, 8, 250, 4, 0, 25, 2);
     snprintf(buf, sizeof(buf), "/tmp/segout.%d.png", which);
     pixWrite(buf, pixt1, IFF_PNG);
     pixDestroy(&pixt1);
     pixaDestroy(&pixa);
 
-	/* clean up to test with valgrind */
+        /* clean up to test with valgrind */
     pixDestroy(&pixr);
     pixDestroy(&pixhs);
     pixDestroy(&pixm);

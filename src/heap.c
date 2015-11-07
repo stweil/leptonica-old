@@ -1,41 +1,52 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  *   heap.c
  *
  *      Create/Destroy L_Heap
- *          L_HEAP    *lheapCreate()
- *          void      *lheapDestroy()
+ *          L_HEAP         *lheapCreate()
+ *          void           *lheapDestroy()
  *
  *      Operations to add/remove to/from the heap
- *          l_int32    lheapAdd()
- *          l_int32    lheapExtendArray()
- *          void      *lheapRemove()
+ *          l_int32         lheapAdd()
+ *          static l_int32  lheapExtendArray()
+ *          void           *lheapRemove()
  *
  *      Heap operations
- *          l_int32    lheapSwapUp()
- *          l_int32    lheapSwapDown()
- *          l_int32    lheapSort()
- *          l_int32    lheapSortStrictOrder()
+ *          l_int32         lheapSwapUp()
+ *          l_int32         lheapSwapDown()
+ *          l_int32         lheapSort()
+ *          l_int32         lheapSortStrictOrder()
  *
  *      Accessors
- *          l_int32    lheapGetCount()
+ *          l_int32         lheapGetCount()
  *
  *      Debug output
- *          l_int32    lheapPrint()
+ *          l_int32         lheapPrint()
  *
  *    The L_Heap is useful to implement a priority queue, that is sorted
  *    on a key in each element of the heap.  The heap is an array
@@ -61,9 +72,7 @@
  *    --------------------------  N.B.  ------------------------------
  */
 
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 static const l_int32  MIN_BUFFER_SIZE = 20;             /* n'importe quoi */
@@ -72,6 +81,9 @@ static const l_int32  INITIAL_BUFFER_ARRAYSIZE = 128;   /* n'importe quoi */
 #define SWAP_ITEMS(i, j)       { void *tempitem = lh->array[(i)]; \
                                  lh->array[(i)] = lh->array[(j)]; \
                                  lh->array[(j)] = tempitem; }
+
+    /* Static function */
+static l_int32 lheapExtendArray(L_HEAP *lh);
 
 
 /*--------------------------------------------------------------------------*
@@ -133,7 +145,7 @@ L_HEAP  *lh;
     PROCNAME("lheapDestroy");
 
     if (plh == NULL) {
-        L_WARNING("ptr address is NULL", procName);
+        L_WARNING("ptr address is NULL\n", procName);
         return;
     }
     if ((lh = *plh) == NULL)
@@ -142,9 +154,9 @@ L_HEAP  *lh;
     if (freeflag) {  /* free each struct in the array */
         for (i = 0; i < lh->n; i++)
             FREE(lh->array[i]);
+    } else if (lh->n > 0) {  /* freeflag == FALSE but elements exist on array */
+        L_WARNING("memory leak of %d items in lheap!\n", procName, lh->n);
     }
-    else if (lh->n > 0)  /* freeflag == FALSE but elements exist on array */
-        L_WARNING_INT("memory leak of %d items in lheap!", procName, lh->n);
 
     if (lh->array)
         FREE(lh->array);
@@ -174,7 +186,7 @@ lheapAdd(L_HEAP  *lh,
         return ERROR_INT("lh not defined", procName, 1);
     if (!item)
         return ERROR_INT("item not defined", procName, 1);
-    
+
         /* If necessary, expand the allocated array by a factor of 2 */
     if (lh->n >= lh->nalloc)
         lheapExtendArray(lh);
@@ -195,7 +207,7 @@ lheapAdd(L_HEAP  *lh,
  *      Input:  lheap
  *      Return: 0 if OK, 1 on error
  */
-l_int32
+static l_int32
 lheapExtendArray(L_HEAP  *lh)
 {
     PROCNAME("lheapExtendArray");
@@ -241,7 +253,7 @@ void   *item;
     lheapSwapDown(lh);  /* restore the heap */
     return item;
 }
-       
+
 
 /*!
  *  lheapGetCount()
@@ -259,7 +271,7 @@ lheapGetCount(L_HEAP  *lh)
 
     return lh->n;
 }
-        
+
 
 
 /*--------------------------------------------------------------------------*
@@ -308,8 +320,7 @@ l_float32  valp, valc;
           SWAP_ITEMS(ip - 1, ic - 1);
           ic = ip;
       }
-  }
-  else {  /* lh->direction == L_SORT_DECREASING */
+  } else {  /* lh->direction == L_SORT_DECREASING */
       while (1) {
           if (ic == 1)  /* root of heap */
               break;
@@ -372,23 +383,20 @@ l_float32  valp, valcl, valcr;
               if (valp > valcl)
                   SWAP_ITEMS(ip - 1, icl - 1);
               break;
-          }
-          else {  /* both children present; swap with the smallest if bigger */
+          } else {  /* both children exist; swap with the smallest if bigger */
               valcr = *(l_float32 *)(lh->array[icr - 1]);
               if (valp <= valcl && valp <= valcr)  /* smaller than both */
                   break;
               if (valcl <= valcr) {  /* left smaller; swap */
                   SWAP_ITEMS(ip - 1, icl - 1);
                   ip = icl;
-              }
-              else { /* right smaller; swap */
+              } else { /* right smaller; swap */
                   SWAP_ITEMS(ip - 1, icr - 1);
                   ip = icr;
               }
           }
       }
-  }
-  else {  /* lh->direction == L_SORT_DECREASING */
+  } else {  /* lh->direction == L_SORT_DECREASING */
       while (1) {
           icl = 2 * ip;
           if (icl > lh->n)
@@ -400,16 +408,14 @@ l_float32  valp, valcl, valcr;
               if (valp < valcl)
                   SWAP_ITEMS(ip - 1, icl - 1);
               break;
-          }
-          else {  /* both children present; swap with the biggest if smaller */
+          } else {  /* both children exist; swap with the biggest if smaller */
               valcr = *(l_float32 *)(lh->array[icr - 1]);
               if (valp >= valcl && valp >= valcr)  /* bigger than both */
                   break;
               if (valcl >= valcr) {  /* left bigger; swap */
                   SWAP_ITEMS(ip - 1, icl - 1);
                   ip = icl;
-              }
-              else { /* right bigger; swap */
+              } else {  /* right bigger; swap */
                   SWAP_ITEMS(ip - 1, icr - 1);
                   ip = icr;
               }
@@ -495,7 +501,7 @@ l_int32  i, index, size;
  *---------------------------------------------------------------------*/
 /*!
  *  lheapPrint()
- *  
+ *
  *      Input:  stream
  *              lheap
  *      Return: 0 if OK; 1 on error
@@ -520,4 +526,3 @@ l_int32  i;
 
     return 0;
 }
-

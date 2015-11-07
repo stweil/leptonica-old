@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -23,52 +34,97 @@
 
 LEPT_DLL extern const char *ImageFileFormatExtensions[];
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *text;
-l_int32      w, h, d, wpl, count, npages, color, format, bps, spp, iscmap;
+l_int32      w, h, d, wpl, count, npages, color;
+l_int32      format, bps, spp, iscmap, xres, yres, transparency;
 FILE        *fp;
-PIX         *pix;
+PIX         *pix, *pixt;
 PIXCMAP     *cmap;
 char        *filein;
 static char  mainName[] = "fileinfo";
 
     if (argc != 2)
-	exit(ERROR_INT(" Syntax:  fileinfo filein", mainName, 1));
+        return ERROR_INT(" Syntax:  fileinfo filein", mainName, 1);
     filein = argv[1];
 
-    l_pngSetStrip16To8(0);  /* to preserve 16 bpp if format is png */
+    l_pngSetReadStrip16To8(1);  /* to preserve 16 bpp if format is png */
 
-        /* Read the full image */
+        /* Read the header */
+    if (pixReadHeader(filein, &format, &w, &h, &bps, &spp, &iscmap)) {
+        fprintf(stderr, "Failure to read header!\n");
+        return 1;
+    }
+    fprintf(stderr, "==========================\nReading the header:\n");
+    fprintf(stderr, "  input image format type: %s\n",
+            ImageFileFormatExtensions[format]);
+    fprintf(stderr,
+            "  w = %d, h = %d, bps = %d, spp = %d, iscmap = %d\n",
+            w, h, bps, spp, iscmap);
+
+    findFileFormat(filein, &format);
+    if (format == IFF_JP2) {
+        fp = lept_fopen(filein, "rb");
+        fgetJp2kResolution(fp, &xres, &yres);
+        fclose(fp);
+        fprintf(stderr, "  xres = %d, yres = %d\n", xres, yres);
+    } else if (format == IFF_PNG) {
+        fp = lept_fopen(filein, "rb");
+        fgetPngResolution(fp, &xres, &yres);
+        fclose(fp);
+        fprintf(stderr, "  xres = %d, yres = %d\n", xres, yres);
+        if (iscmap) {
+            fp = lept_fopen(filein, "rb");
+            fgetPngColormapInfo(fp, &cmap, &transparency);
+            fclose(fp);
+            if (transparency)
+                fprintf(stderr, "  colormap has transparency\n");
+            else
+                fprintf(stderr, "  colormap does not have transparency\n");
+            pixcmapWriteStream(stderr, cmap);
+            pixcmapDestroy(&cmap);
+        }
+    } else if (format == IFF_JFIF_JPEG) {
+        fp = lept_fopen(filein, "rb");
+        fgetJpegResolution(fp, &xres, &yres);
+        fclose(fp);
+        fprintf(stderr, "  xres = %d, yres = %d\n", xres, yres);
+    }
+
+        /* Read the full image.  Note that when we read an image that
+         * has transparency in a colormap, we convert it to RGBA. */
+    fprintf(stderr, "==========================\nReading the full image:\n");
     if ((pix = pixRead(filein)) == NULL)
-	exit(ERROR_INT("image not returned from file", mainName, 1));
+        return ERROR_INT("image not returned from file", mainName, 1);
 
     format = pixGetInputFormat(pix);
     pixGetDimensions(pix, &w, &h, &d);
     wpl = pixGetWpl(pix);
-    fprintf(stderr, "Reading the full image:\n");
-    fprintf(stderr, "  Input image format type: %s\n",
+    spp = pixGetSpp(pix);
+    fprintf(stderr, "  input image format type: %s\n",
             ImageFileFormatExtensions[format]);
-    fprintf(stderr, "  w = %d, h = %d, d = %d, wpl = %d\n", w, h, d, wpl);
+    fprintf(stderr, "  w = %d, h = %d, d = %d, spp = %d, wpl = %d\n",
+            w, h, d, spp, wpl);
     fprintf(stderr, "  xres = %d, yres = %d\n",
             pixGetXRes(pix), pixGetYRes(pix));
 
     text = pixGetText(pix);
     if (text)  /*  not null */
-        fprintf(stderr, "  Text: %s\n", text);
+        fprintf(stderr, "  text: %s\n", text);
 
     cmap = pixGetColormap(pix);
     if (cmap) {
         pixcmapHasColor(cmap, &color);
         if (color)
-            fprintf(stderr, "  Colormap exists and has color values:");
+            fprintf(stderr, "  colormap exists and has color values:");
         else
-            fprintf(stderr, "  Colormap exists and has only gray values:");
-	pixcmapWriteStream(stderr, pixGetColormap(pix));
+            fprintf(stderr, "  colormap exists and has only gray values:");
+        pixcmapWriteStream(stderr, pixGetColormap(pix));
     }
     else
-	fprintf(stderr, "  Colormap does not exist.\n");
+        fprintf(stderr, "  colormap does not exist\n");
 
     if (format == IFF_TIFF || format == IFF_TIFF_G4 ||
         format == IFF_TIFF_G3 || format == IFF_TIFF_PACKBITS) {
@@ -77,7 +133,7 @@ static char  mainName[] = "fileinfo";
         tiffGetCount(fp, &npages);
         lept_fclose(fp);
         if (npages == 1)
-            fprintf(stderr, "    One page in file\n", npages);
+            fprintf(stderr, "    One page in file\n");
         else
             fprintf(stderr, "    %d pages in file\n", npages);
         fprintTiffInfo(stderr, filein);
@@ -85,23 +141,20 @@ static char  mainName[] = "fileinfo";
 
     if (d == 1) {
         pixCountPixels(pix, &count, NULL);
-	fprintf(stderr, "  1 bpp: pixel ratio ON/OFF = %6.3f\n",
+        fprintf(stderr, "  1 bpp: pixel ratio ON/OFF = %6.3f\n",
           (l_float32)count / (l_float32)(pixGetWidth(pix) * pixGetHeight(pix)));
     }
 
-    pixDestroy(&pix);
-
-        /* Test pixReadHeader() */
-    if (pixReadHeader(filein, &format, &w, &h, &bps, &spp, &iscmap)) {
-        fprintf(stderr, "Failure to read header!\n");
-        return 1;
+        /* If there is an alpha component, visualize it.  Note that when
+         * alpha == 0, the rgb layer is transparent.  We visualize the
+         * result when a white background is visible through the
+         * transparency layer. */
+    if (pixGetSpp(pix) == 4) {
+        pixt = pixDisplayLayersRGBA(pix, 0xffffff00, 600.0);
+        pixDisplay(pixt, 100, 100);
+        pixDestroy(&pixt);
     }
-    fprintf(stderr, "Reading just the header:\n");
-    fprintf(stderr, "  Input image format type: %s\n",
-            ImageFileFormatExtensions[format]);
-    fprintf(stderr,
-            "  w = %d, h = %d, d = %d, bps = %d, spp = %d, iscmap = %d\n",
-            w, h, d, bps, spp, iscmap);
+
+    pixDestroy(&pix);
     return 0;
 }
-

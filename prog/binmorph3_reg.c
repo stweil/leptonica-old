@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -39,9 +50,8 @@
 #define    TEST_SYMMETRIC   0     /* set to 1 for symmetric b.c.;
                                      otherwise, it tests asymmetric b.c. */
 
-
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *selnameh, *selnamev;
 l_int32      ok, same, w, h, i, bordercolor, extraborder;
@@ -52,12 +62,11 @@ PIX         *pixt0, *pixt1, *pixt2, *pixt3, *pixt4;
 SEL         *sel;
 SELA        *sela;
 static char  mainName[] = "binmorph3_reg";
-    
-    if (argc != 1)
-	exit(ERROR_INT(" Syntax: binmorph3_reg", mainName, 1));
 
+    if (argc != 1)
+        return ERROR_INT(" Syntax: binmorph3_reg", mainName, 1);
     if ((pixs = pixRead("feyn.tif")) == NULL)
-	exit(ERROR_INT("pix not made", mainName, 1));
+        return ERROR_INT("pix not made", mainName, 1);
 
 #if TEST_SYMMETRIC
     resetMorphBoundaryCondition(SYMMETRIC_MORPH_BC);
@@ -67,11 +76,11 @@ static char  mainName[] = "binmorph3_reg";
         w = width[i];
         h = height[i];
         sel = selCreateBrick(h, w, h / 2, w / 2, SEL_HIT);
-	selnameh = NULL;
-	selnamev = NULL;
+        selnameh = NULL;
+        selnamev = NULL;
 
 
-	    /* Get the selnames for horiz and vert */
+            /* Get the selnames for horiz and vert */
         sela = selaAddBasic(NULL);
         if (w > 1) {
             if ((selnameh = selaGetBrickName(sela, w, 1)) == NULL) {
@@ -85,7 +94,7 @@ static char  mainName[] = "binmorph3_reg";
                 return ERROR_INT("dwa vert sel not defined", mainName, 1);
             }
         }
-	fprintf(stderr, "w = %d, h = %d, selh = %s, selv = %s\n",
+        fprintf(stderr, "w = %d, h = %d, selh = %s, selv = %s\n",
                 w, h, selnameh, selnamev);
         ok = TRUE;
         selaDestroy(&sela);
@@ -97,43 +106,43 @@ static char  mainName[] = "binmorph3_reg";
         pixEqual(pixref, pixt1, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt1 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixt1);
+        }
+        pixDestroy(&pixt1);
 
-	if (w > 1)
+        if (w > 1)
             pixt1 = pixMorphDwa_1(NULL, pixs, L_MORPH_DILATE, selnameh);
-	else
+        else
             pixt1 = pixClone(pixs);
-	if (h > 1)
+        if (h > 1)
             pixt2 = pixMorphDwa_1(NULL, pixt1, L_MORPH_DILATE, selnamev);
-	else
+        else
             pixt2 = pixClone(pixt1);
         pixEqual(pixref, pixt2, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt2 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixt1);
-	pixDestroy(&pixt2);
+        }
+        pixDestroy(&pixt1);
+        pixDestroy(&pixt2);
 
-	pixt1 = pixAddBorder(pixs, 32, 0);
-	if (w > 1)
+        pixt1 = pixAddBorder(pixs, 32, 0);
+        if (w > 1)
             pixt2 = pixFMorphopGen_1(NULL, pixt1, L_MORPH_DILATE, selnameh);
-	else
+        else
             pixt2 = pixClone(pixt1);
         if (h > 1)
             pixt3 = pixFMorphopGen_1(NULL, pixt2, L_MORPH_DILATE, selnamev);
-	else
+        else
             pixt3 = pixClone(pixt2);
-	pixt4 = pixRemoveBorder(pixt3, 32);
+        pixt4 = pixRemoveBorder(pixt3, 32);
         pixEqual(pixref, pixt4, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt4 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixref);
-	pixDestroy(&pixt1);
-	pixDestroy(&pixt2);
-	pixDestroy(&pixt3);
-	pixDestroy(&pixt4);
+        }
+        pixDestroy(&pixref);
+        pixDestroy(&pixt1);
+        pixDestroy(&pixt2);
+        pixDestroy(&pixt3);
+        pixDestroy(&pixt4);
 
             /* ----------------- Erosion ----------------- */
         fprintf(stderr, "Testing erosion\n");
@@ -142,43 +151,43 @@ static char  mainName[] = "binmorph3_reg";
         pixEqual(pixref, pixt1, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt1 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixt1);
+        }
+        pixDestroy(&pixt1);
 
-	if (w > 1)
+        if (w > 1)
             pixt1 = pixMorphDwa_1(NULL, pixs, L_MORPH_ERODE, selnameh);
-	else
+        else
             pixt1 = pixClone(pixs);
-	if (h > 1)
+        if (h > 1)
             pixt2 = pixMorphDwa_1(NULL, pixt1, L_MORPH_ERODE, selnamev);
-	else
+        else
             pixt2 = pixClone(pixt1);
         pixEqual(pixref, pixt2, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt2 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixt1);
-	pixDestroy(&pixt2);
+        }
+        pixDestroy(&pixt1);
+        pixDestroy(&pixt2);
 
-	pixt1 = pixAddBorder(pixs, 32, 0);
-	if (w > 1)
+        pixt1 = pixAddBorder(pixs, 32, 0);
+        if (w > 1)
             pixt2 = pixFMorphopGen_1(NULL, pixt1, L_MORPH_ERODE, selnameh);
-	else
+        else
             pixt2 = pixClone(pixt1);
         if (h > 1)
             pixt3 = pixFMorphopGen_1(NULL, pixt2, L_MORPH_ERODE, selnamev);
-	else
+        else
             pixt3 = pixClone(pixt2);
-	pixt4 = pixRemoveBorder(pixt3, 32);
+        pixt4 = pixRemoveBorder(pixt3, 32);
         pixEqual(pixref, pixt4, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt4 !\n"); ok = FALSE;
         }
-	pixDestroy(&pixref);
-	pixDestroy(&pixt1);
-	pixDestroy(&pixt2);
-	pixDestroy(&pixt3);
-	pixDestroy(&pixt4);
+        pixDestroy(&pixref);
+        pixDestroy(&pixt1);
+        pixDestroy(&pixt2);
+        pixDestroy(&pixt3);
+        pixDestroy(&pixt4);
 
             /* ----------------- Opening ----------------- */
         fprintf(stderr, "Testing opening\n");
@@ -217,32 +226,32 @@ static char  mainName[] = "binmorph3_reg";
             pixt3 = pixFMorphopGen_1(NULL, pixt2, L_MORPH_ERODE, selnamev);
             pixFMorphopGen_1(pixt2, pixt3, L_MORPH_DILATE, selnameh);
             pixFMorphopGen_1(pixt3, pixt2, L_MORPH_DILATE, selnamev);
-	    pixDestroy(&pixt2);
+            pixDestroy(&pixt2);
         }
         pixt4 = pixRemoveBorder(pixt3, 32);
         pixEqual(pixref, pixt4, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt4 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixref);
+        }
+        pixDestroy(&pixref);
         pixDestroy(&pixt1);
         pixDestroy(&pixt3);
-	pixDestroy(&pixt4);
+        pixDestroy(&pixt4);
 
             /* ----------------- Closing ----------------- */
         fprintf(stderr, "Testing closing\n");
         pixref = pixClose(NULL, pixs, sel);
 
-	    /* Note: L_MORPH_CLOSE for h==1 or w==1 gives safe closing,
-	     * so we can't use it here. */
+            /* Note: L_MORPH_CLOSE for h==1 or w==1 gives safe closing,
+             * so we can't use it here. */
         if (h == 1) {
             pixt1 = pixMorphDwa_1(NULL, pixs, L_MORPH_DILATE, selnameh);
             pixt2 = pixMorphDwa_1(NULL, pixt1, L_MORPH_ERODE, selnameh);
-	}
+        }
         else if (w == 1) {
             pixt1 = pixMorphDwa_1(NULL, pixs, L_MORPH_DILATE, selnamev);
             pixt2 = pixMorphDwa_1(NULL, pixt1, L_MORPH_ERODE, selnamev);
-	}
+        }
         else {
             pixt1 = pixMorphDwa_1(NULL, pixs, L_MORPH_DILATE, selnameh);
             pixt2 = pixMorphDwa_1(NULL, pixt1, L_MORPH_DILATE, selnamev);
@@ -256,10 +265,10 @@ static char  mainName[] = "binmorph3_reg";
         }
         pixDestroy(&pixt2);
 
-	    /* Note: by adding only 32 pixels of border, we get
-	     * the normal closing operation, even when calling
-	     * with L_MORPH_CLOSE, because it requires 32 pixels
-	     * of border to be safe. */
+            /* Note: by adding only 32 pixels of border, we get
+             * the normal closing operation, even when calling
+             * with L_MORPH_CLOSE, because it requires 32 pixels
+             * of border to be safe. */
         pixt1 = pixAddBorder(pixs, 32, 0);
         if (h == 1)
             pixt3 = pixFMorphopGen_1(NULL, pixt1, L_MORPH_CLOSE, selnameh);
@@ -270,17 +279,17 @@ static char  mainName[] = "binmorph3_reg";
             pixt3 = pixFMorphopGen_1(NULL, pixt2, L_MORPH_DILATE, selnamev);
             pixFMorphopGen_1(pixt2, pixt3, L_MORPH_ERODE, selnameh);
             pixFMorphopGen_1(pixt3, pixt2, L_MORPH_ERODE, selnamev);
-	    pixDestroy(&pixt2);
+            pixDestroy(&pixt2);
         }
         pixt4 = pixRemoveBorder(pixt3, 32);
         pixEqual(pixref, pixt4, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt4 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixref);
+        }
+        pixDestroy(&pixref);
         pixDestroy(&pixt1);
         pixDestroy(&pixt3);
-	pixDestroy(&pixt4);
+        pixDestroy(&pixt4);
 
             /* ------------- Safe Closing ----------------- */
         fprintf(stderr, "Testing safe closing\n");
@@ -305,16 +314,16 @@ static char  mainName[] = "binmorph3_reg";
         else   /* symmetric b.c. */
             extraborder = 0;
 
-	    /* Note: for safe closing we need 64 border pixels.
-	     * However, when we implement a separable Sel
-	     * with pixMorphDwa_*(), we must do dilation and
-	     * erosion explicitly, and these functions only
-	     * add/remove a 32-pixel border.  Thus, for that
-	     * case we must add an additional 32-pixel border
-	     * before doing the operations.  That is the reason
-	     * why the implementation in morphdwa.c adds the
-	     * 64 bit border and then uses the lower-level
-	     * pixFMorphopGen_*() functions. */
+            /* Note: for safe closing we need 64 border pixels.
+             * However, when we implement a separable Sel
+             * with pixMorphDwa_*(), we must do dilation and
+             * erosion explicitly, and these functions only
+             * add/remove a 32-pixel border.  Thus, for that
+             * case we must add an additional 32-pixel border
+             * before doing the operations.  That is the reason
+             * why the implementation in morphdwa.c adds the
+             * 64 bit border and then uses the lower-level
+             * pixFMorphopGen_*() functions. */
         if (h == 1)
             pixt3 = pixMorphDwa_1(NULL, pixs, L_MORPH_CLOSE, selnameh);
         else if (w == 1)
@@ -325,7 +334,7 @@ static char  mainName[] = "binmorph3_reg";
             pixt2 = pixMorphDwa_1(NULL, pixt1, L_MORPH_DILATE, selnamev);
             pixMorphDwa_1(pixt1, pixt2, L_MORPH_ERODE, selnameh);
             pixMorphDwa_1(pixt2, pixt1, L_MORPH_ERODE, selnamev);
-	    pixt3 = pixRemoveBorder(pixt2, extraborder);
+            pixt3 = pixRemoveBorder(pixt2, extraborder);
             pixDestroy(&pixt0);
             pixDestroy(&pixt1);
             pixDestroy(&pixt2);
@@ -346,23 +355,23 @@ static char  mainName[] = "binmorph3_reg";
             pixt3 = pixFMorphopGen_1(NULL, pixt2, L_MORPH_DILATE, selnamev);
             pixFMorphopGen_1(pixt2, pixt3, L_MORPH_ERODE, selnameh);
             pixFMorphopGen_1(pixt3, pixt2, L_MORPH_ERODE, selnamev);
-	    pixDestroy(&pixt2);
+            pixDestroy(&pixt2);
         }
         pixt4 = pixRemoveBorder(pixt3, 32 + extraborder);
         pixEqual(pixref, pixt4, &same);
         if (!same) {
             fprintf(stderr, "pixref != pixt4 !\n"); ok = FALSE;
-	}
-	pixDestroy(&pixref);
+        }
+        pixDestroy(&pixref);
         pixDestroy(&pixt1);
         pixDestroy(&pixt3);
-	pixDestroy(&pixt4);
+        pixDestroy(&pixt4);
 
         if (ok)
             fprintf(stderr, "All morph tests OK!\n");
-	selDestroy(&sel);
-	lept_free(selnameh);
-	lept_free(selnamev);
+        selDestroy(&sel);
+        lept_free(selnameh);
+        lept_free(selnamev);
 
     }
 

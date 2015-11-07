@@ -1,35 +1,43 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 /*
  *  colormorphtest.c
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
-static void pixCompare(PIX *pix, PIX *pix2, const char *msg1, const char *msg2);
+static void PixCompare(PIX *pix, PIX *pix2, const char *msg1, const char *msg2);
 
     /* MSVC can't handle arrays dimensioned by static const integers */
 #define L_BUF_SIZE    256
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *filein;
 char         buf[L_BUF_SIZE];
@@ -38,52 +46,50 @@ PIX         *pixs, *pixt1, *pixt2;
 static char  mainName[] = "colormorphtest";
 
     if (argc != 3)
-        exit(ERROR_INT(" Syntax:  colormorphtest filein size",
-             mainName, 1));
+        return ERROR_INT(" Syntax:  colormorphtest filein size", mainName, 1);
 
     filein = argv[1];
     size = atoi(argv[2]);
     if (size % 2 == 0) size++;
-
     if ((pixs = pixRead(filein)) == NULL)
-        exit(ERROR_INT("pixs not read", mainName, 1));
+        return ERROR_INT("pixs not read", mainName, 1);
 
     pixt1 = pixColorMorph(pixs, L_MORPH_DILATE, size, size);
     sprintf(buf, "d%d.%d", size, size);
     pixt2 = pixColorMorphSequence(pixs, buf, 0, 0);
-    pixCompare(pixt1, pixt2, "Correct for dilation", "Error on dilation");
+    PixCompare(pixt1, pixt2, "Correct for dilation", "Error on dilation");
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
 
     pixt1 = pixColorMorph(pixs, L_MORPH_ERODE, size, size);
     sprintf(buf, "e%d.%d", size, size);
     pixt2 = pixColorMorphSequence(pixs, buf, 0, 0);
-    pixCompare(pixt1, pixt2, "Correct for erosion", "Error on erosion");
+    PixCompare(pixt1, pixt2, "Correct for erosion", "Error on erosion");
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
 
     pixt1 = pixColorMorph(pixs, L_MORPH_OPEN, size, size);
     sprintf(buf, "o%d.%d", size, size);
     pixt2 = pixColorMorphSequence(pixs, buf, 0, 0);
-    pixCompare(pixt1, pixt2, "Correct for opening", "Error on opening");
+    PixCompare(pixt1, pixt2, "Correct for opening", "Error on opening");
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
 
     pixt1 = pixColorMorph(pixs, L_MORPH_CLOSE, size, size);
     sprintf(buf, "c%d.%d", size, size);
     pixt2 = pixColorMorphSequence(pixs, buf, 0, 0);
-    pixCompare(pixt1, pixt2, "Correct for closing", "Error on closing");
+    PixCompare(pixt1, pixt2, "Correct for closing", "Error on closing");
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
 
-    pixDisplayMultiple("/tmp/junk_write_display*");
+    pixDisplayMultiple("/tmp/display/file*");
 
     pixDestroy(&pixs);
     return 0;
 }
 
     /* Simple comparison function */
-static void pixCompare(PIX         *pix1,
+static void PixCompare(PIX         *pix1,
                        PIX         *pix2,
                        const char  *msg1,
                        const char  *msg2)

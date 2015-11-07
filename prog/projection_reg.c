@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -29,14 +40,14 @@
 
 void TestProjection(L_REGPARAMS *rp, PIX *pix);
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 PIX          *pixs, *pixg1, *pixg2;
 L_REGPARAMS  *rp;
 
     if (regTestSetup(argc, argv, &rp))
-	return 1;
+        return 1;
 
         /* Use for input two different images */
     pixs = pixRead("projectionstats.jpg");
@@ -50,8 +61,7 @@ L_REGPARAMS  *rp;
     TestProjection(rp, pixg2);
     pixDestroy(&pixg1);
     pixDestroy(&pixg2);
-    regTestCleanup(rp);
-    return 0;
+    return regTestCleanup(rp);
 }
 
 
@@ -71,25 +81,25 @@ PIX     *pixd, *pixt;
 PIXA    *pixa;
 
     outline = 2;
-    pixColumnStats(pixs, &na1, &na3, &na5, &na7, &na9, &na11);
+    pixColumnStats(pixs, NULL, &na1, &na3, &na5, &na7, &na9, &na11);
     pixd = pixRotateOrth(pixs, 1);
-    pixRowStats(pixd, &na2, &na4, &na6, &na8, &na10, &na12);
+    pixRowStats(pixd, NULL, &na2, &na4, &na6, &na8, &na10, &na12);
 
-        /* The png plot files are written to "/tmp/proj.0.png", etc.
+        /* The png plot files are written to "/tmp/regout/proj.0.png", etc.
          * These temp files are overwritten each time this
          * function is called. */
-    gplotSimple1(na1, GPLOT_PNG, "/tmp/proj.0", "Mean value");
-    gplotSimple1(na2, GPLOT_PNG, "/tmp/proj.1", "Mean value");
-    gplotSimple1(na3, GPLOT_PNG, "/tmp/proj.2", "Median value");
-    gplotSimple1(na4, GPLOT_PNG, "/tmp/proj.3", "Median value");
-    gplotSimple1(na5, GPLOT_PNG, "/tmp/proj.4", "Mode value");
-    gplotSimple1(na6, GPLOT_PNG, "/tmp/proj.5", "Mode value");
-    gplotSimple1(na7, GPLOT_PNG, "/tmp/proj.6", "Mode count");
-    gplotSimple1(na8, GPLOT_PNG, "/tmp/proj.7", "Mode count");
-    gplotSimple1(na9, GPLOT_PNG, "/tmp/proj.8", "Variance");
-    gplotSimple1(na10, GPLOT_PNG, "/tmp/proj.9", "Variance");
-    gplotSimple1(na11, GPLOT_PNG, "/tmp/proj.10", "Square Root Variance");
-    gplotSimple1(na12, GPLOT_PNG, "/tmp/proj.11", "Square Root Variance");
+    gplotSimple1(na1, GPLOT_PNG, "/tmp/regout/proj.0", "Mean value");
+    gplotSimple1(na2, GPLOT_PNG, "/tmp/regout/proj.1", "Mean value");
+    gplotSimple1(na3, GPLOT_PNG, "/tmp/regout/proj.2", "Median value");
+    gplotSimple1(na4, GPLOT_PNG, "/tmp/regout/proj.3", "Median value");
+    gplotSimple1(na5, GPLOT_PNG, "/tmp/regout/proj.4", "Mode value");
+    gplotSimple1(na6, GPLOT_PNG, "/tmp/regout/proj.5", "Mode value");
+    gplotSimple1(na7, GPLOT_PNG, "/tmp/regout/proj.6", "Mode count");
+    gplotSimple1(na8, GPLOT_PNG, "/tmp/regout/proj.7", "Mode count");
+    gplotSimple1(na9, GPLOT_PNG, "/tmp/regout/proj.8", "Variance");
+    gplotSimple1(na10, GPLOT_PNG, "/tmp/regout/proj.9", "Variance");
+    gplotSimple1(na11, GPLOT_PNG, "/tmp/regout/proj.10", "Square Root Variance");
+    gplotSimple1(na12, GPLOT_PNG, "/tmp/regout/proj.11", "Square Root Variance");
 #ifndef  _WIN32
     sleep(1);
 #else
@@ -101,54 +111,54 @@ PIXA    *pixa;
          *    (2) saved as a golden file (generate stage) or compared
          *        to the existing golden file (testing stage)    */
     pixa = pixaCreate(13);
-    pixSaveTiledOutline(pixs, pixa, 1, 1, 30, outline, 32);
-    pixt = pixRead("/tmp/proj.0.png");
+    pixSaveTiledOutline(pixs, pixa, 1.0, 1, 30, outline, 32);
+    pixt = pixRead("/tmp/regout/proj.0.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);   /* 0 */
-    pixSaveTiledOutline(pixt, pixa, 1, 1, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 1, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.1.png");
+    pixt = pixRead("/tmp/regout/proj.1.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 1 */
-    pixSaveTiledOutline(pixt, pixa, 1, 0, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 0, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.2.png");
+    pixt = pixRead("/tmp/regout/proj.2.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 2 */
-    pixSaveTiledOutline(pixt, pixa, 1, 1, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 1, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.3.png");
+    pixt = pixRead("/tmp/regout/proj.3.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 3 */
-    pixSaveTiledOutline(pixt, pixa, 1, 0, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 0, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.4.png");
+    pixt = pixRead("/tmp/regout/proj.4.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 4 */
-    pixSaveTiledOutline(pixt, pixa, 1, 1, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 1, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.5.png");
+    pixt = pixRead("/tmp/regout/proj.5.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 5 */
-    pixSaveTiledOutline(pixt, pixa, 1, 0, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 0, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.6.png");
+    pixt = pixRead("/tmp/regout/proj.6.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 6 */
-    pixSaveTiledOutline(pixt, pixa, 1, 1, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 1, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.7.png");
+    pixt = pixRead("/tmp/regout/proj.7.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 7 */
-    pixSaveTiledOutline(pixt, pixa, 1, 0, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 0, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.8.png");
+    pixt = pixRead("/tmp/regout/proj.8.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 8 */
-    pixSaveTiledOutline(pixt, pixa, 1, 1, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 1, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.9.png");
+    pixt = pixRead("/tmp/regout/proj.9.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 9 */
-    pixSaveTiledOutline(pixt, pixa, 1, 0, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 0, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.10.png");
+    pixt = pixRead("/tmp/regout/proj.10.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 10 */
-    pixSaveTiledOutline(pixt, pixa, 1, 1, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 1, 30, outline, 32);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/proj.11.png");
+    pixt = pixRead("/tmp/regout/proj.11.png");
     regTestWritePixAndCheck(rp, pixt, IFF_PNG);  /* 11 */
-    pixSaveTiledOutline(pixt, pixa, 1, 0, 30, outline, 32);
+    pixSaveTiledOutline(pixt, pixa, 1.0, 0, 30, outline, 32);
     pixDestroy(&pixt);
 
         /* The pixa is composited into a pix and 'goldened'/tested */
@@ -181,5 +191,3 @@ PIXA    *pixa;
     numaDestroy(&na12);
     return;
 }
-
-

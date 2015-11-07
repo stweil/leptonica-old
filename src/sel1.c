@@ -1,18 +1,28 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 
 /*
@@ -34,7 +44,7 @@
  *
  *         Extension of sela:
  *            SELA      *selaAddSel()
- *            l_int32    selaExtendArray()
+ *            static l_int32  selaExtendArray()
  *
  *         Accessors:
  *            l_int32    selaGetCount()
@@ -68,7 +78,7 @@
  *            l_int32    selaWriteStream()
  *            l_int32    selWrite()
  *            l_int32    selWriteStream()
- *       
+ *
  *         Building custom hit-miss sels from compiled strings
  *            SEL       *selCreateFromString()
  *            char      *selPrintToString()     [for debugging]
@@ -129,12 +139,12 @@
 #include <string.h>
 #include "allheaders.h"
 
-    /* MS VC++ can't handle array initialization with static consts ! */
-#define L_BUF_SIZE      256
-
+static const l_int32  L_BUF_SIZE = 256;
 static const l_int32  INITIAL_PTR_ARRAYSIZE = 50;  /* n'import quoi */
 static const l_int32  MANY_SELS = 1000;
 
+    /* Static functions */
+static l_int32 selaExtendArray(SELA *sela);
 static SEL *selCreateFromSArray(SARRAY *sa, l_int32 first, l_int32 last);
 
 struct CompParameterMap
@@ -233,7 +243,7 @@ SELA  *sela;
     if (n <= 0)
         n = INITIAL_PTR_ARRAYSIZE;
     if (n > MANY_SELS)
-        L_WARNING_INT("%d sels", procName, n);
+        L_WARNING("%d sels\n", procName, n);
 
     if ((sela = (SELA *)CALLOC(1, sizeof(SELA))) == NULL)
         return (SELA *)ERROR_PTR("sela not made", procName, NULL);
@@ -324,7 +334,7 @@ SEL     *sel;
     PROCNAME("selDestroy");
 
     if (psel == NULL)  {
-        L_WARNING("ptr address is NULL!", procName);
+        L_WARNING("ptr address is NULL!\n", procName);
         return;
     }
     if ((sel = *psel) == NULL)
@@ -343,7 +353,7 @@ SEL     *sel;
 
 
 /*!
- *  selCopy() 
+ *  selCopy()
  *
  *      Input:  sel
  *      Return: a copy of the sel, or null on error
@@ -451,8 +461,7 @@ SEL     *sel;
     if (direction == L_HORIZ) {
         sel = selCreate(1, size, NULL);
         selSetOrigin(sel, 0, size / 2);
-    }
-    else {
+    } else {
         sel = selCreate(size, 1, NULL);
         selSetOrigin(sel, size / 2, 0);
     }
@@ -548,9 +557,9 @@ SEL     *csel;
     if (copyflag == TRUE) {
         if ((csel = selCopy(sel)) == NULL)
             return ERROR_INT("csel not made", procName, 1);
-    }
-    else   /* copyflag is false; insert directly */
+    } else {  /* copyflag is false; insert directly */
         csel = sel;
+    }
     if (!csel->name)
         csel->name = stringNew(selname);
 
@@ -562,7 +571,7 @@ SEL     *csel;
 
     return 0;
 }
-    
+
 
 /*!
  *  selaExtendArray()
@@ -570,14 +579,14 @@ SEL     *csel;
  *      Input:  sela
  *      Return: 0 if OK; 1 on error
  */
-l_int32
+static l_int32
 selaExtendArray(SELA  *sela)
 {
     PROCNAME("selaExtendArray");
 
     if (!sela)
         return ERROR_INT("sela not defined", procName, 1);
-    
+
     if ((sela->sel = (SEL **)reallocNew((void **)&sela->sel,
                               sizeof(SEL *) * sela->nalloc,
                               2 * sizeof(SEL *) * sela->nalloc)) == NULL)
@@ -688,7 +697,7 @@ selSetName(SEL         *sel,
  *      Return: 0 if OK; 1 on error
  */
 l_int32
-selaFindSelByName(SELA        *sela, 
+selaFindSelByName(SELA        *sela,
                   const char  *name,
                   l_int32     *pindex,
                   SEL        **psel)
@@ -709,10 +718,10 @@ SEL     *sel;
     for (i = 0; i < n; i++)
     {
         if ((sel = selaGetSel(sela, i)) == NULL) {
-            L_WARNING("missing sel", procName);
+            L_WARNING("missing sel\n", procName);
             continue;
         }
-            
+
         sname = selGetName(sel);
         if (sname && (!strcmp(name, sname))) {
             if (pindex)
@@ -722,7 +731,7 @@ SEL     *sel;
             return 0;
         }
     }
-    
+
     return 1;
 }
 
@@ -818,10 +827,10 @@ selGetParameters(SEL      *sel,
     if (pcx) *pcx = 0;
     if (!sel)
         return ERROR_INT("sel not defined", procName, 1);
-    if (psy) *psy = sel->sy; 
-    if (psx) *psx = sel->sx; 
-    if (pcy) *pcy = sel->cy; 
-    if (pcx) *pcx = sel->cx; 
+    if (psy) *psy = sel->sy;
+    if (psx) *psx = sel->sx;
+    if (pcy) *pcy = sel->cy;
+    if (pcx) *pcx = sel->cx;
     return 0;
 }
 
@@ -979,7 +988,7 @@ static void selaComputeCompositeParameters(const char *fileout);
  *  selaComputeCompParameters()
  *
  *      Input:  output filename
- *      Return: void 
+ *      Return: void
  *
  *  Notes:
  *      (1) This static function was used to construct the comp_parameter_map[]
@@ -1009,8 +1018,7 @@ SELA    *selabasic, *selacomb;
         if (size2 > 1) {
             nameh2 = selaGetCombName(selacomb, size1 * size2, L_HORIZ);
             namev2 = selaGetCombName(selacomb, size1 * size2, L_VERT);
-        }
-        else {
+        } else {
             nameh2 = stringNew("");
             namev2 = stringNew("");
         }
@@ -1212,7 +1220,7 @@ SEL     *seld;
         ncy = cx;
     } else if (quads == 2) {  /* 180 degrees cw */
         nsx = sx;
-        nsy = sy; 
+        nsy = sy;
         ncx = sx - cx - 1;
         ncy = sy - cy - 1;
     } else {  /* 270 degrees cw */
@@ -1562,7 +1570,7 @@ char     ch;
         return (SEL *)ERROR_PTR("height must be > 0", procName, NULL);
     if (w < 1)
         return (SEL *)ERROR_PTR("width must be > 0", procName, NULL);
-    
+
     sel = selCreate(h, w, name);
 
     for (y = 0; y < h; ++y) {
@@ -1683,7 +1691,7 @@ l_int32  sx, sy, cx, cy, x, y;
  *             the end of file is reached.
  *      (3) See selCreateFromString() for a description of the string
  *          format for the Sel data.  As an example, here are the lines
- *          of is a valid file for a single Sel.  In the file, all lines 
+ *          of is a valid file for a single Sel.  In the file, all lines
  *          are left-justified:
  *                    # diagonal sel
  *                    sel_5diag
@@ -1708,7 +1716,7 @@ SELA    *sela;
 
     if (!filename)
         return (SELA *)ERROR_PTR("filename not defined", procName, NULL);
-    
+
     filestr = (char *)l_binaryRead(filename, &nbytes);
     sa = sarrayCreateLinesFromString(filestr, 1);
     FREE(filestr);
@@ -1729,14 +1737,14 @@ SELA    *sela;
             numaAddNumber(nafirst, i);
             insel = TRUE;
 	    continue;
-        }	    
+        }
 	if (insel &&
             (line[0] == '\0' || line[0] == ' ' ||
              line[0] == '\t' || line[0] == '\n' || line[0] == '#')) {
             numaAddNumber(nalast, i - 1);
             insel = FALSE;
             continue;
-        }	    
+        }
     }
     if (insel)  /* fell off the end of the file */
         numaAddNumber(nalast, n - 1);
@@ -1782,7 +1790,7 @@ SELA    *sela;
  *          - 'last' gives the last line in the Sel data.
  *      (2) See selCreateFromString() for a description of the string
  *          format for the Sel data.  As an example, here are the lines
- *          of is a valid file for a single Sel.  In the file, all lines 
+ *          of is a valid file for a single Sel.  In the file, all lines
  *          are left-justified:
  *                    # diagonal sel
  *                    sel_5diag
@@ -1809,7 +1817,7 @@ SEL     *sel;
     n = sarrayGetCount(sa);
     if (first < 0 || first >= n || last <= first || last >= n)
         return (SEL *)ERROR_PTR("invalid range", procName, NULL);
-    
+
     name = sarrayGetString(sa, first, L_NOCOPY);
     h = last - first;
     line = sarrayGetString(sa, first + 1, L_NOCOPY);
@@ -1893,7 +1901,7 @@ SEL     *sel;
     boxDestroy(&box);
     if (x < 0 || y < 0)
         return (SEL *)ERROR_PTR("not all x and y >= 0", procName, NULL);
-    
+
     sel = selCreate(y + h, x + w, name);
     selSetOrigin(sel, cy, cx);
     for (i = 0; i < n; i++) {
@@ -2044,9 +2052,9 @@ l_uint32  pixval;
         for (j = 0; j < w; j++) {
             pixGetPixel (pixs, j, i, &pixval);
 
-            if (cmap)
+            if (cmap) {
                 pixcmapGetColor (cmap, pixval, &red, &green, &blue);
-            else {
+            } else {
                 red = GET_DATA_BYTE (&pixval, COLOR_RED);
                 green = GET_DATA_BYTE (&pixval, COLOR_GREEN);
                 blue = GET_DATA_BYTE (&pixval, COLOR_BLUE);
@@ -2054,19 +2062,18 @@ l_uint32  pixval;
 
             if (red < 255 && green < 255 && blue < 255) {
                 if (hasorigin)
-                    L_WARNING("multiple origins in sel image", procName);
+                    L_WARNING("multiple origins in sel image\n", procName);
                 selSetOrigin (sel, i, j);
                 hasorigin = TRUE;
             }
             if (!red && green && !blue) {
                 nohits = FALSE;
                 selSetElement (sel, i, j, SEL_HIT);
-            }
-            else if (red && !green && !blue)
+            } else if (red && !green && !blue) {
                 selSetElement (sel, i, j, SEL_MISS);
-            else if (red && green && blue)
+            } else if (red && green && blue) {
                 selSetElement (sel, i, j, SEL_DONT_CARE);
-            else {
+            } else {
                 selDestroy(&sel);
                 return (SEL *)ERROR_PTR("invalid color", procName, NULL);
             }
@@ -2115,13 +2122,13 @@ PTA     *pta1, *pta2, *pta1t, *pta2t;
     if (!sel)
         return (PIX *)ERROR_PTR("sel not defined", procName, NULL);
     if (size < 13) {
-        L_WARNING("size < 13; setting to 13", procName);
+        L_WARNING("size < 13; setting to 13\n", procName);
         size = 13;
     }
     if (size % 2 == 0)
         size++;
     if (gthick < 2) {
-        L_WARNING("grid thickness < 2; setting to 2", procName);
+        L_WARNING("grid thickness < 2; setting to 2\n", procName);
         gthick = 2;
     }
     selGetParameters(sel, &sy, &sx, &cy, &cx);
@@ -2233,17 +2240,17 @@ SEL     *sel;
     if (!sela)
         return (PIX *)ERROR_PTR("sela not defined", procName, NULL);
     if (size < 13) {
-        L_WARNING("size < 13; setting to 13", procName);
+        L_WARNING("size < 13; setting to 13\n", procName);
         size = 13;
     }
     if (size % 2 == 0)
         size++;
     if (gthick < 2) {
-        L_WARNING("grid thickness < 2; setting to 2", procName);
+        L_WARNING("grid thickness < 2; setting to 2\n", procName);
         gthick = 2;
     }
     if (spacing < 5) {
-        L_WARNING("spacing < 5; setting to 5", procName);
+        L_WARNING("spacing < 5; setting to 5\n", procName);
         spacing = 5;
     }
 
@@ -2268,9 +2275,8 @@ SEL     *sel;
         pixDestroy(&pixt);
     }
     width += (ncols + 1) * spacing;  /* add spacing all around as well */
-    
+
     pixd = pixaDisplayTiledInRows(pixa, 1, width, 1.0, 0, spacing, 0);
     pixaDestroy(&pixa);
     return pixd;
 }
-

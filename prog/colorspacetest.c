@@ -1,48 +1,78 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  * colorspacetest.c
  *
+ *   This allows the functions in colorspace_reg to be applied
+ *   to any arbitrary image.  Otherwise, it is essentially the same.
+ *
+ *   We test:
+ *     * conversions between HSV and both RGB and colormapped images
+ *     * global linear color mapping and extraction of color magnitude
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
-
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char         label[512];
-l_int32      w, h, i, j, rwhite, gwhite, bwhite, count;
+l_int32      rval, gval, bval, w, h, i, j, rwhite, gwhite, bwhite, count;
+l_uint32     pixel;
 GPLOT       *gplot1, *gplot2;
 NUMA        *naseq, *na;
 NUMAA       *naa1, *naa2;
 PIX         *pixs, *pixt, *pixt0, *pixt1, *pixt2;
-PIX         *pixr, *pixg, *pixb;  /* for color content extraction */
+PIX         *pixr, *pixg, *pixb;
 PIXA        *pixa;
 PIXCMAP     *cmap;
 static char  mainName[] = "colorspacetest";
 
     if (argc != 2)
-	exit(ERROR_INT(" Syntax:  colorspacetest filein", mainName, 1));
+        return ERROR_INT(" Syntax:  colorspacetest filein", mainName, 1);
 
     if ((pixs = pixRead(argv[1])) == NULL)
-	exit(ERROR_INT("pixs not made", mainName, 1));
-	    
+        return ERROR_INT("pixs not made", mainName, 1);
+
+        /* Generate colors by sampling hue with max sat and value.
+         * This was used to make the color strip 19-colors.png.  */
+    pixa = pixaCreate(19);
+    for (i = 0; i < 19; i++) {
+        convertHSVToRGB((240 * i / 18), 255, 255, &rval, &gval, &bval);
+        composeRGBPixel(rval, gval, bval, &pixel);
+        pixt1 = pixCreate(50, 100, 32);
+        pixSetAllArbitrary(pixt1, pixel);
+        pixaAddPix(pixa, pixt1, L_INSERT);
+    }
+    pixt2 = pixaDisplayTiledInRows(pixa, 32, 1100, 1.0, 0, 0, 0);
+    pixDisplayWrite(pixt2, 1);
+    pixDestroy(&pixt2);
+    pixaDestroy(&pixa);
+
         /* Colorspace conversion in rgb */
     pixDisplayWrite(pixs, 1);
     pixt = pixConvertRGBToHSV(NULL, pixs);
@@ -80,8 +110,8 @@ static char  mainName[] = "colorspacetest";
     naa2 = numaaCreate(6);
     for (i = 0; i < 6; i++) {
         na = numaCreate(20);
-	numaaAddNuma(naa1, na, L_COPY);
-	numaaAddNuma(naa2, na, L_INSERT);
+        numaaAddNuma(naa1, na, L_COPY);
+        numaaAddNuma(naa2, na, L_INSERT);
     }
     pixGetDimensions(pixs, &w, &h, NULL);
     for (i = 0; i < 20; i++) {
@@ -92,27 +122,27 @@ static char  mainName[] = "colorspacetest";
         pixaAddPix(pixa, pixt0, L_INSERT);
         pixt1 = pixColorMagnitude(pixs, rwhite, gwhite, bwhite,
                                   L_MAX_DIFF_FROM_AVERAGE_2);
-	for (j = 0; j < 6; j++) {
+        for (j = 0; j < 6; j++) {
             pixt2 = pixThresholdToBinary(pixt1, 30 + 10 * j);
             pixInvert(pixt2, pixt2);
             pixCountPixels(pixt2, &count, NULL);
-	    na = numaaGetNuma(naa1, j, L_CLONE);
+            na = numaaGetNuma(naa1, j, L_CLONE);
             numaAddNumber(na, (l_float32)count / (l_float32)(w * h));
-	    numaDestroy(&na);
+            numaDestroy(&na);
             pixDestroy(&pixt2);
-	}
+        }
         pixDestroy(&pixt1);
         pixt1 = pixColorMagnitude(pixs, rwhite, gwhite, bwhite,
                                   L_MAX_MIN_DIFF_FROM_2);
-	for (j = 0; j < 6; j++) {
+        for (j = 0; j < 6; j++) {
             pixt2 = pixThresholdToBinary(pixt1, 30 + 10 * j);
             pixInvert(pixt2, pixt2);
             pixCountPixels(pixt2, &count, NULL);
-	    na = numaaGetNuma(naa2, j, L_CLONE);
+            na = numaaGetNuma(naa2, j, L_CLONE);
             numaAddNumber(na, (l_float32)count / (l_float32)(w * h));
-	    numaDestroy(&na);
+            numaDestroy(&na);
             pixDestroy(&pixt2);
-	}
+        }
         pixDestroy(&pixt1);
     }
     gplot1 = gplotCreate("/tmp/junkplot1", GPLOT_X11,
@@ -123,12 +153,12 @@ static char  mainName[] = "colorspacetest";
                          "white point space for red", "amount of color");
     for (j = 0; j < 6; j++) {
         na = numaaGetNuma(naa1, j, L_CLONE);
-	sprintf(label, "thresh %d", 30 + 10 * j);
+        sprintf(label, "thresh %d", 30 + 10 * j);
         gplotAddPlot(gplot1, naseq, na, GPLOT_LINES, label);
-	numaDestroy(&na);
+        numaDestroy(&na);
         na = numaaGetNuma(naa2, j, L_CLONE);
         gplotAddPlot(gplot2, naseq, na, GPLOT_LINES, label);
-	numaDestroy(&na);
+        numaDestroy(&na);
     }
     gplotMakeOutput(gplot1);
     gplotMakeOutput(gplot2);
@@ -143,9 +173,8 @@ static char  mainName[] = "colorspacetest";
     numaaDestroy(&naa1);
     numaaDestroy(&naa2);
 
-    pixDisplayMultiple("/tmp/junk_write_display*");
+    pixDisplayMultiple("/tmp/display/file*");
 
     pixDestroy(&pixs);
     return 0;
 }
-

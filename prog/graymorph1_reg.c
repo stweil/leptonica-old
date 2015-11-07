@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -26,7 +37,7 @@
  *
  *      (4) Demonstrates closing plus white tophat.  Note that this
  *          combination of operations can be quite useful.
- *      
+ *
  *      (5) Demonstrates a method of doing contrast enhancement
  *          by taking 3 * pixs and subtracting from this the
  *          closing and opening of pixs.  Do this both with the
@@ -50,8 +61,8 @@
 static void pixCompare(PIX *pix, PIX *pix2, const char *msg1, const char *msg2);
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char         dilateseq[BUF_SIZE], erodeseq[BUF_SIZE];
 char         openseq[BUF_SIZE], closeseq[BUF_SIZE];
@@ -65,14 +76,14 @@ PIXCMAP     *cmap;
 static char  mainName[] = "graymorph1_reg";
 
     if (argc != 2)
-	exit(ERROR_INT(" Syntax:  graymorph1_reg filein", mainName, 1));
+        return ERROR_INT(" Syntax:  graymorph1_reg filein", mainName, 1);
 
     filein = argv[1];
     if ((pixs = pixRead(filein)) == NULL)
-	exit(ERROR_INT("pixs not made", mainName, 1));
+        return ERROR_INT("pixs not made", mainName, 1);
     pixGetDimensions(pixs, &w, &h, &d);
     if (d != 8)
-	exit(ERROR_INT("pixs not 8 bpp", mainName, 1));
+        return ERROR_INT("pixs not 8 bpp", mainName, 1);
 
     /* -------- Test gray morph, including interpreter ------------ */
     pixd = pixDilateGray(pixs, WSIZE, HSIZE);
@@ -139,7 +150,7 @@ static char  mainName[] = "graymorph1_reg";
     pixInvert(pixs, pixs);
     pixd2 = pixTophat(pixs, WSIZE, HSIZE, L_TOPHAT_BLACK);
     pixCompare(pixd, pixd2, "Correct: images are duals",
-	       "Error: images are not duals" );
+               "Error: images are not duals" );
     pixDestroy(&pixd);
     pixDestroy(&pixd2);
     pixInvert(pixs, pixs);
@@ -148,16 +159,16 @@ static char  mainName[] = "graymorph1_reg";
     pixInvert(pixs, pixs);
     pixd2 = pixGrayMorphSequence(pixs, "Tb9.5", HORIZ_SEP, 300);
     pixCompare(pixd, pixd2, "Correct: images are duals",
-	       "Error: images are not duals" );
+               "Error: images are not duals" );
     pixDestroy(&pixd);
     pixDestroy(&pixd2);
 
     /* ------------- Test opening/closing for large sels -------------- */
     pixd = pixGrayMorphSequence(pixs,
-	    "C9.9 + C19.19 + C29.29 + C39.39 + C49.49", HORIZ_SEP, 100);
+            "C9.9 + C19.19 + C29.29 + C39.39 + C49.49", HORIZ_SEP, 100);
     pixDestroy(&pixd);
     pixd = pixGrayMorphSequence(pixs,
-	    "O9.9 + O19.19 + O29.29 + O39.39 + O49.49", HORIZ_SEP, 400);
+            "O9.9 + O19.19 + O29.29 + O39.39 + O49.49", HORIZ_SEP, 400);
     pixDestroy(&pixd);
 
     /* ---------- Closing plus white tophat result ------------ *
@@ -193,7 +204,7 @@ static char  mainName[] = "graymorph1_reg";
     /* ----- Contrast enhancement with morph parameters 9, 9 -------*/
     pixd1 = pixInitAccumulate(w, h, 0x8000);
     pixAccumulate(pixd1, pixs, L_ARITH_ADD);
-    pixMultConstAccumulate(pixd1, 3., 0x8000); 
+    pixMultConstAccumulate(pixd1, 3., 0x8000);
     pixd2 = pixOpenGray(pixs, 9, 9);
     pixAccumulate(pixd1, pixd2, L_ARITH_SUBTRACT);
     pixDestroy(&pixd2);
@@ -242,7 +253,7 @@ static char  mainName[] = "graymorph1_reg";
         /* Paste in the grayscale version */
     cmap = pixGetColormap(pixs);
     if (cmap)
-	pixt = pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
+        pixt = pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
     else
         pixt = pixConvertRGBToGray(pixs, 0.33, 0.34, 0.33);
     pixt2 = pixConvertTo32(pixt);  /* 8 --> 32 bpp */
@@ -280,7 +291,7 @@ static char  mainName[] = "graymorph1_reg";
     pixDestroy(&pixt4);
     pixDestroy(&pixd);
 
-    pixDisplayMultiple("/tmp/junk_write_display*");
+    pixDisplayMultiple("/tmp/display/file*");
     pixDestroy(&pixs);
     return 0;
 }
@@ -296,13 +307,13 @@ static void pixCompare(PIX         *pix1,
 l_int32  same;
     pixEqual(pix1, pix2, &same);
     if (same) {
-	fprintf(stderr, "%s\n", msg1);
-	pixDisplayWrite(pix1, 1);
+        fprintf(stderr, "%s\n", msg1);
+        pixDisplayWrite(pix1, 1);
     }
     else {
-	fprintf(stderr, "%s\n", msg2);
-	pixDisplayWrite(pix1, 1);
-	pixDisplayWrite(pix2, 1);
+        fprintf(stderr, "%s\n", msg2);
+        pixDisplayWrite(pix1, 1);
+        pixDisplayWrite(pix2, 1);
     }
     return;
 }

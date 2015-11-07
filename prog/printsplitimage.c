@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -41,11 +52,11 @@
 static const l_float32   FILL_FACTOR = 0.95;
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-char        *filein, *name, *printer;
-char         buffer[512];
+char        *filein, *fname, *printer;
+char         buf[512];
 l_int32      nx, ny, i, w, h, ws, hs, n, ignore;
 l_float32    scale;
 FILE        *fp;
@@ -55,40 +66,41 @@ SARRAY      *sa;
 static char  mainName[] = "printsplitimage";
 
     if (argc != 4 && argc != 5)
-	exit(ERROR_INT(" Syntax:  printsplitimage filein nx ny [printer]",
-                       mainName, 1));
+        return ERROR_INT(" Syntax:  printsplitimage filein nx ny [printer]",
+                         mainName, 1);
 
     filein = argv[1];
     nx = atoi(argv[2]);
     ny = atoi(argv[3]);
     if (argc == 5)
-	printer = argv[4];
+        printer = argv[4];
 
-    ignore = system("rm -f /tmp/junk_print_image_*.ps");
+    lept_rmdir("split");
+    lept_mkdir("split");
 
     if ((pixs = pixRead(filein)) == NULL)
-	exit(ERROR_INT("pixs not made", mainName, 1));
-    ws = pixGetWidth(pixs);
-    hs = pixGetHeight(pixs);
+        return ERROR_INT("pixs not made", mainName, 1);
+    pixGetDimensions(pixs, &ws, &hs, NULL);
     if (ny * ws > nx * hs) {
         pixr = pixRotate90(pixs, 1);
         pixa = pixaSplitPix(pixr, ny, nx, 0, 0);
-    }
-    else {
+    } else {
         pixr = pixClone(pixs);
         pixa = pixaSplitPix(pixr, nx, ny, 0, 0);
     }
+    pixDestroy(&pixr);
 
     n = pixaGetCount(pixa);
     sa = sarrayCreate(n);
     for (i = 0; i < n; i++) {
         pixt = pixaGetPix(pixa, i, L_CLONE);
-        w = pixGetWidth(pixt);
-        h = pixGetHeight(pixt);
+        pixGetDimensions(pixt, &w, &h, NULL);
         scale = L_MIN(FILL_FACTOR * 2550 / w, FILL_FACTOR * 3300 / h);
-        sprintf(buffer, "/tmp/junk_print_image_%d.ps", i);
-        fp = lept_fopen(buffer, "wb+");
-        sarrayAddString(sa, buffer, 1);
+        sprintf(buf, "image%d.ps", i);
+        fname = genPathname("/tmp/split", buf);
+        fprintf(stderr, "fname: %s\n", fname);
+        sarrayAddString(sa, fname, L_INSERT);
+        fp = lept_fopen(fname, "wb+");
         pixWriteStreamPS(fp, pixt, NULL, 300, scale);
         lept_fclose(fp);
         pixDestroy(&pixt);
@@ -96,15 +108,14 @@ static char  mainName[] = "printsplitimage";
 
     if (argc == 5) {
         for (i = 0; i < n; i++) {
-            name = sarrayGetString(sa, i, 0);
-            sprintf(buffer, "lpr -P%s %s &", printer, name);
-            ignore = system(buffer);
+            fname = sarrayGetString(sa, i, 0);
+            sprintf(buf, "lpr -P%s %s &", printer, fname);
+            ignore = system(buf);
         }
     }
 
     sarrayDestroy(&sa);
     pixaDestroy(&pixa);
-    pixDestroy(&pixr);
     pixDestroy(&pixs);
     return 0;
 }

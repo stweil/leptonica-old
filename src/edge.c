@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -31,7 +42,7 @@
  *
  *  The Sobel edge detector uses these two simple gradient filters.
  *
- *       1    2    1             1    0   -1 
+ *       1    2    1             1    0   -1
  *       0    0    0             2    0   -2
  *      -1   -2   -1             1    0   -1
  *
@@ -45,8 +56,6 @@
  *  the edges dark, both for 8 bpp and 1 bpp.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 
@@ -162,7 +171,7 @@ PIX       *pixt, *pixd;
  *      Return: pixd (8 bpp, edges are brighter), or null on error
  *
  *  Notes:
- *      (1) For detecting vertical edges, this considers the 
+ *      (1) For detecting vertical edges, this considers the
  *          difference of the central pixel from those on the left
  *          and right.  For situations where the gradient is the same
  *          sign on both sides, this computes and stores the minimum
@@ -247,7 +256,7 @@ PIX       *pixd;
             }
         }
     }
-                
+
     return pixd;
 }
 
@@ -259,7 +268,7 @@ PIX       *pixd;
  *  pixMeasureEdgeSmoothness()
  *
  *      Input:  pixs (1 bpp)
- *              side (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOTTOM)
+ *              side (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOT)
  *              minjump (minimum jump to be counted; >= 1)
  *              minreversal (minimum reversal size for new peak or valley)
  *              &jpl (<optional return> jumps/length: number of jumps,
@@ -311,7 +320,7 @@ NUMA    *na, *nae;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (side != L_FROM_LEFT && side != L_FROM_RIGHT &&
-        side != L_FROM_TOP && side != L_FROM_BOTTOM)
+        side != L_FROM_TOP && side != L_FROM_BOT)
         return ERROR_INT("invalid side", procName, 1);
     if (minjump < 1)
         return ERROR_INT("invalid minjump; must be >= 1", procName, 1);
@@ -360,7 +369,7 @@ NUMA    *na, *nae;
  *  pixGetEdgeProfile()
  *
  *      Input:  pixs (1 bpp)
- *              side (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOTTOM)
+ *              side (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOT)
  *              debugfile (<optional> displays constructed edge; use NULL
  *                         for no output)
  *      Return: na (of fg edge pixel locations), or null on error
@@ -370,7 +379,7 @@ pixGetEdgeProfile(PIX         *pixs,
                   l_int32      side,
                   const char  *debugfile)
 {
-l_int32   x, y, w, h, loc, n, index, ival;
+l_int32   x, y, w, h, loc, index, ival;
 l_uint32  val;
 NUMA     *na;
 PIX      *pixt;
@@ -381,7 +390,7 @@ PIXCMAP  *cmap;
     if (!pixs || pixGetDepth(pixs) != 1)
         return (NUMA *)ERROR_PTR("pixs undefined or not 1 bpp", procName, NULL);
     if (side != L_FROM_LEFT && side != L_FROM_RIGHT &&
-        side != L_FROM_TOP && side != L_FROM_BOTTOM)
+        side != L_FROM_TOP && side != L_FROM_BOT)
         return (NUMA *)ERROR_PTR("invalid side", procName, NULL);
 
     pixGetDimensions(pixs, &w, &h, NULL);
@@ -395,9 +404,9 @@ PIXCMAP  *cmap;
         numaAddNumber(na, loc);
         for (y = 1; y < h; y++) {
             pixGetPixel(pixs, loc, y, &val);
-            if (val == 1)
+            if (val == 1) {
                 pixGetLastOnPixelInRun(pixs, loc, y, L_FROM_RIGHT, &loc);
-            else {
+            } else {
                 pixGetLastOffPixelInRun(pixs, loc, y, L_FROM_LEFT, &loc);
                 loc = (loc == w - 1) ? 0 : loc + 1;
             }
@@ -410,9 +419,9 @@ PIXCMAP  *cmap;
         numaAddNumber(na, loc);
         for (y = 1; y < h; y++) {
             pixGetPixel(pixs, loc, y, &val);
-            if (val == 1)
+            if (val == 1) {
                 pixGetLastOnPixelInRun(pixs, loc, y, L_FROM_LEFT, &loc);
-            else {
+            } else {
                 pixGetLastOffPixelInRun(pixs, loc, y, L_FROM_RIGHT, &loc);
                 loc = (loc == 0) ? w - 1 : loc - 1;
             }
@@ -425,25 +434,25 @@ PIXCMAP  *cmap;
         numaAddNumber(na, loc);
         for (x = 1; x < w; x++) {
             pixGetPixel(pixs, x, loc, &val);
-            if (val == 1)
-                pixGetLastOnPixelInRun(pixs, x, loc, L_FROM_BOTTOM, &loc);
-            else {
+            if (val == 1) {
+                pixGetLastOnPixelInRun(pixs, x, loc, L_FROM_BOT, &loc);
+            } else {
                 pixGetLastOffPixelInRun(pixs, x, loc, L_FROM_TOP, &loc);
                 loc = (loc == h - 1) ? 0 : loc + 1;
             }
             numaAddNumber(na, loc);
         }
     }
-    else {  /* side == L_FROM_BOTTOM */
-        pixGetLastOffPixelInRun(pixs, 0, h - 1, L_FROM_BOTTOM, &loc);
+    else {  /* side == L_FROM_BOT */
+        pixGetLastOffPixelInRun(pixs, 0, h - 1, L_FROM_BOT, &loc);
         loc = (loc == 0) ? h - 1 : loc - 1;  /* back to the bottom edge */
         numaAddNumber(na, loc);
         for (x = 1; x < w; x++) {
             pixGetPixel(pixs, x, loc, &val);
-            if (val == 1)
+            if (val == 1) {
                 pixGetLastOnPixelInRun(pixs, x, loc, L_FROM_TOP, &loc);
-            else {
-                pixGetLastOffPixelInRun(pixs, x, loc, L_FROM_BOTTOM, &loc);
+            } else {
+                pixGetLastOffPixelInRun(pixs, x, loc, L_FROM_BOT, &loc);
                 loc = (loc == 0) ? h - 1 : loc - 1;
             }
             numaAddNumber(na, loc);
@@ -455,13 +464,12 @@ PIXCMAP  *cmap;
         cmap = pixGetColormap(pixt);
         pixcmapAddColor(cmap, 255, 0, 0);
         index = pixcmapGetCount(cmap) - 1;
-        n = numaGetCount(na);
         if (side == L_FROM_LEFT || side == L_FROM_RIGHT) {
             for (y = 0; y < h; y++) {
                 numaGetIValue(na, y, &ival);
                 pixSetPixel(pixt, ival, y, index);
             }
-        } else {  /* L_FROM_TOP or L_FROM_BOTTOM */
+        } else {  /* L_FROM_TOP or L_FROM_BOT */
             for (x = 0; x < w; x++) {
                 numaGetIValue(na, x, &ival);
                 pixSetPixel(pixt, x, ival, index);
@@ -480,7 +488,7 @@ PIXCMAP  *cmap;
  *
  *      Input:  pixs (1 bpp)
  *              x, y (starting location)
- *              direction (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOTTOM)
+ *              direction (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOT)
  *              &loc (<return> location in scan direction coordinate
  *                    of last OFF pixel found)
  *      Return: na (of fg edge pixel locations), or null on error
@@ -513,7 +521,7 @@ l_uint32  val;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs undefined or not 1 bpp", procName, 1);
     if (direction != L_FROM_LEFT && direction != L_FROM_RIGHT &&
-        direction != L_FROM_TOP && direction != L_FROM_BOTTOM)
+        direction != L_FROM_TOP && direction != L_FROM_BOT)
         return ERROR_INT("invalid side", procName, 1);
 
     pixGetDimensions(pixs, &w, &h, NULL);
@@ -540,7 +548,7 @@ l_uint32  val;
         }
         *ploc = loc - 1;
     }
-    else if (direction == L_FROM_BOTTOM) {
+    else if (direction == L_FROM_BOT) {
         for (loc = y; loc >= 0; loc--) {
             pixGetPixel(pixs, x, loc, &val);
             if (val == 1)
@@ -557,7 +565,7 @@ l_uint32  val;
  *
  *      Input:  pixs (1 bpp)
  *              x, y (starting location)
- *              direction (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOTTOM)
+ *              direction (L_FROM_LEFT, L_FROM_RIGHT, L_FROM_TOP, L_FROM_BOT)
  *              &loc (<return> location in scan direction coordinate
  *                    of first ON pixel found)
  *      Return: na (of fg edge pixel locations), or null on error
@@ -585,7 +593,7 @@ l_uint32  val;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs undefined or not 1 bpp", procName, 1);
     if (direction != L_FROM_LEFT && direction != L_FROM_RIGHT &&
-        direction != L_FROM_TOP && direction != L_FROM_BOTTOM)
+        direction != L_FROM_TOP && direction != L_FROM_BOT)
         return ERROR_INT("invalid side", procName, 1);
 
     pixGetDimensions(pixs, &w, &h, NULL);
@@ -612,7 +620,7 @@ l_uint32  val;
         }
         *ploc = loc - 1;
     }
-    else if (direction == L_FROM_BOTTOM) {
+    else if (direction == L_FROM_BOT) {
         for (loc = y; loc >= 0; loc--) {
             pixGetPixel(pixs, x, loc, &val);
             if (val == 0)
@@ -622,5 +630,3 @@ l_uint32  val;
     }
     return 0;
 }
-
-

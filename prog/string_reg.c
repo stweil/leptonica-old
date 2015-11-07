@@ -1,40 +1,52 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  * string_reg.c
  *
  *    This tests several sarray functions.
+ *
+ *    N.B.  This requires 'diff' for testing.
  */
 
 #include <string.h>
 #include "allheaders.h"
 
-
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 l_int32      ignore;
 size_t       nbytesin, nbytesout;
-char        *infile, *outfile, *instring, *outstring;
+char        *infile, *instring, *outstring;
 SARRAY      *sa1, *sa2, *sa3, *sa4, *sa5;
 char         buf[256];
 static char  mainName[] = "string_reg";
 
     if (argc != 2)
-	return ERROR_INT(" Syntax:  string_reg infile", mainName, 1);
+        return ERROR_INT(" Syntax:  string_reg infile", mainName, 1);
 
     infile = argv[1];
     instring = (char *)l_binaryRead(infile, &nbytesin);
@@ -76,9 +88,9 @@ static char  mainName[] = "string_reg";
     l_binaryWrite("/tmp/junk6.txt", "w", outstring, nbytesout);
     lept_free(outstring);
     sprintf(buf, "diff -s /tmp/junk6.txt %s", infile);
-    ignore = system(buf);
+    ignore = system(buf);  /* diff */
 
-	/* write/read/write; compare /tmp/junkout5 with /tmp/junkout6 */
+        /* write/read/write; compare /tmp/junkout5 with /tmp/junkout6 */
     sarrayWrite("/tmp/junk7.txt", sa2);
     sarrayWrite("/tmp/junk8.txt", sa3);
     sa4 = sarrayRead("/tmp/junk8.txt");
@@ -92,7 +104,6 @@ static char  mainName[] = "string_reg";
     sarrayDestroy(&sa4);
     sarrayDestroy(&sa5);
     lept_free(instring);
-
     return 0;
 }
 

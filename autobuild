@@ -2,9 +2,9 @@
 #
 #  autobuild
 
-libtoolize -c
+libtoolize -c -f
 aclocal
-autoheader
+autoheader -f
 autoconf
-automake -a -c
+automake -a -c -f
 

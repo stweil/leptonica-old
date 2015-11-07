@@ -1,23 +1,73 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
+
+/*
+ *  General features of image I/O in leptonica
+ *
+ *  At present, there are 9 file formats for images that can be read
+ *  and written:
+ *      png (requires libpng, libz)
+ *      jpeg (requires libjpeg)
+ *      tiff (requires libtiff, libz)
+ *      gif (requires libgif)
+ *      webp (requires libwebp)
+ *      jp2 (requires libopenjp2)
+ *      bmp (no library required)
+ *      pnm (no library required)
+ *      spix (no library required)
+ *  Additionally, there are two file formats for writing (only) images:
+ *      PostScript (requires libpng, libz, libjpeg, libtiff)
+ *      pdf (requires libpng, libz, libjpeg, libtiff)
+ *
+ *  For all 9 read/write formats, leptonica provides interconversion
+ *  between pix (with raster data) and formatted image data:
+ *      Conversion from pix (typically compression):
+ *          pixWrite():        pix --> file
+ *          pixWriteStream():  pix --> filestream (aka FILE*)
+ *          pixWriteMem():     pix --> memory buffer
+ *      Conversion to pix (typically decompression):
+ *          pixRead():         file --> pix
+ *          pixReadStream():   filestream --> pix
+ *          pixReadMem():      memory buffer --> pix
+ *
+ *  Conversions for which the image data is not compressed are:
+ *     * uncompressed tiff   (IFF_TIFF)
+ *     * bmp
+ *     * pnm
+ *     * spix (fast serialization that copies the pix raster data)
+ *
+ *  The image header (metadata) information can be read from either
+ *  the compressed file or a memory buffer, for all 9 formats.
+ */
 
 #ifndef  LEPTONICA_IMAGEIO_H
 #define  LEPTONICA_IMAGEIO_H
 
 /* ------------------ Image file format types -------------- */
-/*  
+/*
  *  The IFF_DEFAULT flag is used to write the file out in the
  *  same (input) file format that the pix was read from.  If the pix
  *  was not read from file, the input format field will be
@@ -62,9 +112,10 @@ enum {
 };
 
 
-/* ------------------ Gray hinting in jpeg reader --------------- */
+/* ------------- Hinting bit flags in jpeg reader --------------- */
 enum {
-    L_HINT_GRAY = 1,  /* only want grayscale information */
+    L_JPEG_READ_LUMINANCE = 1,  /* only want luminance data; no chroma */
+    L_JPEG_FAIL_ON_BAD_DATA = 2  /* don't return possibly damaged pix */
 };
 
 
@@ -72,7 +123,8 @@ enum {
 enum {
     L_JPEG_ENCODE   = 1,    /* use dct encoding: 8 and 32 bpp, no cmap     */
     L_G4_ENCODE     = 2,    /* use ccitt g4 fax encoding: 1 bpp            */
-    L_FLATE_ENCODE  = 3     /* use flate encoding: any depth, cmap ok      */
+    L_FLATE_ENCODE  = 3,    /* use flate encoding: any depth, cmap ok      */
+    L_JP2K_ENCODE  = 4      /* use jp2k encoding: 8 and 32 bpp, no cmap    */
 };
 
 
@@ -102,10 +154,11 @@ struct L_Compressed_Data
     l_int32            bps;          /* bits/sample; typ. 1, 2, 4 or 8      */
     l_int32            spp;          /* samples/pixel; typ. 1 or 3          */
     l_int32            minisblack;   /* tiff g4 photometry                  */
+    l_int32            predictor;    /* flate data has PNG predictors       */
     size_t             nbytes;       /* number of uncompressed raster bytes */
     l_int32            res;          /* resolution (ppi)                    */
 };
-typedef struct L_Compressed_Data  L_COMPRESSED_DATA;
+typedef struct L_Compressed_Data  L_COMP_DATA;
 
 
 /* ------------------------ Pdf multi-image flags ------------------------ */
@@ -142,12 +195,11 @@ struct L_Pdf_Data
     struct Box        *mediabox;     /* bounding region for all images      */
     struct Sarray     *saprex;       /* pre-binary-stream xobject strings   */
     struct Sarray     *sacmap;       /* colormap pdf object strings         */
-    struct Numa       *objsize;      /* sizes of each pdf string object     */
-    struct Numa       *objloc;       /* location of each pdf string object  */
+    struct L_Dna      *objsize;      /* sizes of each pdf string object     */
+    struct L_Dna      *objloc;       /* location of each pdf string object  */
     l_int32            xrefloc;      /* location of xref                    */
 };
 typedef struct L_Pdf_Data  L_PDF_DATA;
 
 
 #endif  /* LEPTONICA_IMAGEIO_H */
-

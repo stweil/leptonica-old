@@ -1,22 +1,33 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 
 /*
  *  fmorphauto.c
- *      
+ *
  *    Main function calls:
  *       l_int32             fmorphautogen()
  *       l_int32             fmorphautogen1()
@@ -51,7 +62,7 @@
  *        you can invoke fmorphautogen() any number of times
  *        to get functions that all have different names so that
  *        they can be linked into one program.
- *        
+ *
  *    (3) You copy the generated source files back to your src
  *        directory for compilation.  Put their names in the
  *        Makefile, regenerate the prototypes, and recompile
@@ -78,7 +89,7 @@
  *        This set is listed at the beginning of the file fmorphgen.1.c.
  *        For examples of use, see the file prog/binmorph_reg1.c, which
  *        verifies the consistency of the various implementations by
- *        comparing the dwa result with that of full-image rasterops. 
+ *        comparing the dwa result with that of full-image rasterops.
  */
 
 #include <string.h>
@@ -88,9 +99,9 @@
 #define   TEMPLATE1       "morphtemplate1.txt"
 #define   TEMPLATE2       "morphtemplate2.txt"
 
-#define   BUFFER_SIZE     512
-
 #define   PROTOARGS   "(l_uint32 *, l_int32, l_int32, l_int32, l_uint32 *, l_int32);"
+
+static const l_int32  L_BUF_SIZE = 512;
 
 static char * makeBarrelshiftString(l_int32 delx, l_int32 dely);
 static SARRAY * sarrayMakeInnerLoopDWACode(SEL *sel, l_int32 index);
@@ -273,7 +284,7 @@ char    *str_doc1, *str_doc2, *str_doc3, *str_doc4;
 char    *str_def1, *str_def2, *str_proc1, *str_proc2;
 char    *str_dwa1, *str_low_dt, *str_low_ds, *str_low_ts;
 char    *str_low_tsp1, *str_low_dtp1;
-char     bigbuf[BUFFER_SIZE];
+char     bigbuf[L_BUF_SIZE];
 l_int32  i, nsels, nbytes, actstart, end, newstart;
 size_t   size;
 SARRAY  *sa1, *sa2, *sa3;
@@ -286,7 +297,7 @@ SARRAY  *sa1, *sa2, *sa3;
         fileindex = 0;
     if ((nsels = selaGetCount(sela)) == 0)
         return ERROR_INT("no sels in sela", procName, 1);
-    
+
         /* Make array of sel names */
     sa1 = selaGetSelnames(sela);
 
@@ -328,7 +339,7 @@ SARRAY  *sa1, *sa2, *sa3;
     str_proc2 = stringNew(bigbuf);
     sprintf(bigbuf,
             "    pixt2 = pixFMorphopGen_%d(NULL, pixt1, operation, selname);",
-	    fileindex);
+            fileindex);
     str_dwa1 = stringNew(bigbuf);
     sprintf(bigbuf,
       "            fmorphopgen_low_%d(datad, w, h, wpld, datat, wpls, index);",
@@ -362,16 +373,16 @@ SARRAY  *sa1, *sa2, *sa3;
         /* Insert function names as documentation */
     sarrayAddString(sa3, str_doc1, L_INSERT);
     sarrayAddString(sa3, str_doc2, L_INSERT);
-    
+
         /* Add '#include's */
     sarrayParseRange(sa2, newstart, &actstart, &end, &newstart, "--", 0);
     sarrayAppendRange(sa3, sa2, actstart, end);
-    
+
         /* Insert function prototypes */
     sarrayAddString(sa3, str_proto1, L_INSERT);
     sarrayAddString(sa3, str_proto2, L_INSERT);
     sarrayAddString(sa3, str_proto3, L_INSERT);
-    
+
         /* Add static globals */
     sprintf(bigbuf, "\nstatic l_int32   NUM_SELS_GENERATED = %d;", nsels);
     sarrayAddString(sa3, bigbuf, L_COPY);
@@ -450,9 +461,9 @@ SARRAY  *sa1, *sa2, *sa3;
     FREE(filestr);
     return 0;
 }
-        
 
-/* 
+
+/*
  *  fmorphautogen2()
  *
  *      Input:  sela
@@ -478,7 +489,7 @@ fmorphautogen2(SELA        *sela,
 {
 char    *filestr, *linestr, *fname;
 char    *str_doc1, *str_doc2, *str_doc3, *str_doc4, *str_def1;
-char     bigbuf[BUFFER_SIZE];
+char     bigbuf[L_BUF_SIZE];
 char     breakstring[] = "        break;";
 char     staticstring[] = "static void";
 l_int32  i, nsels, nbytes, actstart, end, newstart;
@@ -495,7 +506,7 @@ SEL     *sel;
         fileindex = 0;
     if ((nsels = selaGetCount(sela)) == 0)
         return ERROR_INT("no sels in sela", procName, 1);
-    
+
         /* Make the array of textlines from morphtemplate2.txt */
     if ((filestr = (char *)l_binaryRead(TEMPLATE2, &size)) == NULL)
         return ERROR_INT("filestr not made", procName, 1);
@@ -558,7 +569,7 @@ SEL     *sel;
             return ERROR_INT("linestr not retrieved", procName, 1);
         sarrayAddString(sa4, linestr, L_INSERT);
     }
-        
+
         /* Insert function header */
     sarrayParseRange(sa1, newstart, &actstart, &end, &newstart, "--", 0);
     sarrayAppendRange(sa4, sa1, actstart, end);
@@ -594,7 +605,7 @@ SEL     *sel;
 
         /* Do all the static functions */
     for (i = 0; i < 2 * nsels; i++) {
-	    /* Generate the function header and add the common args */
+            /* Generate the function header and add the common args */
         sarrayAddString(sa4, staticstring, L_COPY);
         fname = sarrayGetString(sa2, i, L_NOCOPY);
         sprintf(bigbuf, "%s(l_uint32  *datad,", fname);
@@ -604,12 +615,12 @@ SEL     *sel;
             /* Declare and define wplsN args, as necessary */
         if ((sel = selaGetSel(sela, i/2)) == NULL)
             return ERROR_INT("sel not returned", procName, 1);
-        if ((sa5 = sarrayMakeWplsCode(sel)) == NULL) 
+        if ((sa5 = sarrayMakeWplsCode(sel)) == NULL)
             return ERROR_INT("sa5 not made", procName, 1);
         sarrayConcatenate(sa4, sa5);
         sarrayDestroy(&sa5);
-        
-	    /* Add the function loop code */
+
+            /* Add the function loop code */
         sarrayAppendRange(sa4, sa1, loopstart, loopend);
 
             /* Insert barrel-op code for *dptr */
@@ -618,7 +629,7 @@ SEL     *sel;
         sarrayConcatenate(sa4, sa6);
         sarrayDestroy(&sa6);
 
-	    /* Finish the function code */
+            /* Finish the function code */
         sarrayAppendRange(sa4, sa1, finalstart, finalend);
     }
 
@@ -636,7 +647,7 @@ SEL     *sel;
     sarrayDestroy(&sa3);
     sarrayDestroy(&sa4);
     FREE(filestr);
-        
+
     return 0;
 }
 
@@ -650,7 +661,7 @@ SEL     *sel;
 static SARRAY *
 sarrayMakeWplsCode(SEL  *sel)
 {
-char     spacestring[] = "    ";
+char     emptystring[] = "";
 l_int32  i, j, ymax, dely, allvshifts;
 l_int32  vshift[32];
 SARRAY  *sa;
@@ -674,7 +685,7 @@ SARRAY  *sa;
         }
     }
     if (ymax > 31) {
-        L_WARNING("ymax > 31; truncating to 31", procName);
+        L_WARNING("ymax > 31; truncating to 31\n", procName);
         ymax = 31;
     }
 
@@ -683,7 +694,7 @@ SARRAY  *sa;
     for (i = 0; i < ymax; i++) {
         if (vshift[i] == 0) {
             allvshifts = FALSE;
-	    break;
+            break;
         }
     }
 
@@ -708,15 +719,14 @@ SARRAY  *sa;
             sarrayAddString(sa, wpldecls[26], 1);
         if (ymax > 1)
             sarrayAddString(sa, wpldecls[ymax - 2], 1);
-    }
-    else {  /* puts them one/line */
+    } else {  /* puts them one/line */
         for (i = 2; i <= ymax; i++) {
             if (vshift[i])
                 sarrayAddString(sa, wplgendecls[i - 2], 1);
         }
     }
-    
-    sarrayAddString(sa, spacestring, 1);
+
+    sarrayAddString(sa, emptystring, 1);
 
         /* Add definitions */
     for (i = 2; i <= ymax; i++) {
@@ -738,7 +748,7 @@ sarrayMakeInnerLoopDWACode(SEL     *sel,
 char    *tstr, *string;
 char     logicalor[] = "|";
 char     logicaland[] = "&";
-char     bigbuf[BUFFER_SIZE];
+char     bigbuf[L_BUF_SIZE];
 l_int32  i, j, optype, count, nfound, delx, dely;
 SARRAY  *sa;
 
@@ -750,8 +760,7 @@ SARRAY  *sa;
     if (index % 2 == 0) {
         optype = L_MORPH_DILATE;
         tstr = logicalor;
-    }
-    else {
+    } else {
         optype = L_MORPH_ERODE;
         tstr = logicaland;
     }
@@ -767,7 +776,7 @@ SARRAY  *sa;
     if ((sa = sarrayCreate(0)) == NULL)
         return (SARRAY *)ERROR_PTR("sa not made", procName, NULL);
     if (count == 0) {
-        L_WARNING_INT("no hits in Sel %d", procName, index);
+        L_WARNING("no hits in Sel %d\n", procName, index);
         return sa;  /* no code inside! */
     }
 
@@ -779,13 +788,12 @@ SARRAY  *sa;
                 if (optype == L_MORPH_DILATE) {
                     dely = sel->cy - i;
                     delx = sel->cx - j;
-                }
-                else if (optype == L_MORPH_ERODE) {
+                } else if (optype == L_MORPH_ERODE) {
                     dely = i - sel->cy;
                     delx = j - sel->cx;
                 }
                 if ((string = makeBarrelshiftString(delx, dely)) == NULL) {
-                    L_WARNING("barrel shift string not made", procName);
+                    L_WARNING("barrel shift string not made\n", procName);
                     continue;
                 }
                 if (count == 1)  /* just one item */
@@ -814,7 +822,7 @@ makeBarrelshiftString(l_int32  delx,    /* j - cx */
                       l_int32  dely)    /* i - cy */
 {
 l_int32  absx, absy;
-char     bigbuf[BUFFER_SIZE];
+char     bigbuf[L_BUF_SIZE];
 
     PROCNAME("makeBarrelshiftString");
 
@@ -849,7 +857,6 @@ char     bigbuf[BUFFER_SIZE];
     else  /*  ((delx > 0) && (dely > 0))  */
         sprintf(bigbuf, "((*(sptr %s) << %d) | (*(sptr %s + 1) >> %d))",
               wplstrp[absy - 1], absx, wplstrp[absy - 1], 32 - absx);
-            
+
     return stringNew(bigbuf);
 }
-

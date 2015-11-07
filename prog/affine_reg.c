@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -50,16 +61,14 @@ static const l_float32  SCALEY = 0.78;
 static const l_float32  ROTATION = 0.11;   /* radian */
 
 #define   ADDED_BORDER_PIXELS       1000
-#define   ALL     0
+#define   ALL     1
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char         bufname[256];
-l_int32      i, j, w, h, d, x, y, wpls;
-l_uint32    *datas, *lines;
-l_float32   *vc;
+l_int32      i, w, h;
 l_float32   *mat1, *mat2, *mat3, *mat1i, *mat2i, *mat3i, *matdinv;
 l_float32    matd[9], matdi[9];
 BOXA        *boxa, *boxa2;
@@ -70,25 +79,25 @@ PTA         *ptas, *ptad;
 static char  mainName[] = "affine_reg";
 
     if (argc != 1)
-	exit(ERROR_INT(" Syntax:  affine_reg", mainName, 1));
+        return ERROR_INT(" Syntax:  affine_reg", mainName, 1);
 
     if ((pixs = pixRead("feyn.tif")) == NULL)
-	exit(ERROR_INT("pixs not made", mainName, 1));
+        return ERROR_INT("pixs not made", mainName, 1);
 
-#if ALL
+#if 1
         /* Test invertability of sequential. */
     pixa = pixaCreate(0);
     for (i = 0; i < 3; i++) {
         pixb = pixAddBorder(pixs, ADDED_BORDER_PIXELS, 0);
         MakePtas(i, &ptas, &ptad);
         pixt1 = pixAffineSequential(pixb, ptad, ptas, 0, 0);
-        pixSaveTiled(pixt1, pixa, 3, 1, 20, 8);
+        pixSaveTiled(pixt1, pixa, 0.3333, 1, 20, 8);
         pixt2 = pixAffineSequential(pixt1, ptas, ptad, 0, 0);
-        pixSaveTiled(pixt2, pixa, 3, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 0.3333, 0, 20, 0);
         pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS);
         pixXor(pixd, pixd, pixs);
-        pixSaveTiled(pixd, pixa, 3, 0, 20, 0);
-        sprintf(bufname, "/tmp/junkseq%d.png", i);
+        pixSaveTiled(pixd, pixa, 0.3333, 0, 20, 0);
+        sprintf(bufname, "/tmp/seq%d.png", i);
         pixWrite(bufname, pixd, IFF_PNG);
         pixDestroy(&pixb);
         pixDestroy(&pixt1);
@@ -99,26 +108,26 @@ static char  mainName[] = "affine_reg";
     }
 
     pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine1.png", pixt1, IFF_PNG);
+    pixWrite("/tmp/affine1.png", pixt1, IFF_PNG);
     pixDisplay(pixt1, 100, 100);
     pixDestroy(&pixt1);
     pixaDestroy(&pixa);
 #endif
 
-#if ALL 
+#if ALL
         /* Test invertability of sampling */
     pixa = pixaCreate(0);
     for (i = 0; i < 3; i++) {
         pixb = pixAddBorder(pixs, ADDED_BORDER_PIXELS, 0);
         MakePtas(i, &ptas, &ptad);
         pixt1 = pixAffineSampledPta(pixb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 3, 1, 20, 8);
+        pixSaveTiled(pixt1, pixa, 0.3333, 1, 20, 8);
         pixt2 = pixAffineSampledPta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 3, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 0.3333, 0, 20, 0);
         pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS);
         pixXor(pixd, pixd, pixs);
-        pixSaveTiled(pixd, pixa, 3, 0, 20, 0);
-        if (i == 0) pixWrite("/tmp/junksamp.png", pixt1, IFF_PNG);
+        pixSaveTiled(pixd, pixa, 0.3333, 0, 20, 0);
+        if (i == 0) pixWrite("/tmp/samp.png", pixt1, IFF_PNG);
         pixDestroy(&pixb);
         pixDestroy(&pixt1);
         pixDestroy(&pixt2);
@@ -128,7 +137,7 @@ static char  mainName[] = "affine_reg";
     }
 
     pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine2.png", pixt1, IFF_PNG);
+    pixWrite("/tmp/affine2.png", pixt1, IFF_PNG);
     pixDisplay(pixt1, 100, 300);
     pixDestroy(&pixt1);
     pixaDestroy(&pixa);
@@ -142,13 +151,13 @@ static char  mainName[] = "affine_reg";
         pixb = pixAddBorder(pixg, ADDED_BORDER_PIXELS / 3, 255);
         MakePtas(i, &ptas, &ptad);
         pixt1 = pixAffinePta(pixb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 1, 1, 20, 8);
+        pixSaveTiled(pixt1, pixa, 1.0, 1, 20, 8);
         pixt2 = pixAffinePta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 0);
         pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS / 3);
         pixXor(pixd, pixd, pixg);
-        pixSaveTiled(pixd, pixa, 1, 0, 20, 0);
-        if (i == 0) pixWrite("/tmp/junkinterp.png", pixt1, IFF_PNG);
+        pixSaveTiled(pixd, pixa, 1.0, 0, 20, 0);
+        if (i == 0) pixWrite("/tmp/interp.png", pixt1, IFF_PNG);
         pixDestroy(&pixb);
         pixDestroy(&pixt1);
         pixDestroy(&pixt2);
@@ -158,7 +167,7 @@ static char  mainName[] = "affine_reg";
     }
 
     pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine3.png", pixt1, IFF_PNG);
+    pixWrite("/tmp/affine3.png", pixt1, IFF_PNG);
     pixDisplay(pixt1, 100, 500);
     pixDestroy(&pixt1);
     pixaDestroy(&pixa);
@@ -174,12 +183,12 @@ static char  mainName[] = "affine_reg";
         pixb = pixAddBorder(pixcs, ADDED_BORDER_PIXELS / 4, 0xffffff00);
         MakePtas(i, &ptas, &ptad);
         pixt1 = pixAffinePta(pixb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 1, 1, 20, 32);
+        pixSaveTiled(pixt1, pixa, 1.0, 1, 20, 32);
         pixt2 = pixAffinePta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
+        pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 0);
         pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS / 4);
         pixXor(pixd, pixd, pixcs);
-        pixSaveTiled(pixd, pixa, 1, 0, 20, 0);
+        pixSaveTiled(pixd, pixa, 1.0, 0, 20, 0);
         pixDestroy(&pixb);
         pixDestroy(&pixt1);
         pixDestroy(&pixt2);
@@ -189,7 +198,7 @@ static char  mainName[] = "affine_reg";
     }
 
     pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine4.png", pixt1, IFF_PNG);
+    pixWrite("/tmp/affine4.png", pixt1, IFF_PNG);
     pixDisplay(pixt1, 100, 500);
     pixDestroy(&pixt1);
     pixaDestroy(&pixa);
@@ -197,26 +206,26 @@ static char  mainName[] = "affine_reg";
     pixDestroy(&pixcs);
 #endif
 
-#if ALL 
+#if ALL
        /* Comparison between sequential and sampling */
     MakePtas(3, &ptas, &ptad);
     pixa = pixaCreate(0);
 
-	/* Use sequential transforms */
+        /* Use sequential transforms */
     pixt1 = pixAffineSequential(pixs, ptas, ptad,
                      ADDED_BORDER_PIXELS, ADDED_BORDER_PIXELS);
-    pixSaveTiled(pixt1, pixa, 2, 0, 20, 8);
+    pixSaveTiled(pixt1, pixa, 0.5, 0, 20, 8);
 
-	/* Use sampled transform */
+        /* Use sampled transform */
     pixt2 = pixAffineSampledPta(pixs, ptas, ptad, L_BRING_IN_WHITE);
-    pixSaveTiled(pixt2, pixa, 2, 0, 20, 8);
+    pixSaveTiled(pixt2, pixa, 0.5, 0, 20, 8);
 
         /* Compare the results */
     pixXor(pixt2, pixt2, pixt1);
-    pixSaveTiled(pixt2, pixa, 2, 0, 20, 8);
+    pixSaveTiled(pixt2, pixa, 0.5, 0, 20, 8);
 
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine5.png", pixd, IFF_PNG);
+    pixWrite("/tmp/affine5.png", pixd, IFF_PNG);
     pixDisplay(pixd, 100, 700);
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
@@ -226,7 +235,7 @@ static char  mainName[] = "affine_reg";
     ptaDestroy(&ptad);
 #endif
 
-#if ALL 
+#if ALL
        /* Get timings and test with large distortion */
     MakePtas(4, &ptas, &ptad);
     pixa = pixaCreate(0);
@@ -236,28 +245,28 @@ static char  mainName[] = "affine_reg";
     pixt1 = pixAffineSequential(pixg, ptas, ptad, 0, 0);
     fprintf(stderr, " Time for pixAffineSequentialPta(): %6.2f sec\n",
             stopTimer());
-    pixSaveTiled(pixt1, pixa, 1, 1, 20, 8);
+    pixSaveTiled(pixt1, pixa, 1.0, 1, 20, 8);
 
     startTimer();
     pixt2 = pixAffineSampledPta(pixg, ptas, ptad, L_BRING_IN_WHITE);
     fprintf(stderr, " Time for pixAffineSampledPta(): %6.2f sec\n", stopTimer());
-    pixSaveTiled(pixt2, pixa, 1, 0, 20, 8);
+    pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 8);
 
     startTimer();
     pixt3 = pixAffinePta(pixg, ptas, ptad, L_BRING_IN_WHITE);
     fprintf(stderr, " Time for pixAffinePta(): %6.2f sec\n", stopTimer());
-    pixSaveTiled(pixt3, pixa, 1, 0, 20, 8);
+    pixSaveTiled(pixt3, pixa, 1.0, 0, 20, 8);
 
     pixXor(pixt1, pixt1, pixt2);
-    pixSaveTiled(pixt1, pixa, 1, 1, 20, 8);
+    pixSaveTiled(pixt1, pixa, 1.0, 1, 20, 8);
     pixXor(pixt2, pixt2, pixt3);
-    pixSaveTiled(pixt2, pixa, 1, 0, 20, 8);
+    pixSaveTiled(pixt2, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt1);
     pixDestroy(&pixt2);
     pixDestroy(&pixt3);
 
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine6.png", pixd, IFF_PNG);
+    pixWrite("/tmp/affine6.png", pixd, IFF_PNG);
     pixDisplay(pixd, 100, 900);
     pixDestroy(&pixd);
     pixDestroy(&pixg);
@@ -268,7 +277,7 @@ static char  mainName[] = "affine_reg";
 
     pixDestroy(&pixs);
 
-#if 1
+#if ALL
         /* Set up pix and boxa */
     pixa = pixaCreate(0);
     pix = pixRead("lucasta.1.300.tif");
@@ -280,7 +289,7 @@ static char  mainName[] = "affine_reg";
     pixGetDimensions(pixs, &w, &h, NULL);
     pixc = pixCopy(NULL, pixs);
     RenderHashedBoxa(pixc, boxa, 113);
-    pixSaveTiled(pixc, pixa, 2, 1, 30, 32);
+    pixSaveTiled(pixc, pixa, 0.5, 1, 30, 32);
     pixDestroy(&pix);
     pixDestroy(&pixc);
     pixDestroy(&pixt1);
@@ -320,11 +329,11 @@ static char  mainName[] = "affine_reg";
         /* Apply the inverted affine transform pixs */
     pixd = pixAffine(pixs, matdinv, L_BRING_IN_WHITE);
     RenderHashedBoxa(pixd, boxa2, 513);
-    pixSaveTiled(pixd, pixa, 2, 0, 30, 32);
+    pixSaveTiled(pixd, pixa, 0.5, 0, 30, 32);
     pixDestroy(&pixd);
 
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkaffine7.png", pixd, IFF_PNG);
+    pixWrite("/tmp/affine7.png", pixd, IFF_PNG);
     pixDisplay(pixd, 100, 900);
     pixDestroy(&pixd);
     pixDestroy(&pixs);

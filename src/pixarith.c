@@ -1,18 +1,28 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 /*
  *  pixarith.c
@@ -32,11 +42,14 @@
  *           PIX        *pixInitAccumulate()
  *           PIX        *pixFinalAccumulate()
  *           PIX        *pixFinalAccumulateThreshold()
- *           l_int32     pixAccumulate() 
+ *           l_int32     pixAccumulate()
  *           l_int32     pixMultConstAccumulate()
  *
  *      Absolute value of difference
  *           PIX        *pixAbsDifference()
+ *
+ *      Sum of color images
+ *           PIX        *pixAddRGB()
  *
  *      Two-image min and max operations (8 and 16 bpp)
  *           PIX        *pixMinOrMax()
@@ -67,9 +80,6 @@
  *      provided in pixacc.c.
  */
 
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -96,8 +106,8 @@ l_int32
 pixAddConstantGray(PIX      *pixs,
                    l_int32   val)
 {
-l_int32    w, h, d, wpl;
-l_uint32  *data;
+l_int32    i, j, w, h, d, wpl, pval;
+l_uint32  *data, *line;
 
     PROCNAME("pixAddConstantGray");
 
@@ -109,7 +119,41 @@ l_uint32  *data;
 
     data = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
-    addConstantGrayLow(data, w, h, d, wpl, val);
+    for (i = 0; i < h; i++) {
+        line = data + i * wpl;
+        if (d == 8) {
+            if (val < 0) {
+                for (j = 0; j < w; j++) {
+                    pval = GET_DATA_BYTE(line, j);
+                    pval = L_MAX(0, pval + val);
+                    SET_DATA_BYTE(line, j, pval);
+                }
+            } else {  /* val >= 0 */
+                for (j = 0; j < w; j++) {
+                    pval = GET_DATA_BYTE(line, j);
+                    pval = L_MIN(255, pval + val);
+                    SET_DATA_BYTE(line, j, pval);
+                }
+            }
+        } else if (d == 16) {
+            if (val < 0) {
+                for (j = 0; j < w; j++) {
+                    pval = GET_DATA_TWO_BYTES(line, j);
+                    pval = L_MAX(0, pval + val);
+                    SET_DATA_TWO_BYTES(line, j, pval);
+                }
+            } else {  /* val >= 0 */
+                for (j = 0; j < w; j++) {
+                    pval = GET_DATA_TWO_BYTES(line, j);
+                    pval = L_MIN(0xffff, pval + val);
+                    SET_DATA_TWO_BYTES(line, j, pval);
+                }
+            }
+        } else {  /* d == 32; no check for overflow (< 0 or > 0xffffffff) */
+            for (j = 0; j < w; j++)
+                *(line + j) += val;
+        }
+    }
 
     return 0;
 }
@@ -131,8 +175,9 @@ l_int32
 pixMultConstantGray(PIX       *pixs,
                     l_float32  val)
 {
-l_int32    w, h, d, wpl;
-l_uint32  *data;
+l_int32    i, j, w, h, d, wpl, pval;
+l_uint32   upval;
+l_uint32  *data, *line;
 
     PROCNAME("pixMultConstantGray");
 
@@ -146,12 +191,35 @@ l_uint32  *data;
 
     data = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
-    multConstantGrayLow(data, w, h, d, wpl, val);
+    for (i = 0; i < h; i++) {
+        line = data + i * wpl;
+        if (d == 8) {
+            for (j = 0; j < w; j++) {
+                pval = GET_DATA_BYTE(line, j);
+                pval = (l_int32)(val * pval);
+                pval = L_MIN(255, pval);
+                SET_DATA_BYTE(line, j, pval);
+            }
+        } else if (d == 16) {
+            for (j = 0; j < w; j++) {
+                pval = GET_DATA_TWO_BYTES(line, j);
+                pval = (l_int32)(val * pval);
+                pval = L_MIN(0xffff, pval);
+                SET_DATA_TWO_BYTES(line, j, pval);
+            }
+        } else {  /* d == 32; no clipping */
+            for (j = 0; j < w; j++) {
+                upval = *(line + j);
+                upval = (l_uint32)(val * upval);
+                *(line + j) = upval;
+            }
+        }
+    }
 
     return 0;
 }
 
-            
+
 /*-------------------------------------------------------------*
  *             Two-image grayscale arithmetic ops              *
  *-------------------------------------------------------------*/
@@ -181,8 +249,8 @@ pixAddGray(PIX  *pixd,
            PIX  *pixs1,
            PIX  *pixs2)
 {
-l_int32    d, ws, hs, w, h, wpls, wpld;
-l_uint32  *datas, *datad;
+l_int32    i, j, d, ws, hs, w, h, wpls, wpld, val, sum;
+l_uint32  *datas, *datad, *lines, *lined;
 
     PROCNAME("pixAddGray");
 
@@ -203,9 +271,9 @@ l_uint32  *datas, *datad;
         return (PIX *)ERROR_PTR("depths differ (pixs1, pixd)", procName, pixd);
 
     if (!pixSizesEqual(pixs1, pixs2))
-        L_WARNING("pixs1 and pixs2 not equal in size", procName);
+        L_WARNING("pixs1 and pixs2 not equal in size\n", procName);
     if (pixd && !pixSizesEqual(pixs1, pixd))
-        L_WARNING("pixs1 and pixd not equal in size", procName);
+        L_WARNING("pixs1 and pixd not equal in size\n", procName);
 
     if (pixs1 != pixd)
         pixd = pixCopy(pixd, pixs1);
@@ -219,7 +287,27 @@ l_uint32  *datas, *datad;
     pixGetDimensions(pixd, &w, &h, NULL);
     w = L_MIN(ws, w);
     h = L_MIN(hs, h);
-    addGrayLow(datad, w, h, d, wpld, datas, wpls);
+    for (i = 0; i < h; i++) {
+        lined = datad + i * wpld;
+        lines = datas + i * wpls;
+        if (d == 8) {
+            for (j = 0; j < w; j++) {
+                sum = GET_DATA_BYTE(lines, j) + GET_DATA_BYTE(lined, j);
+                val = L_MIN(sum, 255);
+                SET_DATA_BYTE(lined, j, val);
+            }
+        } else if (d == 16) {
+            for (j = 0; j < w; j++) {
+                sum = GET_DATA_TWO_BYTES(lines, j)
+                    + GET_DATA_TWO_BYTES(lined, j);
+                val = L_MIN(sum, 0xffff);
+                SET_DATA_TWO_BYTES(lined, j, val);
+            }
+        } else {   /* d == 32; no clipping */
+            for (j = 0; j < w; j++)
+                *(lined + j) += *(lines + j);
+        }
+    }
 
     return pixd;
 }
@@ -251,8 +339,8 @@ pixSubtractGray(PIX  *pixd,
                 PIX  *pixs1,
                 PIX  *pixs2)
 {
-l_int32    w, h, ws, hs, d, wpls, wpld;
-l_uint32  *datas, *datad;
+l_int32    i, j, w, h, ws, hs, d, wpls, wpld, val, diff;
+l_uint32  *datas, *datad, *lines, *lined;
 
     PROCNAME("pixSubtractGray");
 
@@ -273,9 +361,9 @@ l_uint32  *datas, *datad;
         return (PIX *)ERROR_PTR("depths differ (pixs1, pixd)", procName, pixd);
 
     if (!pixSizesEqual(pixs1, pixs2))
-        L_WARNING("pixs1 and pixs2 not equal in size", procName);
+        L_WARNING("pixs1 and pixs2 not equal in size\n", procName);
     if (pixd && !pixSizesEqual(pixs1, pixd))
-        L_WARNING("pixs1 and pixd not equal in size", procName);
+        L_WARNING("pixs1 and pixd not equal in size\n", procName);
 
     if (pixs1 != pixd)
         pixd = pixCopy(pixd, pixs1);
@@ -289,7 +377,27 @@ l_uint32  *datas, *datad;
     pixGetDimensions(pixd, &w, &h, NULL);
     w = L_MIN(ws, w);
     h = L_MIN(hs, h);
-    subtractGrayLow(datad, w, h, d, wpld, datas, wpls);
+    for (i = 0; i < h; i++) {
+        lined = datad + i * wpld;
+        lines = datas + i * wpls;
+        if (d == 8) {
+            for (j = 0; j < w; j++) {
+                diff = GET_DATA_BYTE(lined, j) - GET_DATA_BYTE(lines, j);
+                val = L_MAX(diff, 0);
+                SET_DATA_BYTE(lined, j, val);
+            }
+        } else if (d == 16) {
+            for (j = 0; j < w; j++) {
+                diff = GET_DATA_TWO_BYTES(lined, j)
+                       - GET_DATA_TWO_BYTES(lines, j);
+                val = L_MAX(diff, 0);
+                SET_DATA_TWO_BYTES(lined, j, val);
+            }
+        } else {  /* d == 32; no clipping */
+            for (j = 0; j < w; j++)
+                *(lined + j) -= *(lines + j);
+        }
+    }
 
     return pixd;
 }
@@ -319,8 +427,8 @@ pixThresholdToValue(PIX      *pixd,
                     l_int32   threshval,
                     l_int32   setval)
 {
-l_int32    w, h, d, wpld;
-l_uint32  *datad;
+l_int32    i, j, w, h, d, wpld, setabove;
+l_uint32  *datad, *lined;
 
     PROCNAME("pixThresholdToValue");
 
@@ -341,18 +449,59 @@ l_uint32  *datad;
     if (!pixd)
         pixd = pixCopy(NULL, pixs);
     if (setval == threshval) {
-        L_WARNING("setval == threshval; no operation", procName);
+        L_WARNING("setval == threshval; no operation\n", procName);
         return pixd;
     }
 
     datad = pixGetData(pixd);
     pixGetDimensions(pixd, &w, &h, NULL);
     wpld = pixGetWpl(pixd);
+    if (setval > threshval)
+        setabove = TRUE;
+    else
+        setabove = FALSE;
 
-    thresholdToValueLow(datad, w, h, d, wpld, threshval, setval);
+    for (i = 0; i < h; i++) {
+        lined = datad + i * wpld;
+        if (setabove == TRUE) {
+            if (d == 8) {
+                for (j = 0; j < w; j++) {
+                    if (GET_DATA_BYTE(lined, j) - threshval >= 0)
+                        SET_DATA_BYTE(lined, j, setval);
+                }
+            } else if (d == 16) {
+                for (j = 0; j < w; j++) {
+                    if (GET_DATA_TWO_BYTES(lined, j) - threshval >= 0)
+                        SET_DATA_TWO_BYTES(lined, j, setval);
+                }
+            } else {  /* d == 32 */
+                for (j = 0; j < w; j++) {
+                    if (*(lined + j) >= threshval)
+                        *(lined + j) = setval;
+                }
+            }
+        } else { /* set if below or at threshold */
+            if (d == 8) {
+                for (j = 0; j < w; j++) {
+                    if (GET_DATA_BYTE(lined, j) - threshval <= 0)
+                        SET_DATA_BYTE(lined, j, setval);
+                }
+            } else if (d == 16) {
+                for (j = 0; j < w; j++) {
+                    if (GET_DATA_TWO_BYTES(lined, j) - threshval <= 0)
+                        SET_DATA_TWO_BYTES(lined, j, setval);
+                }
+            } else {  /* d == 32 */
+                for (j = 0; j < w; j++) {
+                    if (*(lined + j) <= threshval)
+                        *(lined + j) = setval;
+                }
+            }
+        }
+    }
+
     return pixd;
 }
-
 
 
 /*-------------------------------------------------------------*
@@ -416,8 +565,8 @@ pixFinalAccumulate(PIX      *pixs,
                    l_uint32  offset,
                    l_int32   depth)
 {
-l_int32    w, h, wpls, wpld;
-l_uint32  *datas, *datad;
+l_int32    i, j, w, h, wpls, wpld, val;
+l_uint32  *datas, *datad, *lines, *lined;
 PIX       *pixd;
 
     PROCNAME("pixFinalAccumulate");
@@ -439,8 +588,37 @@ PIX       *pixd;
     datad = pixGetData(pixd);
     wpls = pixGetWpl(pixs);
     wpld = pixGetWpl(pixd);
+    if (depth == 8) {
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            for (j = 0; j < w; j++) {
+                val = lines[j] - offset;
+                val = L_MAX(0, val);
+                val = L_MIN(255, val);
+                SET_DATA_BYTE(lined, j, (l_uint8)val);
+            }
+        }
+    } else if (depth == 16) {
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            for (j = 0; j < w; j++) {
+                val = lines[j] - offset;
+                val = L_MAX(0, val);
+                val = L_MIN(0xffff, val);
+                SET_DATA_TWO_BYTES(lined, j, (l_uint16)val);
+            }
+        }
+    } else {  /* depth == 32 */
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            for (j = 0; j < w; j++)
+                lined[j] = lines[j] - offset;
+        }
+    }
 
-    finalAccumulateLow(datad, w, h, depth, wpld, datas, wpls, offset);
     return pixd;
 }
 
@@ -462,8 +640,8 @@ pixFinalAccumulateThreshold(PIX      *pixs,
                             l_uint32  offset,
                             l_uint32  threshold)
 {
-l_int32    w, h, wpls, wpld;
-l_uint32  *datas, *datad;
+l_int32    i, j, w, h, wpls, wpld, val;
+l_uint32  *datas, *datad, *lines, *lined;
 PIX       *pixd;
 
     PROCNAME("pixFinalAccumulateThreshold");
@@ -483,14 +661,23 @@ PIX       *pixd;
     datad = pixGetData(pixd);
     wpls = pixGetWpl(pixs);
     wpld = pixGetWpl(pixd);
+    for (i = 0; i < h; i++) {
+        lines = datas + i * wpls;
+        lined = datad + i * wpld;
+        for (j = 0; j < w; j++) {
+            val = lines[j] - offset;
+            if (val >= threshold) {
+                SET_DATA_BIT(lined, j);
+            }
+        }
+    }
 
-    finalAccumulateThreshLow(datad, w, h, wpld, datas, wpls, offset, threshold);
     return pixd;
 }
 
 
 /*!
- *  pixAccumulate() 
+ *  pixAccumulate()
  *
  *      Input:  pixd (32 bpp)
  *              pixs (1, 8, 16 or 32 bpp)
@@ -508,8 +695,9 @@ pixAccumulate(PIX     *pixd,
               PIX     *pixs,
               l_int32  op)
 {
-l_int32    w, h, d, wd, hd, wpls, wpld;
-l_uint32  *datas, *datad;
+l_int32    i, j, w, h, d, wd, hd, wpls, wpld;
+l_uint32  *datas, *datad, *lines, *lined;
+
 
     PROCNAME("pixAccumulate");
 
@@ -532,14 +720,62 @@ l_uint32  *datas, *datad;
     pixGetDimensions(pixd, &wd, &hd, NULL);
     w = L_MIN(w, wd);
     h = L_MIN(h, hd);
+    if (d == 1) {
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            if (op == L_ARITH_ADD) {
+                for (j = 0; j < w; j++)
+                    lined[j] += GET_DATA_BIT(lines, j);
+            } else {  /* op == L_ARITH_SUBTRACT */
+                for (j = 0; j < w; j++)
+                    lined[j] -= GET_DATA_BIT(lines, j);
+            }
+        }
+    } else if (d == 8) {
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            if (op == L_ARITH_ADD) {
+                for (j = 0; j < w; j++)
+                    lined[j] += GET_DATA_BYTE(lines, j);
+            } else {  /* op == L_ARITH_SUBTRACT */
+                for (j = 0; j < w; j++)
+                    lined[j] -= GET_DATA_BYTE(lines, j);
+            }
+        }
+    } else if (d == 16) {
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            if (op == L_ARITH_ADD) {
+                for (j = 0; j < w; j++)
+                    lined[j] += GET_DATA_TWO_BYTES(lines, j);
+            } else {  /* op == L_ARITH_SUBTRACT */
+                for (j = 0; j < w; j++)
+                    lined[j] -= GET_DATA_TWO_BYTES(lines, j);
+            }
+        }
+    } else {  /* d == 32 */
+        for (i = 0; i < h; i++) {
+            lines = datas + i * wpls;
+            lined = datad + i * wpld;
+            if (op == L_ARITH_ADD) {
+                for (j = 0; j < w; j++)
+                    lined[j] += lines[j];
+            } else {  /* op == L_ARITH_SUBTRACT */
+                for (j = 0; j < w; j++)
+                    lined[j] -= lines[j];
+            }
+        }
+    }
 
-    accumulateLow(datad, w, h, wpld, datas, d, wpls, op);
     return 0;
 }
 
 
 /*!
- *  pixMultConstAccumulate() 
+ *  pixMultConstAccumulate()
  *
  *      Input:  pixs (32 bpp)
  *              factor
@@ -556,8 +792,8 @@ pixMultConstAccumulate(PIX       *pixs,
                        l_float32  factor,
                        l_uint32   offset)
 {
-l_int32    w, h, wpl;
-l_uint32  *data;
+l_int32    i, j, w, h, wpl, val;
+l_uint32  *data, *line;
 
     PROCNAME("pixMultConstAccumulate");
 
@@ -571,8 +807,16 @@ l_uint32  *data;
     pixGetDimensions(pixs, &w, &h, NULL);
     data = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
+    for (i = 0; i < h; i++) {
+        line = data + i * wpl;
+        for (j = 0; j < w; j++) {
+            val = line[j] - offset;
+            val = (l_int32)(val * factor);
+            val += offset;
+            line[j] = (l_uint32)val;
+        }
+    }
 
-    multConstAccumulateLow(data, w, h, wpl, factor, offset);
     return 0;
 }
 
@@ -599,8 +843,9 @@ PIX *
 pixAbsDifference(PIX  *pixs1,
                  PIX  *pixs2)
 {
-l_int32    w, h, w2, h2, d, wpls, wpld;
-l_uint32  *datas1, *datas2, *datad;
+l_int32    i, j, w, h, w2, h2, d, wpls1, wpls2, wpld, val1, val2, diff;
+l_int32    rval1, gval1, bval1, rval2, gval2, bval2, rdiff, gdiff, bdiff;
+l_uint32  *datas1, *datas2, *datad, *lines1, *lines2, *lined;
 PIX       *pixd;
 
     PROCNAME("pixAbsDifference");
@@ -625,11 +870,126 @@ PIX       *pixd;
     datas1 = pixGetData(pixs1);
     datas2 = pixGetData(pixs2);
     datad = pixGetData(pixd);
-    wpls = pixGetWpl(pixs1);
+    wpls1 = pixGetWpl(pixs1);
+    wpls2 = pixGetWpl(pixs2);
     wpld = pixGetWpl(pixd);
+    if (d == 8) {
+        for (i = 0; i < h; i++) {
+            lines1 = datas1 + i * wpls1;
+            lines2 = datas2 + i * wpls2;
+            lined = datad + i * wpld;
+            for (j = 0; j < w; j++) {
+                val1 = GET_DATA_BYTE(lines1, j);
+                val2 = GET_DATA_BYTE(lines2, j);
+                diff = L_ABS(val1 - val2);
+                SET_DATA_BYTE(lined, j, diff);
+            }
+        }
+    } else if (d == 16) {
+        for (i = 0; i < h; i++) {
+            lines1 = datas1 + i * wpls1;
+            lines2 = datas2 + i * wpls2;
+            lined = datad + i * wpld;
+            for (j = 0; j < w; j++) {
+                val1 = GET_DATA_TWO_BYTES(lines1, j);
+                val2 = GET_DATA_TWO_BYTES(lines2, j);
+                diff = L_ABS(val1 - val2);
+                SET_DATA_TWO_BYTES(lined, j, diff);
+            }
+        }
+    } else {  /* d == 32 */
+        for (i = 0; i < h; i++) {
+            lines1 = datas1 + i * wpls1;
+            lines2 = datas2 + i * wpls2;
+            lined = datad + i * wpld;
+            for (j = 0; j < w; j++) {
+                extractRGBValues(lines1[j], &rval1, &gval1, &bval1);
+                extractRGBValues(lines2[j], &rval2, &gval2, &bval2);
+                rdiff = L_ABS(rval1 - rval2);
+                gdiff = L_ABS(gval1 - gval2);
+                bdiff = L_ABS(bval1 - bval2);
+                composeRGBPixel(rdiff, gdiff, bdiff, lined + j);
+            }
+        }
+    }
 
-    absDifferenceLow(datad, w, h, wpld, datas1, datas2, d, wpls);
+    return pixd;
+}
 
+
+/*-----------------------------------------------------------------------*
+ *                           Sum of color images                         *
+ *-----------------------------------------------------------------------*/
+/*!
+ *  pixAddRGB()
+ *
+ *      Input:  pixs1, pixs2  (32 bpp RGB, or colormapped)
+ *      Return: pixd, or null on error
+ *
+ *  Notes:
+ *      (1) Clips computation to the minimum size, aligning the UL corners.
+ *      (2) Removes any colormap to RGB, and ignores the LSB of each
+ *          pixel word (the alpha channel).
+ *      (3) Adds each component value, pixelwise, clipping to 255.
+ *      (4) This is useful to combine two images where most of the
+ *          pixels are essentially black, such as in pixPerceptualDiff().
+ */
+PIX *
+pixAddRGB(PIX  *pixs1,
+          PIX  *pixs2)
+{
+l_int32    i, j, w, h, d, w2, h2, d2, wplc1, wplc2, wpld;
+l_int32    rval1, gval1, bval1, rval2, gval2, bval2, rval, gval, bval;
+l_uint32  *datac1, *datac2, *datad, *linec1, *linec2, *lined;
+PIX       *pixc1, *pixc2, *pixd;
+
+    PROCNAME("pixAddRGB");
+
+    if (!pixs1)
+        return (PIX *)ERROR_PTR("pixs1 not defined", procName, NULL);
+    if (!pixs2)
+        return (PIX *)ERROR_PTR("pixs2 not defined", procName, NULL);
+    pixGetDimensions(pixs1, &w, &h, &d);
+    pixGetDimensions(pixs2, &w2, &h2, &d2);
+    if (!pixGetColormap(pixs1) && d != 32)
+        return (PIX *)ERROR_PTR("pixs1 not cmapped or rgb", procName, NULL);
+    if (!pixGetColormap(pixs2) && d2 != 32)
+        return (PIX *)ERROR_PTR("pixs2 not cmapped or rgb", procName, NULL);
+    if (pixGetColormap(pixs1))
+        pixc1 = pixRemoveColormap(pixs1, REMOVE_CMAP_TO_FULL_COLOR);
+    else
+        pixc1 = pixClone(pixs1);
+    if (pixGetColormap(pixs2))
+        pixc2 = pixRemoveColormap(pixs2, REMOVE_CMAP_TO_FULL_COLOR);
+    else
+        pixc2 = pixClone(pixs2);
+
+    w = L_MIN(w, w2);
+    h = L_MIN(h, h2);
+    pixd = pixCreate(w, h, 32);
+    pixCopyResolution(pixd, pixs1);
+    datac1 = pixGetData(pixc1);
+    datac2 = pixGetData(pixc2);
+    datad = pixGetData(pixd);
+    wplc1 = pixGetWpl(pixc1);
+    wplc2 = pixGetWpl(pixc2);
+    wpld = pixGetWpl(pixd);
+    for (i = 0; i < h; i++) {
+        linec1 = datac1 + i * wplc1;
+        linec2 = datac2 + i * wplc2;
+        lined = datad + i * wpld;
+        for (j = 0; j < w; j++) {
+            extractRGBValues(linec1[j], &rval1, &gval1, &bval1);
+            extractRGBValues(linec2[j], &rval2, &gval2, &bval2);
+            rval = L_MIN(255, rval1 + rval2);
+            gval = L_MIN(255, gval1 + gval2);
+            bval = L_MIN(255, bval1 + bval2);
+            composeRGBPixel(rval, gval, bval, lined + j);
+        }
+    }
+
+    pixDestroy(&pixc1);
+    pixDestroy(&pixc2);
     return pixd;
 }
 
@@ -648,8 +1008,10 @@ PIX       *pixd;
  *      Return: pixd always
  *
  *  Notes:
- *      (1) This gives the min or max of two images.
- *      (2) The depth can be 8 or 16 bpp.
+ *      (1) This gives the min or max of two images, component-wise.
+ *      (2) The depth can be 8 or 16 bpp for 1 component, and 32 bpp
+ *          for a 3 component image.  For 32 bpp, ignore the LSB
+ *          of each word (the alpha channel)
  *      (3) There are 3 cases:
  *          -  if pixd == null,   Min(src1, src2) --> new pixd
  *          -  if pixd == pixs1,  Min(src1, src2) --> src1  (in-place)
@@ -661,8 +1023,8 @@ pixMinOrMax(PIX     *pixd,
             PIX     *pixs2,
             l_int32  type)
 {
-l_int32    d, ws, hs, w, h, wpls, wpld, i, j;
-l_int32    vals, vald, val;
+l_int32    d, ws, hs, w, h, wpls, wpld, i, j, vals, vald, val;
+l_int32    rval1, gval1, bval1, rval2, gval2, bval2, rval, gval, bval;
 l_uint32  *datas, *datad, *lines, *lined;
 
     PROCNAME("pixMinOrMax");
@@ -678,8 +1040,8 @@ l_uint32  *datas, *datad, *lines, *lined;
     d = pixGetDepth(pixs1);
     if (pixGetDepth(pixs2) != d)
         return (PIX *)ERROR_PTR("depths unequal", procName, pixd);
-    if (d != 8 && d != 16)
-        return (PIX *)ERROR_PTR("depth not 8 or 16 bpp", procName, pixd);
+    if (d != 8 && d != 16 && d != 32)
+        return (PIX *)ERROR_PTR("depth not 8, 16 or 32 bpp", procName, pixd);
 
     if (pixs1 != pixd)
         pixd = pixCopy(pixd, pixs1);
@@ -696,36 +1058,39 @@ l_uint32  *datas, *datad, *lines, *lined;
         lines = datas + i * wpls;
         lined = datad + i * wpld;
         if (d == 8) {
-            if (type == L_CHOOSE_MIN) {
-                for (j = 0; j < w; j++) {
-                    vals = GET_DATA_BYTE(lines, j);
-                    vald = GET_DATA_BYTE(lined, j);
+            for (j = 0; j < w; j++) {
+                vals = GET_DATA_BYTE(lines, j);
+                vald = GET_DATA_BYTE(lined, j);
+                if (type == L_CHOOSE_MIN)
                     val = L_MIN(vals, vald);
-                    SET_DATA_BYTE(lined, j, val);
-                }
-            } else {  /* type == L_CHOOSE_MAX */
-                for (j = 0; j < w; j++) {
-                    vals = GET_DATA_BYTE(lines, j);
-                    vald = GET_DATA_BYTE(lined, j);
+                else  /* type == L_CHOOSE_MAX */
                     val = L_MAX(vals, vald);
-                    SET_DATA_BYTE(lined, j, val);
-                }
+                SET_DATA_BYTE(lined, j, val);
             }
-        } else {  /* d == 16 */
-            if (type == L_CHOOSE_MIN) {
-                for (j = 0; j < w; j++) {
-                    vals = GET_DATA_TWO_BYTES(lines, j);
-                    vald = GET_DATA_TWO_BYTES(lined, j);
+        } else if (d == 16) {
+            for (j = 0; j < w; j++) {
+                vals = GET_DATA_TWO_BYTES(lines, j);
+                vald = GET_DATA_TWO_BYTES(lined, j);
+                if (type == L_CHOOSE_MIN)
                     val = L_MIN(vals, vald);
-                    SET_DATA_TWO_BYTES(lined, j, val);
-                }
-            } else {  /* type == L_CHOOSE_MAX */
-                for (j = 0; j < w; j++) {
-                    vals = GET_DATA_TWO_BYTES(lines, j);
-                    vald = GET_DATA_TWO_BYTES(lined, j);
+                else  /* type == L_CHOOSE_MAX */
                     val = L_MAX(vals, vald);
-                    SET_DATA_TWO_BYTES(lined, j, val);
+                SET_DATA_TWO_BYTES(lined, j, val);
+            }
+        } else {  /* d == 32 */
+            for (j = 0; j < w; j++) {
+                extractRGBValues(lines[j], &rval1, &gval1, &bval1);
+                extractRGBValues(lined[j], &rval2, &gval2, &bval2);
+                if (type == L_CHOOSE_MIN) {
+                    rval = L_MIN(rval1, rval2);
+                    gval = L_MIN(gval1, gval2);
+                    bval = L_MIN(bval1, bval2);
+                } else {  /* type == L_CHOOSE_MAX */
+                    rval = L_MAX(rval1, rval2);
+                    gval = L_MAX(gval1, gval2);
+                    bval = L_MAX(bval1, bval2);
                 }
+                composeRGBPixel(rval, gval, bval, lined + j);
             }
         }
     }
@@ -974,4 +1339,3 @@ getLogBase2(l_int32     val,
     else
         return 24.0 + logtab[val >> 24];
 }
-

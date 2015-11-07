@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -19,16 +30,13 @@
  *    rotatetest1 filein angle(in degrees) fileout
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 #define  NTIMES   180
 #define  NITERS   3
 
-
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 l_int32      i, w, h, d, rotflag;
 PIX         *pixs, *pixt, *pixd;
@@ -37,8 +45,8 @@ char        *filein, *fileout;
 static char  mainName[] = "rotatetest1";
 
     if (argc != 4)
-	exit(ERROR_INT(" Syntax:  rotatetest1 filein angle fileout",
-                       mainName, 1));
+        return ERROR_INT(" Syntax:  rotatetest1 filein angle fileout",
+                         mainName, 1);
 
     filein = argv[1];
     angle = atof(argv[2]);
@@ -46,7 +54,7 @@ static char  mainName[] = "rotatetest1";
     deg2rad = 3.1415926535 / 180.;
 
     if ((pixs = pixRead(filein)) == NULL)
-	exit(ERROR_INT("pix not made", mainName, 1));
+        return ERROR_INT("pix not made", mainName, 1);
     if (pixGetDepth(pixs) == 1) {
         pixt = pixScaleToGray3(pixs);
         pixDestroy(&pixs);
@@ -73,26 +81,26 @@ static char  mainName[] = "rotatetest1";
 #if 0
         /* timing of shear rotation */
     for (i = 0; i < NITERS; i++) {
-	pixd = pixRotateShear(pixs, (i * w) / NITERS,
-	                      (i * h) / NITERS, deg2rad * angle,
-			      L_BRING_IN_WHITE);
-	pixDisplay(pixd, 100 + 20 * i, 100 + 20 * i);
-	pixDestroy(&pixd);
+        pixd = pixRotateShear(pixs, (i * w) / NITERS,
+                              (i * h) / NITERS, deg2rad * angle,
+                              L_BRING_IN_WHITE);
+        pixDisplay(pixd, 100 + 20 * i, 100 + 20 * i);
+        pixDestroy(&pixd);
     }
 #endif
 
 #if 0
         /* timing of in-place shear rotation */
     for (i = 0; i < NITERS; i++) {
-	pixRotateShearIP(pixs, w/2, h/2, deg2rad * angle, L_BRING_IN_WHITE);
-/*	pixRotateShearCenterIP(pixs, deg2rad * angle, L_BRING_IN_WHITE); */
-	pixDisplay(pixs, 100 + 20 * i, 100 + 20 * i);
+        pixRotateShearIP(pixs, w/2, h/2, deg2rad * angle, L_BRING_IN_WHITE);
+/*        pixRotateShearCenterIP(pixs, deg2rad * angle, L_BRING_IN_WHITE); */
+        pixDisplay(pixs, 100 + 20 * i, 100 + 20 * i);
     }
     pixd = pixs;
     if (pixGetDepth(pixd) == 1)
-	pixWrite(fileout, pixd, IFF_PNG);
+        pixWrite(fileout, pixd, IFF_PNG);
     else
-	pixWrite(fileout, pixd, IFF_JFIF_JPEG);
+        pixWrite(fileout, pixd, IFF_JFIF_JPEG);
     pixDestroy(&pixs);
 #endif
 
@@ -102,8 +110,8 @@ static char  mainName[] = "rotatetest1";
     w = pixGetWidth(pixs);
     h = pixGetHeight(pixs);
     for (i = 0; i < NTIMES; i++) {
-	pixd = pixRotateShearCenter(pixs, deg2rad * angle, L_BRING_IN_WHITE);
-	pixDestroy(&pixd);
+        pixd = pixRotateShearCenter(pixs, deg2rad * angle, L_BRING_IN_WHITE);
+        pixDestroy(&pixd);
     }
     pops = (l_float32)(w * h * NTIMES / 1000000.) / stopTimer();
     fprintf(stderr, "vers. 1, mpops: %f\n", pops);
@@ -111,13 +119,13 @@ static char  mainName[] = "rotatetest1";
     w = pixGetWidth(pixs);
     h = pixGetHeight(pixs);
     for (i = 0; i < NTIMES; i++) {
-	pixRotateShearIP(pixs, w/2, h/2, deg2rad * angle, L_BRING_IN_WHITE);
+        pixRotateShearIP(pixs, w/2, h/2, deg2rad * angle, L_BRING_IN_WHITE);
     }
     pops = (l_float32)(w * h * NTIMES / 1000000.) / stopTimer();
     fprintf(stderr, "shear, mpops: %f\n", pops);
     pixWrite(fileout, pixs, IFF_PNG);
     for (i = 0; i < NTIMES; i++) {
-	pixRotateShearIP(pixs, w/2, h/2, -deg2rad * angle, L_BRING_IN_WHITE);
+        pixRotateShearIP(pixs, w/2, h/2, -deg2rad * angle, L_BRING_IN_WHITE);
     }
     pixWrite("/usr/tmp/junkout", pixs, IFF_PNG);
 #endif
@@ -127,14 +135,14 @@ static char  mainName[] = "rotatetest1";
     pixd = pixRotateAM(pixs, deg2rad * angle, L_BRING_IN_WHITE);
 /*    pixd = pixRotateAMColorFast(pixs, deg2rad * angle, 255); */
     if (pixGetDepth(pixd) == 1)
-	pixWrite(fileout, pixd, IFF_PNG);
+        pixWrite(fileout, pixd, IFF_PNG);
     else
-	pixWrite(fileout, pixd, IFF_JFIF_JPEG);
+        pixWrite(fileout, pixd, IFF_JFIF_JPEG);
 #endif
 
 #if 0
-	/* compare the standard area-map color rotation with
-	 * the fast area-map color rotation, on a pixel basis */
+        /* compare the standard area-map color rotation with
+         * the fast area-map color rotation, on a pixel basis */
     {
     PIX    *pix1, *pix2;
     NUMA   *nar, *nag, *nab, *naseq;
@@ -152,7 +160,7 @@ static char  mainName[] = "rotatetest1";
     pixGetColorHistogram(pixd, 1, &nar, &nag, &nab);
     naseq = numaMakeSequence(0., 1., 256);
     gplot = gplotCreate("junk_absdiff", GPLOT_X11, "Number vs diff",
-			"diff", "number");
+                        "diff", "number");
     gplotAddPlot(gplot, naseq, nar, GPLOT_POINTS, "red");
     gplotAddPlot(gplot, naseq, nag, GPLOT_POINTS, "green");
     gplotAddPlot(gplot, naseq, nab, GPLOT_POINTS, "blue");
@@ -169,11 +177,11 @@ static char  mainName[] = "rotatetest1";
 #endif
 
         /* Do a succession of 180 7-degree rotations in a cw
-	 * direction, and unwind the result with another set in
-	 * a ccw direction.  Although there is a considerable amount
-	 * of distortion after successive rotations, after all
-	 * 360 rotations, the resulting image is restored to
-	 * its original pristine condition! */
+         * direction, and unwind the result with another set in
+         * a ccw direction.  Although there is a considerable amount
+         * of distortion after successive rotations, after all
+         * 360 rotations, the resulting image is restored to
+         * its original pristine condition! */
 #if 1
     rotflag = L_ROTATE_AREA_MAP;
 /*    rotflag = L_ROTATE_SHEAR;     */

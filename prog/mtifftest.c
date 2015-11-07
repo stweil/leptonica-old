@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -23,38 +34,41 @@
  */
 
 #include "allheaders.h"
+#include <string.h>
 
-static const char *tempmtiff = "/tmp/junkmtiff";
-static const char *tempnewmtiff = "/tmp/junknewmtiff";
+static const char *weasel_rev = "/tmp/tiff/weasel_rev";
+static const char *weasel_rev_rev = "/tmp/tiff/weasel_rev_rev";
+static const char *weasel_orig = "/tmp/tiff/weasel_orig";
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-char        *filein, *fileout, *str, *fname, *filename;
+char        *fname, *filename;
+const char  *str;
 char         buffer[512];
-l_int32      i, count, npages, length;
+l_int32      i, npages;
+size_t       length;
 FILE        *fp;
 NUMA        *naflags, *nasizes;
-PIX         *pix, *pixd;
+PIX         *pix, *pix1, *pix2, *pixd;
 PIXA        *pixa;
 PIXCMAP     *cmap;
 SARRAY      *savals, *satypes, *sa;
 static char  mainName[] = "mtifftest";
 
-    if (argc != 3)
-	exit(ERROR_INT(" Syntax:  mtifftest filein fileout", mainName, 1));
+    if (argc != 1)
+        return ERROR_INT(" Syntax:  mtifftest", mainName, 1);
 
-    filein = argv[1];
-    fileout = argv[2];
+    lept_mkdir("tiff");
 
 #if 1   /* ------------------  Test multipage I/O  -------------------*/
         /* This puts every image file in the directory with a string
          * match to "weasel" into a multipage tiff file.
          * Images with 1 bpp are coded as g4; the others as zip.
          * It then reads back into a pix and displays.  */
-    writeMultipageTiff(".", "weasel", "/tmp/junkout.tif");
-    pixa = pixaReadMultipageTiff("/tmp/junkout.tif");
+    writeMultipageTiff(".", "weasel8.", "/tmp/tiff/weasel8.tif");
+    pixa = pixaReadMultipageTiff("/tmp/tiff/weasel8.tif");
     pixd = pixaDisplayTiledInRows(pixa, 1, 1200, 0.5, 0, 15, 4);
     pixDisplay(pixd, 100, 0);
     pixDestroy(&pixd);
@@ -67,78 +81,82 @@ static char  mainName[] = "mtifftest";
     pixaDestroy(&pixa);
 #endif
 
-#if 0   /* ------------ Test single-to-multipage I/O  -------------------*/
-        /* Use 'filein' to specify a directory of tiff files.
-	 * Read them in and generate a multipage tiff file.
-	 * Then convert that to a G4 compressed and ascii85 encoded
-	 * PS file. */
-    sa = getFilenamesInDirectory(filein);
+#if 1   /* ------------ Test single-to-multipage I/O  -------------------*/
+        /* Read the files and generate a multipage tiff file of G4 images.
+         * Then convert that to a G4 compressed and ascii85 encoded PS file. */
+    sa = getSortedPathnamesInDirectory(".", "weasel4.", 0, 4);
     sarrayWriteStream(stderr, sa);
     sarraySort(sa, sa, L_SORT_INCREASING);
     sarrayWriteStream(stderr, sa);
     npages = sarrayGetCount(sa);
     for (i = 0; i < npages; i++) {
         fname = sarrayGetString(sa, i, 0);
-        filename = genPathname(filein, fname);
-        pix = pixRead(filename);
-	if (!pix) continue;
-	if (i == 0)
-	    pixWriteTiff(tempmtiff, pix, IFF_TIFF_G4, "w+");
+        filename = genPathname(".", fname);
+        pix1 = pixRead(filename);
+        if (!pix1) continue;
+        pix2 = pixConvertTo1(pix1, 128);
+        if (i == 0)
+            pixWriteTiff("/tmp/tiff/weasel4", pix2, IFF_TIFF_G4, "w+");
         else
-	    pixWriteTiff(tempmtiff, pix, IFF_TIFF_G4, "a");
-        pixDestroy(&pix);
+            pixWriteTiff("/tmp/tiff/weasel4", pix2, IFF_TIFF_G4, "a");
+        pixDestroy(&pix1);
+        pixDestroy(&pix2);
         lept_free(filename);
     }
 
-        /* write it out as a PS file */
-    convertTiffMultipageToPS(tempmtiff, fileout, NULL, 0.95);
+        /* Write it out as a PS file */
+    convertTiffMultipageToPS("/tmp/tiff/weasel4", "/tmp/tiff/weasel4.ps",
+                             NULL, 0.95);
     sarrayDestroy(&sa);
 #endif
 
-#if 0   /* ------------------  Test multipage I/O  -------------------*/
-        /* read count of tiff multipage */
-    fp = lept_fopen(filein, "rb");
+#if 1   /* ------------------  Test multipage I/O  -------------------*/
+        /* Read count of pages in tiff multipage  file */
+    writeMultipageTiff(".", "weasel2", weasel_orig);
+    fp = lept_fopen(weasel_orig, "rb");
     if (fileFormatIsTiff(fp)) {
-	tiffGetCount(fp, &npages);
-	fprintf(stderr, " Tiff: %d page\n", npages);
+        tiffGetCount(fp, &npages);
+        fprintf(stderr, " Tiff: %d page\n", npages);
     }
-    else 
-	exit(ERROR_INT(" file not tiff", mainName, 1));
+    else
+        return ERROR_INT(" file not tiff", mainName, 1);
     lept_fclose(fp);
 
-        /* split into separate page files */
+        /* Split into separate page files */
     for (i = 0; i < npages + 1; i++) {   /* read one beyond to catch error */
-	pix = pixReadTiff(filein, i);
-	if (!pix) continue;
-	sprintf(buffer, "/tmp/junkout.%d.tif", i);
-	pixWrite(buffer, pix, IFF_TIFF_G4);
+        if (i == npages)
+            L_INFO("Errors in next 2 lines are intentional!\n", mainName);
+        pix = pixReadTiff(weasel_orig, i);
+        if (!pix) continue;
+        sprintf(buffer, "/tmp/tiff/%03d.tif", i);
+        pixWrite(buffer, pix, IFF_TIFF_ZIP);
         pixDestroy(&pix);
     }
 
-        /* read separate page files and write reversed file */
+        /* Read separate page files and write reversed file */
     for (i = npages - 1; i >= 0; i--) {
-	sprintf(buffer, "/tmp/junkout.%d.tif", i);
+        sprintf(buffer, "/tmp/tiff/%03d.tif", i);
         pix = pixRead(buffer);
-	if (!pix) continue;
-	if (i == npages - 1)
-	    pixWriteTiff(tempmtiff, pix, IFF_TIFF_G4, "w+");
+        if (!pix) continue;
+        if (i == npages - 1)
+            pixWriteTiff(weasel_rev, pix, IFF_TIFF_ZIP, "w+");
         else
-	    pixWriteTiff(tempmtiff, pix, IFF_TIFF_G4, "a");
+            pixWriteTiff(weasel_rev, pix, IFF_TIFF_ZIP, "a");
         pixDestroy(&pix);
     }
 
-        /* read reversed file and reverse again */
+        /* Read reversed file and reverse again */
     pixa = pixaCreate(npages);
-    for (i = 0; i < 5; i++) {
-	pix = pixReadTiff(tempmtiff, i);
-	pixaAddPix(pixa, pix, L_INSERT);
+    for (i = 0; i < npages; i++) {
+        pix = pixReadTiff(weasel_rev, i);
+        pixaAddPix(pixa, pix, L_INSERT);
     }
     for (i = npages - 1; i >= 0; i--) {
         pix = pixaGetPix(pixa, i, L_CLONE);
-	if (i == npages - 1)
-	    pixWriteTiff(tempnewmtiff, pix, IFF_TIFF_G4, "w+");
+        if (i == npages - 1)
+            pixWriteTiff(weasel_rev_rev, pix, IFF_TIFF_ZIP, "w+");
         else
-	    pixWriteTiff(tempnewmtiff, pix, IFF_TIFF_G4, "a");
+            pixWriteTiff(weasel_rev_rev, pix, IFF_TIFF_ZIP, "a");
         pixDestroy(&pix);
     }
     pixaDestroy(&pixa);
@@ -146,42 +164,46 @@ static char  mainName[] = "mtifftest";
 
 
 #if 0    /* -----   test adding custom public tags to a tiff header ----- */
-    pix = pixRead(filein);
+    pix = pixRead("feyn.tif");
     naflags = numaCreate(10);
     savals = sarrayCreate(10);
     satypes = sarrayCreate(10);
     nasizes = numaCreate(10);
-    
+
 /*    numaAddNumber(naflags, TIFFTAG_XMLPACKET);  */ /* XMP:  700 */
     numaAddNumber(naflags, 700);
     str = "<xmp>This is a Fake XMP packet</xmp>\n<text>Guess what ...?</text>";
     length = strlen(str);
-    sarrayAddString(savals, str, 1);
-    sarrayAddString(satypes, "char*", 1);
+    sarrayAddString(savals, (char *)str, 1);
+    sarrayAddString(satypes, (char *)"char*", 1);
     numaAddNumber(nasizes, length);  /* get it all */
 
     numaAddNumber(naflags, 269);  /* DOCUMENTNAME */
-    sarrayAddString(savals, "One silly title", 1);
-    sarrayAddString(satypes, "char*", 1);
+    sarrayAddString(savals, (char *)"One silly title", 1);
+    sarrayAddString(satypes, (char *)"const char*", 1);
     numaAddNumber(naflags, 270);  /* IMAGEDESCRIPTION */
-    sarrayAddString(savals, "One page of text", 1);
-    sarrayAddString(satypes, "char*", 1);
-        /* the max sample is used by rendering programs 
+    sarrayAddString(savals, (char *)"One page of text", 1);
+    sarrayAddString(satypes, (char *)"const char*", 1);
+        /* the max sample is used by rendering programs
          * to scale the dynamic range */
     numaAddNumber(naflags, 281);  /* MAXSAMPLEVALUE */
-    sarrayAddString(savals, "4", 1);
-    sarrayAddString(satypes, "l_uint16", 1);
+    sarrayAddString(savals, (char *)"4", 1);
+    sarrayAddString(satypes, (char *)"l_uint16", 1);
         /* note that date is required to be a 20 byte string */
     numaAddNumber(naflags, 306);  /* DATETIME */
-    sarrayAddString(savals, "2004:10:11 09:35:15", 1);
-    sarrayAddString(satypes, "char*", 1);
+    sarrayAddString(savals, (char *)"2004:10:11 09:35:15", 1);
+    sarrayAddString(satypes, (char *)"const char*", 1);
         /* note that page number requires 2 l_uint16 input */
     numaAddNumber(naflags, 297);  /* PAGENUMBER */
-    sarrayAddString(savals, "1-412", 1);
-    sarrayAddString(satypes, "l_uint16-l_uint16", 1);
-    pixWriteTiffCustom(fileout, pix, IFF_TIFF_G4, "w", naflags,
+    sarrayAddString(savals, (char *)"1-412", 1);
+    sarrayAddString(satypes, (char *)"l_uint16-l_uint16", 1);
+    pixWriteTiffCustom("/tmp/tiff/tags.tif", pix, IFF_TIFF_G4, "w", naflags,
                        savals, satypes, nasizes);
-    fprintTiffInfo(stderr, fileout);
+    fprintTiffInfo(stderr, (char *)"/tmp/tiff/tags.tif");
+    fprintf(stderr, "num flags = %d\n", numaGetCount(naflags));
+    fprintf(stderr, "num sizes = %d\n", numaGetCount(nasizes));
+    fprintf(stderr, "num vals = %d\n", sarrayGetCount(savals));
+    fprintf(stderr, "num types = %d\n", sarrayGetCount(satypes));
     numaDestroy(&naflags);
     numaDestroy(&nasizes);
     sarrayDestroy(&savals);
@@ -189,6 +211,6 @@ static char  mainName[] = "mtifftest";
     pixDestroy(&pix);
 #endif
 
-    exit(0);
+    return 0;
 }
 

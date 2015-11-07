@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -19,13 +30,10 @@
  *     Use with dave-orig.png
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
-
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *filein;
 l_float32    angle, conf, deg2rad;
@@ -34,21 +42,21 @@ PIX         *pix6, *pix7, *pix8, *pix9;
 static char  mainName[] = "lineremoval";
 
     if (argc != 2)
-	exit(ERROR_INT(" Syntax:  lineremoval filein", mainName, 1));
+        return ERROR_INT(" Syntax:  lineremoval filein", mainName, 1);
 
     filein = argv[1];
 
     deg2rad = 3.14159 / 180.;
     if ((pixs = pixRead(filein)) == NULL)
-	exit(ERROR_INT("pix not made", mainName, 1));
+        return ERROR_INT("pix not made", mainName, 1);
 
         /* threshold to binary, extracting much of the lines */
     pix1 = pixThresholdToBinary(pixs, 170);
     pixWrite("/tmp/dave-proc1.png", pix1, IFF_PNG);
     pixDisplayWrite(pix1, 1);
 
-	/* find the skew angle and deskew using an interpolated
-	 * rotator for anti-aliasing (to avoid jaggies) */
+        /* find the skew angle and deskew using an interpolated
+         * rotator for anti-aliasing (to avoid jaggies) */
     pixFindSkew(pix1, &angle, &conf);
     pix2 = pixRotateAMGray(pixs, deg2rad * angle, 255);
     pixWrite("/tmp/dave-proc2.png", pix2, IFF_PNG);
@@ -78,10 +86,10 @@ static char  mainName[] = "lineremoval";
     pixWrite("/tmp/dave-proc7.png", pix7, IFF_PNG);
     pixDisplayWrite(pix7, 1);
 
-        /* add the inverted, cleaned lines to orig.  Because 
-	 * the background was cleaned, the inversion is 0,
-	 * so when you add, it doesn't lighten those pixels.
-	 * It only lightens (to white) the pixels in the lines! */
+        /* add the inverted, cleaned lines to orig.  Because
+         * the background was cleaned, the inversion is 0,
+         * so when you add, it doesn't lighten those pixels.
+         * It only lightens (to white) the pixels in the lines! */
     pixInvert(pix6, pix6);
     pix8 = pixAddGray(NULL, pix2, pix6);
     pixWrite("/tmp/dave-proc8.png", pix8, IFF_PNG);
@@ -95,7 +103,7 @@ static char  mainName[] = "lineremoval";
     pixWrite("/tmp/dave-result.png", pix8, IFF_PNG);
     pixDisplayWrite(pix8, 1);
 
-    pixDisplayMultiple("/tmp/junk_write_display*");
+    pixDisplayMultiple("/tmp/display/file*");
     return 0;
 }
 

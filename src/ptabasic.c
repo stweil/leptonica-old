@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 
@@ -18,56 +29,71 @@
  *   ptabasic.c
  *
  *      Pta creation, destruction, copy, clone, empty
- *           PTA      *ptaCreate()
- *           PTA      *ptaCreateFromNuma()
- *           void      ptaDestroy()
- *           PTA      *ptaCopy()
- *           PTA      *ptaClone()
- *           l_int32   ptaEmpty()
+ *           PTA            *ptaCreate()
+ *           PTA            *ptaCreateFromNuma()
+ *           void            ptaDestroy()
+ *           PTA            *ptaCopy()
+ *           PTA            *ptaCopyRange()
+ *           PTA            *ptaClone()
+ *           l_int32         ptaEmpty()
  *
  *      Pta array extension
- *           l_int32   ptaAddPt()
- *           l_int32   ptaExtendArrays()
+ *           l_int32         ptaAddPt()
+ *           static l_int32  ptaExtendArrays()
  *
- *      Pta Accessors
- *           l_int32   ptaGetRefcount()
- *           l_int32   ptaChangeRefcount()
- *           l_int32   ptaGetCount()
- *           l_int32   ptaGetPt()
- *           l_int32   ptaGetIPt()
- *           l_int32   ptaSetPt()
- *           l_int32   ptaGetArrays()
+ *      Pta insertion and removal
+ *           l_int32         ptaInsertPt()
+ *           l_int32         ptaRemovePt()
+ *
+ *      Pta accessors
+ *           l_int32         ptaGetRefcount()
+ *           l_int32         ptaChangeRefcount()
+ *           l_int32         ptaGetCount()
+ *           l_int32         ptaGetPt()
+ *           l_int32         ptaGetIPt()
+ *           l_int32         ptaSetPt()
+ *           l_int32         ptaGetArrays()
  *
  *      Pta serialized for I/O
- *           PTA      *ptaRead()
- *           PTA      *ptaReadStream()
- *           l_int32   ptaWrite()
- *           l_int32   ptaWriteStream()
+ *           PTA            *ptaRead()
+ *           PTA            *ptaReadStream()
+ *           l_int32         ptaWrite()
+ *           l_int32         ptaWriteStream()
  *
  *      Ptaa creation, destruction
- *           PTAA     *ptaaCreate()
- *           void      ptaaDestroy()
+ *           PTAA           *ptaaCreate()
+ *           void            ptaaDestroy()
  *
  *      Ptaa array extension
- *           l_int32   ptaaAddPta()
- *           l_int32   ptaaExtendArray()
+ *           l_int32         ptaaAddPta()
+ *           static l_int32  ptaaExtendArray()
  *
- *      Ptaa Accessors
- *           l_int32   ptaaGetCount()
- *           l_int32   ptaaGetPta()
- *           l_int32   ptaaGetPt()
+ *      Ptaa accessors
+ *           l_int32         ptaaGetCount()
+ *           l_int32         ptaaGetPta()
+ *           l_int32         ptaaGetPt()
+ *
+ *      Ptaa array modifiers
+ *           l_int32         ptaaInitFull()
+ *           l_int32         ptaaReplacePta()
+ *           l_int32         ptaaAddPt()
+ *           l_int32         ptaaTruncate()
  *
  *      Ptaa serialized for I/O
- *           PTAA     *ptaaRead()
- *           PTAA     *ptaaReadStream()
- *           l_int32   ptaaWrite()
- *           l_int32   ptaaWriteStream()
+ *           PTAA           *ptaaRead()
+ *           PTAA           *ptaaReadStream()
+ *           l_int32         ptaaWrite()
+ *           l_int32         ptaaWriteStream()
  */
 
 #include <string.h>
 #include "allheaders.h"
 
 static const l_int32  INITIAL_PTR_ARRAYSIZE = 20;   /* n'import quoi */
+
+    /* Static functions */
+static l_int32 ptaExtendArrays(PTA *pta);
+static l_int32 ptaaExtendArray(PTAA *ptaa);
 
 
 /*---------------------------------------------------------------------*
@@ -128,7 +154,7 @@ PTA       *pta;
         return (PTA *)ERROR_PTR("nax and nay sizes differ", procName, NULL);
 
     pta = ptaCreate(n);
-    numaGetXParameters(nay, &startx, &delx);
+    numaGetParameters(nay, &startx, &delx);
     for (i = 0; i < n; i++) {
         if (nax)
             numaGetFValue(nax, i, &xval);
@@ -160,7 +186,7 @@ PTA  *pta;
     PROCNAME("ptaDestroy");
 
     if (ppta == NULL) {
-        L_WARNING("ptr address is NULL!", procName);
+        L_WARNING("ptr address is NULL!\n", procName);
         return;
     }
 
@@ -206,6 +232,47 @@ PTA       *npta;
     }
 
     return npta;
+}
+
+
+/*!
+ *  ptaCopyRange()
+ *
+ *      Input:  ptas
+ *              istart  (starting index in ptas)
+ *              iend  (ending index in ptas; use 0 to copy to end)
+ *      Return: 0 if OK, 1 on error
+ */
+PTA *
+ptaCopyRange(PTA     *ptas,
+             l_int32  istart,
+             l_int32  iend)
+{
+l_int32  n, i, x, y;
+PTA     *ptad;
+
+    PROCNAME("ptaCopyRange");
+
+    if (!ptas)
+        return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
+    n = ptaGetCount(ptas);
+    if (istart < 0)
+        istart = 0;
+    if (istart >= n)
+        return (PTA *)ERROR_PTR("istart out of bounds", procName, NULL);
+    if (iend <= 0 || iend >= n)
+        iend = n - 1;
+    if (istart > iend)
+        return (PTA *)ERROR_PTR("istart > iend; no pts", procName, NULL);
+
+    if ((ptad = ptaCreate(iend - istart + 1)) == NULL)
+        return (PTA *)ERROR_PTR("ptad not made", procName, NULL);
+    for (i = istart; i <= iend; i++) {
+        ptaGetIPt(ptas, i, &x, &y);
+        ptaAddPt(ptad, x, y);
+    }
+
+    return ptad;
 }
 
 
@@ -287,7 +354,7 @@ l_int32  n;
  *      Input:  pta
  *      Return: 0 if OK; 1 on error
  */
-l_int32
+static l_int32
 ptaExtendArrays(PTA  *pta)
 {
     PROCNAME("ptaExtendArrays");
@@ -305,6 +372,82 @@ ptaExtendArrays(PTA  *pta)
         return ERROR_INT("new y array not returned", procName, 1);
 
     pta->nalloc = 2 * pta->nalloc;
+    return 0;
+}
+
+
+/*---------------------------------------------------------------------*
+ *                     Pta insertion and removal                       *
+ *---------------------------------------------------------------------*/
+/*!
+ *  ptaInsertPt()
+ *
+ *      Input:  pta
+ *              index (at which pt is to be inserted)
+ *              x, y (point values)
+ *      Return: 0 if OK; 1 on error
+ */
+l_int32
+ptaInsertPt(PTA     *pta,
+            l_int32  index,
+            l_int32  x,
+            l_int32  y)
+{
+l_int32  i, n;
+
+    PROCNAME("ptaInsertPt");
+
+    if (!pta)
+        return ERROR_INT("pta not defined", procName, 1);
+    n = ptaGetCount(pta);
+    if (index < 0 || index > n)
+        return ERROR_INT("index not in {0...n}", procName, 1);
+
+    if (n > pta->nalloc)
+        ptaExtendArrays(pta);
+    pta->n++;
+    for (i = n; i > index; i--) {
+        pta->x[i] = pta->x[i - 1];
+        pta->y[i] = pta->y[i - 1];
+    }
+    pta->x[index] = x;
+    pta->y[index] = y;
+    return 0;
+}
+
+
+/*!
+ *  ptaRemovePt()
+ *
+ *      Input:  pta
+ *              index (of point to be removed)
+ *      Return: 0 if OK, 1 on error
+ *
+ *  Notes:
+ *      (1) This shifts pta[i] --> pta[i - 1] for all i > index.
+ *      (2) It should not be used repeatedly on large arrays,
+ *          because the function is O(n).
+ */
+l_int32
+ptaRemovePt(PTA     *pta,
+            l_int32  index)
+{
+l_int32  i, n;
+
+    PROCNAME("ptaRemovePt");
+
+    if (!pta)
+        return ERROR_INT("pta not defined", procName, 1);
+    n = ptaGetCount(pta);
+    if (index < 0 || index >= n)
+        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+
+        /* Remove the point */
+    for (i = index + 1; i < n; i++) {
+        pta->x[i - 1] = pta->x[i];
+        pta->y[i - 1] = pta->y[i];
+    }
+    pta->n--;
     return 0;
 }
 
@@ -560,8 +703,7 @@ PTA       *pta;
             if (fscanf(fp, "   (%f, %f)\n", &x, &y) != 2)
                 return (PTA *)ERROR_PTR("error reading floats", procName, NULL);
             ptaAddPt(pta, x, y);
-        }
-        else {   /* data is integer */
+        } else {   /* data is integer */
             if (fscanf(fp, "   (%d, %d)\n", &ix, &iy) != 2)
                 return (PTA *)ERROR_PTR("error reading ints", procName, NULL);
             ptaAddPt(pta, ix, iy);
@@ -637,8 +779,7 @@ l_float32  x, y;
         if (type == 0) {  /* data is float */
             ptaGetPt(pta, i, &x, &y);
             fprintf(fp, "   (%f, %f)\n", x, y);
-        }
-        else {   /* data is integer */
+        } else {   /* data is integer */
             ptaGetIPt(pta, i, &ix, &iy);
             fprintf(fp, "   (%d, %d)\n", ix, iy);
         }
@@ -694,7 +835,7 @@ PTAA    *ptaa;
     PROCNAME("ptaaDestroy");
 
     if (pptaa == NULL) {
-        L_WARNING("ptr address is NULL!", procName);
+        L_WARNING("ptr address is NULL!\n", procName);
         return;
     }
 
@@ -737,18 +878,17 @@ PTA     *ptac;
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
 
-    if (copyflag == L_INSERT)
+    if (copyflag == L_INSERT) {
         ptac = pta;
-    else if (copyflag == L_COPY) {
+    } else if (copyflag == L_COPY) {
         if ((ptac = ptaCopy(pta)) == NULL)
             return ERROR_INT("ptac not made", procName, 1);
-    }
-    else if (copyflag == L_CLONE) {
+    } else if (copyflag == L_CLONE) {
         if ((ptac = ptaClone(pta)) == NULL)
             return ERROR_INT("pta clone not made", procName, 1);
-    }
-    else
+    } else {
         return ERROR_INT("invalid copyflag", procName, 1);
+    }
 
     n = ptaaGetCount(ptaa);
     if (n >= ptaa->nalloc)
@@ -766,7 +906,7 @@ PTA     *ptac;
  *      Input:  ptaa
  *      Return: 0 if OK, 1 on error
  */
-l_int32
+static l_int32
 ptaaExtendArray(PTAA  *ptaa)
 {
     PROCNAME("ptaaExtendArray");
@@ -870,6 +1010,148 @@ PTA  *pta;
 
     ptaGetPt(pta, jpt, px, py);
     ptaDestroy(&pta);
+    return 0;
+}
+
+
+/*---------------------------------------------------------------------*
+ *                        Ptaa array modifiers                         *
+ *---------------------------------------------------------------------*/
+/*!
+ *  ptaaInitFull()
+ *
+ *      Input:  ptaa (can have non-null ptrs in the ptr array)
+ *              pta (to be replicated into the entire ptr array)
+ *      Return: 0 if OK; 1 on error
+ */
+l_int32
+ptaaInitFull(PTAA  *ptaa,
+             PTA   *pta)
+{
+l_int32  n, i;
+PTA     *ptat;
+
+    PROCNAME("ptaaInitFull");
+
+    if (!ptaa)
+        return ERROR_INT("ptaa not defined", procName, 1);
+    if (!pta)
+        return ERROR_INT("pta not defined", procName, 1);
+
+    n = ptaa->nalloc;
+    ptaa->n = n;
+    for (i = 0; i < n; i++) {
+        ptat = ptaCopy(pta);
+        ptaaReplacePta(ptaa, i, ptat);
+    }
+    return 0;
+}
+
+
+/*!
+ *  ptaaReplacePta()
+ *
+ *      Input:  ptaa
+ *              index  (to the index-th pta)
+ *              pta (insert and replace any existing one)
+ *      Return: 0 if OK, 1 on error
+ *
+ *  Notes:
+ *      (1) Any existing pta is destroyed, and the input one
+ *          is inserted in its place.
+ *      (2) If the index is invalid, return 1 (error)
+ */
+l_int32
+ptaaReplacePta(PTAA    *ptaa,
+               l_int32  index,
+               PTA     *pta)
+{
+l_int32  n;
+
+    PROCNAME("ptaaReplacePta");
+
+    if (!ptaa)
+        return ERROR_INT("ptaa not defined", procName, 1);
+    if (!pta)
+        return ERROR_INT("pta not defined", procName, 1);
+    n = ptaaGetCount(ptaa);
+    if (index < 0 || index >= n)
+        return ERROR_INT("index not valid", procName, 1);
+
+    ptaDestroy(&ptaa->pta[index]);
+    ptaa->pta[index] = pta;
+    return 0;
+}
+
+
+/*!
+ *  ptaaAddPt()
+ *
+ *      Input:  ptaa
+ *              ipta  (to the i-th pta)
+ *              x,y (point coordinates)
+ *      Return: 0 if OK; 1 on error
+ */
+l_int32
+ptaaAddPt(PTAA      *ptaa,
+          l_int32    ipta,
+          l_float32  x,
+          l_float32  y)
+{
+PTA  *pta;
+
+    PROCNAME("ptaaAddPt");
+
+    if (!ptaa)
+        return ERROR_INT("ptaa not defined", procName, 1);
+    if (ipta < 0 || ipta >= ptaa->n)
+        return ERROR_INT("index ipta not valid", procName, 1);
+
+    pta = ptaaGetPta(ptaa, ipta, L_CLONE);
+    ptaAddPt(pta, x, y);
+    ptaDestroy(&pta);
+    return 0;
+}
+
+
+/*!
+ *  ptaaTruncate()
+ *
+ *      Input:  ptaa
+ *      Return: 0 if OK, 1 on error
+ *
+ *  Notes:
+ *      (1) This identifies the largest index containing a pta that
+ *          has any points within it, destroys all pta above that index,
+ *          and resets the count.
+ */
+l_int32
+ptaaTruncate(PTAA  *ptaa)
+{
+l_int32  i, n, np;
+PTA     *pta;
+
+    PROCNAME("ptaaTruncate");
+
+    if (!ptaa)
+        return ERROR_INT("ptaa not defined", procName, 1);
+
+    n = ptaaGetCount(ptaa);
+    for (i = n - 1; i >= 0; i--) {
+        pta = ptaaGetPta(ptaa, i, L_CLONE);
+        if (!pta) {
+            ptaa->n--;
+            continue;
+        }
+        np = ptaGetCount(pta);
+        ptaDestroy(&pta);
+        if (np == 0) {
+            ptaDestroy(&ptaa->pta[i]);
+            ptaa->n--;
+        } else {
+            break;
+        }
+    }
     return 0;
 }
 
@@ -1009,4 +1291,3 @@ PTA     *pta;
 
     return 0;
 }
-

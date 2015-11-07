@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -18,8 +29,6 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 static void MakePtas(l_int32 i, PTA **pptas, PTA **pptad);
@@ -51,23 +60,19 @@ static const l_int32  yp4[] = { 300,  300,  250,  350,   83};
 #define   ALL     1
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-char         bufname[256];
-l_int32      i, j, w, h, d, x, y, wpls;
-l_uint32    *datas, *lines;
-l_float32   *vc;
-PIX         *pixs, *pixsc, *pixb, *pixg, *pixc, *pixcs, *pixd;
-PIX         *pixt1, *pixt2, *pixt3;
+l_int32      i;
+PIX         *pixs, *pixsc, *pixb, *pixg, *pixc, *pixcs, *pix1, *pix2, *pixd;
 PIXA        *pixa;
 PTA         *ptas, *ptad;
 static char  mainName[] = "projective_reg";
 
     if (argc != 1)
-	exit(ERROR_INT(" Syntax:  projective_reg", mainName, 1));
+        return ERROR_INT(" Syntax:  projective_reg", mainName, 1);
     if ((pixs = pixRead("feyn.tif")) == NULL)
-	exit(ERROR_INT("pixs not made", mainName, 1));
+        return ERROR_INT("pixs not made", mainName, 1);
     pixsc = pixScale(pixs, 0.5, 0.5);
 
 #if ALL
@@ -76,26 +81,26 @@ static char  mainName[] = "projective_reg";
     for (i = 0; i < 3; i++) {
         pixb = pixAddBorder(pixsc, ADDED_BORDER_PIXELS, 0);
         MakePtas(i, &ptas, &ptad);
-        pixt1 = pixProjectiveSampledPta(pixb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 1, 1, 20, 8);
-        pixt2 = pixProjectiveSampledPta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
-        pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS);
+        pix1 = pixProjectiveSampledPta(pixb, ptad, ptas, L_BRING_IN_WHITE);
+        pixSaveTiled(pix1, pixa, 1.0, 1, 20, 8);
+        pix2 = pixProjectiveSampledPta(pix1, ptas, ptad, L_BRING_IN_WHITE);
+        pixSaveTiled(pix2, pixa, 1.0, 0, 20, 0);
+        pixd = pixRemoveBorder(pix2, ADDED_BORDER_PIXELS);
         pixXor(pixd, pixd, pixsc);
-        pixSaveTiled(pixd, pixa, 1, 0, 20, 0);
-        if (i == 0) pixWrite("/tmp/junksamp.png", pixt1, IFF_PNG);
+        pixSaveTiled(pixd, pixa, 1.0, 0, 20, 0);
+        if (i == 0) pixWrite("/tmp/samp.png", pix1, IFF_PNG);
         pixDestroy(&pixb);
-        pixDestroy(&pixt1);
-        pixDestroy(&pixt2);
+        pixDestroy(&pix1);
+        pixDestroy(&pix2);
         pixDestroy(&pixd);
         ptaDestroy(&ptas);
         ptaDestroy(&ptad);
     }
 
-    pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkproj1.png", pixt1, IFF_PNG);
-    pixDisplay(pixt1, 100, 300);
-    pixDestroy(&pixt1);
+    pix1 = pixaDisplay(pixa, 0, 0);
+    pixWrite("/tmp/proj1.png", pix1, IFF_PNG);
+    pixDisplay(pix1, 100, 300);
+    pixDestroy(&pix1);
     pixaDestroy(&pixa);
 #endif
 
@@ -106,26 +111,26 @@ static char  mainName[] = "projective_reg";
     for (i = 0; i < 3; i++) {
         pixb = pixAddBorder(pixg, ADDED_BORDER_PIXELS / 2, 255);
         MakePtas(i, &ptas, &ptad);
-        pixt1 = pixProjectivePta(pixb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 1, 1, 20, 8);
-        pixt2 = pixProjectivePta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
-        pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS / 2);
+        pix1 = pixProjectivePta(pixb, ptad, ptas, L_BRING_IN_WHITE);
+        pixSaveTiled(pix1, pixa, 1.0, 1, 20, 8);
+        pix2 = pixProjectivePta(pix1, ptas, ptad, L_BRING_IN_WHITE);
+        pixSaveTiled(pix2, pixa, 1.0, 0, 20, 0);
+        pixd = pixRemoveBorder(pix2, ADDED_BORDER_PIXELS / 2);
         pixXor(pixd, pixd, pixg);
-        pixSaveTiled(pixd, pixa, 1, 0, 20, 0);
-        if (i == 0) pixWrite("/tmp/junkinterp.png", pixt1, IFF_PNG);
+        pixSaveTiled(pixd, pixa, 1.0, 0, 20, 0);
+        if (i == 0) pixWrite("/tmp/interp.png", pix1, IFF_PNG);
         pixDestroy(&pixb);
-        pixDestroy(&pixt1);
-        pixDestroy(&pixt2);
+        pixDestroy(&pix1);
+        pixDestroy(&pix2);
         pixDestroy(&pixd);
         ptaDestroy(&ptas);
         ptaDestroy(&ptad);
     }
 
-    pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkproj2.png", pixt1, IFF_PNG);
-    pixDisplay(pixt1, 100, 500);
-    pixDestroy(&pixt1);
+    pix1 = pixaDisplay(pixa, 0, 0);
+    pixWrite("/tmp/proj2.png", pix1, IFF_PNG);
+    pixDisplay(pix1, 100, 500);
+    pixDestroy(&pix1);
     pixaDestroy(&pixa);
     pixDestroy(&pixg);
 #endif
@@ -138,52 +143,52 @@ static char  mainName[] = "projective_reg";
     for (i = 0; i < 5; i++) {
         pixb = pixAddBorder(pixcs, ADDED_BORDER_PIXELS, 0xffffff00);
         MakePtas(i, &ptas, &ptad);
-        pixt1 = pixProjectivePta(pixb, ptad, ptas, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt1, pixa, 1, 1, 20, 32);
-        pixt2 = pixProjectivePta(pixt1, ptas, ptad, L_BRING_IN_WHITE);
-        pixSaveTiled(pixt2, pixa, 1, 0, 20, 0);
-        pixd = pixRemoveBorder(pixt2, ADDED_BORDER_PIXELS);
+        pix1 = pixProjectivePta(pixb, ptad, ptas, L_BRING_IN_WHITE);
+        pixSaveTiled(pix1, pixa, 1.0, 1, 20, 32);
+        pix2 = pixProjectivePta(pix1, ptas, ptad, L_BRING_IN_WHITE);
+        pixSaveTiled(pix2, pixa, 1.0, 0, 20, 0);
+        pixd = pixRemoveBorder(pix2, ADDED_BORDER_PIXELS);
         pixXor(pixd, pixd, pixcs);
-        pixSaveTiled(pixd, pixa, 1, 0, 20, 0);
+        pixSaveTiled(pixd, pixa, 1.0, 0, 20, 0);
         pixDestroy(&pixb);
-        pixDestroy(&pixt1);
-        pixDestroy(&pixt2);
+        pixDestroy(&pix1);
+        pixDestroy(&pix2);
         pixDestroy(&pixd);
         ptaDestroy(&ptas);
         ptaDestroy(&ptad);
     }
 
-    pixt1 = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkproj3.png", pixt1, IFF_PNG);
-    pixDisplay(pixt1, 100, 500);
-    pixDestroy(&pixt1);
+    pix1 = pixaDisplay(pixa, 0, 0);
+    pixWrite("/tmp/proj3.png", pix1, IFF_PNG);
+    pixDisplay(pix1, 100, 500);
+    pixDestroy(&pix1);
     pixaDestroy(&pixa);
     pixDestroy(&pixc);
     pixDestroy(&pixcs);
 #endif
 
-#if ALL 
+#if ALL
        /* Comparison between sampling and interpolated */
     MakePtas(3, &ptas, &ptad);
     pixa = pixaCreate(0);
 
-	/* Use sampled transform */
-    pixt1 = pixProjectiveSampledPta(pixs, ptas, ptad, L_BRING_IN_WHITE);
-    pixSaveTiled(pixt1, pixa, 2, 1, 20, 8);
+        /* Use sampled transform */
+    pix1 = pixProjectiveSampledPta(pixs, ptas, ptad, L_BRING_IN_WHITE);
+    pixSaveTiled(pix1, pixa, 0.5, 1, 20, 8);
 
-	/* Use interpolated transforms */
-    pixt2 = pixProjectivePta(pixs, ptas, ptad, L_BRING_IN_WHITE);
-    pixSaveTiled(pixt2, pixa, 2, 0, 20, 8);
+        /* Use interpolated transforms */
+    pix2 = pixProjectivePta(pixs, ptas, ptad, L_BRING_IN_WHITE);
+    pixSaveTiled(pix2, pixa, 0.5, 0, 20, 8);
 
         /* Compare the results */
-    pixXor(pixt2, pixt2, pixt1);
-    pixSaveTiled(pixt2, pixa, 2, 0, 20, 8);
+    pixXor(pix2, pix2, pix1);
+    pixSaveTiled(pix2, pixa, 0.5, 0, 20, 8);
 
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkproj4.png", pixd, IFF_PNG);
+    pixWrite("/tmp/proj4.png", pixd, IFF_PNG);
     pixDisplay(pixd, 100, 700);
-    pixDestroy(&pixt1);
-    pixDestroy(&pixt2);
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
     pixDestroy(&pixd);
     pixaDestroy(&pixa);
     ptaDestroy(&ptas);
@@ -197,22 +202,22 @@ static char  mainName[] = "projective_reg";
     pixg = pixScaleToGray3(pixs);
 
     startTimer();
-    pixt1 = pixProjectiveSampledPta(pixg, ptas, ptad, L_BRING_IN_WHITE);
+    pix1 = pixProjectiveSampledPta(pixg, ptas, ptad, L_BRING_IN_WHITE);
     fprintf(stderr, " Time for pixProjectiveSampledPta(): %6.2f sec\n", stopTimer());
-    pixSaveTiled(pixt1, pixa, 1, 1, 20, 8);
+    pixSaveTiled(pix1, pixa, 1.0, 1, 20, 8);
 
     startTimer();
-    pixt2 = pixProjectivePta(pixg, ptas, ptad, L_BRING_IN_WHITE);
+    pix2 = pixProjectivePta(pixg, ptas, ptad, L_BRING_IN_WHITE);
     fprintf(stderr, " Time for pixProjectivePta(): %6.2f sec\n", stopTimer());
-    pixSaveTiled(pixt2, pixa, 1, 0, 20, 8);
+    pixSaveTiled(pix2, pixa, 1.0, 0, 20, 8);
 
-    pixXor(pixt1, pixt1, pixt2);
-    pixSaveTiled(pixt1, pixa, 1, 0, 20, 8);
-    pixDestroy(&pixt1);
-    pixDestroy(&pixt2);
+    pixXor(pix1, pix1, pix2);
+    pixSaveTiled(pix1, pixa, 1.0, 0, 20, 8);
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
 
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/junkproj5.png", pixd, IFF_PNG);
+    pixWrite("/tmp/proj5.png", pixd, IFF_PNG);
     pixDisplay(pixd, 100, 900);
     pixDestroy(&pixd);
     pixDestroy(&pixg);

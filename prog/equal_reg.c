@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -23,8 +34,6 @@
  *    the colormap to either RGB or grayscale.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
     /* use this set */
@@ -35,15 +44,15 @@
 #define   KAREN8           "karen8.jpg"    /* 8 bpp, not cmapped */
 #define   MARGE32          "marge.jpg"     /* rgb */
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 l_int32      errorfound, same;
 PIX         *pixs, *pixt1, *pixt2, *pixt3, *pixt4;
 static char  mainName[] = "equal_reg";
 
     if (argc != 1)
-	exit(ERROR_INT(" Syntax:  equal_reg", mainName, 1));
+        return ERROR_INT(" Syntax:  equal_reg", mainName, 1);
 
     errorfound = FALSE;
     pixs = pixRead(FEYN1);
@@ -51,10 +60,10 @@ static char  mainName[] = "equal_reg";
     pixt1 = pixRead("/tmp/junkfeyn.png");
     pixEqual(pixs, pixt1, &same);
     if (same)
-        L_INFO("equal for feyn1", mainName);
+        L_INFO("equal for feyn1\n", mainName);
     else {
-        L_INFO("FAILURE for equal for feyn1", mainName);
-	errorfound = TRUE;
+        L_INFO("FAILURE for equal for feyn1\n", mainName);
+        errorfound = TRUE;
     }
     pixDestroy(&pixs);
     pixDestroy(&pixt1);
@@ -69,32 +78,32 @@ static char  mainName[] = "equal_reg";
     pixt4 = pixConvertRGBToColormap(pixt2, 1);
     pixWrite("/tmp/junkdrey2-4.png", pixt4, IFF_PNG);
     pixEqual(pixs, pixt1, &same);
-    if (same)
-        L_INFO("equal for pixt1 of dreyfus2", mainName);
-    else {
-        L_INFO("FAILURE for pixt1 of dreyfus2", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt1 of dreyfus2\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt1 of dreyfus2\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt2, &same);
-    if (same)
-        L_INFO("equal for pixt2 of dreyfus2", mainName);
-    else {
-        L_INFO("FAILURE for pixt2 of dreyfus2", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt2 of dreyfus2\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt2 of dreyfus2\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt3, &same);
-    if (same)
-        L_INFO("equal for pixt3 of dreyfus2", mainName);
-    else {
-        L_INFO("FAILURE for pixt3 of dreyfus2", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt3 of dreyfus2\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt3 of dreyfus2\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt4, &same);
-    if (same)
-        L_INFO("equal for pixt4 of dreyfus2", mainName);
-    else {
-        L_INFO("FAILURE for pixt4 of dreyfus2", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt4 of dreyfus2\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt4 of dreyfus2\n", mainName);
+        errorfound = TRUE;
     }
     pixDestroy(&pixs);
     pixDestroy(&pixt1);
@@ -112,32 +121,32 @@ static char  mainName[] = "equal_reg";
     pixt4 = pixConvertRGBToColormap(pixt2, 1);
     pixWrite("/tmp/junkdrey4-4.png", pixt4, IFF_PNG);
     pixEqual(pixs, pixt1, &same);
-    if (same)
-        L_INFO("equal for pixt1 of dreyfus4", mainName);
-    else {
-        L_INFO("FAILURE for pixt1 of dreyfus4", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt1 of dreyfus4\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt1 of dreyfus4\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt2, &same);
-    if (same)
-        L_INFO("equal for pixt2 of dreyfus4", mainName);
-    else {
-        L_INFO("FAILURE for pixt2 of dreyfus4", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt2 of dreyfus4\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt2 of dreyfus4\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt3, &same);
-    if (same)
-        L_INFO("equal for pixt3 of dreyfus4", mainName);
-    else {
-        L_INFO("FAILURE for pixt3 of dreyfus4", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt3 of dreyfus4\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt3 of dreyfus4\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt4, &same);
-    if (same)
-        L_INFO("equal for pixt4 of dreyfus4", mainName);
-    else {
-        L_INFO("FAILURE for pixt4 of dreyfus4", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt4 of dreyfus4\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt4 of dreyfus4\n", mainName);
+        errorfound = TRUE;
     }
     pixDestroy(&pixs);
     pixDestroy(&pixt1);
@@ -153,18 +162,18 @@ static char  mainName[] = "equal_reg";
     pixt3 = pixConvertRGBToColormap(pixt2, 1);
     pixWrite("/tmp/junkdrey8-3.png", pixt3, IFF_PNG);
     pixEqual(pixs, pixt1, &same);
-    if (same)
-        L_INFO("equal for pixt1 of dreyfus8", mainName);
-    else {
-        L_INFO("FAILURE for pixt1 of dreyfus8", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt1 of dreyfus8\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt1 of dreyfus8\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixs, pixt2, &same);
-    if (same)
-        L_INFO("equal for pixt2 of dreyfus8", mainName);
-    else {
-        L_INFO("FAILURE for pixt2 of dreyfus8", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt2 of dreyfus8\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt2 of dreyfus8\n", mainName);
+        errorfound = TRUE;
     }
     pixDestroy(&pixs);
     pixDestroy(&pixt1);
@@ -180,25 +189,25 @@ static char  mainName[] = "equal_reg";
     pixWrite("/tmp/junkkar8-3.png", pixt3, IFF_PNG);
     pixt4 = pixConvertRGBToColormap(pixt3, 1);
     pixEqual(pixt1, pixt2, &same);
-    if (same)
-        L_INFO("equal for pixt2 of karen8", mainName);
-    else {
-        L_INFO("FAILURE for pixt2 of karen8", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt2 of karen8\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt2 of karen8\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixt1, pixt3, &same);
-    if (same)
-        L_INFO("equal for pixt3 of karen8", mainName);
-    else {
-        L_INFO("FAILURE for pixt3 of karen8", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt3 of karen8\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt3 of karen8\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixt1, pixt4, &same);
-    if (same)
-        L_INFO("equal for pixt4 of karen8", mainName);
-    else {
-        L_INFO("FAILURE for pixt4 of karen8", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt4 of karen8\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt4 of karen8\n", mainName);
+        errorfound = TRUE;
     }
     pixDestroy(&pixs);
     pixDestroy(&pixt1);
@@ -216,25 +225,25 @@ static char  mainName[] = "equal_reg";
     pixt4 = pixOctreeQuantNumColors(pixt2, 64, 0);
     pixWrite("/tmp/junkmarge8-4.png", pixt4, IFF_PNG);
     pixEqual(pixt1, pixt2, &same);
-    if (same)
-        L_INFO("equal for pixt2 of marge32", mainName);
-    else {
-        L_INFO("FAILURE for pixt2 of marge32", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt2 of marge32\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt2 of marge32\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixt1, pixt3, &same);
-    if (same)
-        L_INFO("equal for pixt3 of marge32", mainName);
-    else {
-        L_INFO("FAILURE for pixt3 of marge32", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt3 of marge32\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt3 of marge32\n", mainName);
+        errorfound = TRUE;
     }
     pixEqual(pixt1, pixt4, &same);
-    if (same)
-        L_INFO("equal for pixt4 of marge32", mainName);
-    else {
-        L_INFO("FAILURE for pixt4 of marge32", mainName);
-	errorfound = TRUE;
+    if (same) {
+        L_INFO("equal for pixt4 of marge32\n", mainName);
+    } else {
+        L_INFO("FAILURE for pixt4 of marge32\n", mainName);
+        errorfound = TRUE;
     }
     pixDestroy(&pixs);
     pixDestroy(&pixt1);
@@ -243,10 +252,9 @@ static char  mainName[] = "equal_reg";
     pixDestroy(&pixt4);
 
     if (errorfound)
-        L_INFO("FAILURE in processing this test", mainName);
+        L_INFO("FAILURE in processing this test\n", mainName);
     else
-        L_INFO("SUCCESS in processing this test", mainName);
-
-    exit(0);
+        L_INFO("SUCCESS in processing this test\n", mainName);
+    return 0;
 }
 

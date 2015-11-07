@@ -1,34 +1,42 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 /*
  * cornertest.c
  *
- *   e.g., use on witten.tif
+ *   e.g., use on witten.png
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
-#define   LINE_SIZE   9
+#define   LINE_SIZE   29
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *filein, *fileout;
 l_int32      x, y, n, i;
@@ -38,19 +46,18 @@ PTAA        *ptaa, *ptaa2, *ptaa3;
 static char  mainName[] = "cornertest";
 
     if (argc != 3)
-	exit(ERROR_INT(" Syntax:  cornertest filein fileout", mainName, 1));
+        return ERROR_INT(" Syntax:  cornertest filein fileout", mainName, 1);
 
     filein = argv[1];
     fileout = argv[2];
-
     if ((pixs = pixRead(filein)) == NULL)
-	exit(ERROR_INT("pixs not made", mainName, 1));
+        return ERROR_INT("pixs not made", mainName, 1);
 
-	/* Clean noise in LR corner of witten.tif */
+        /* Clean noise in LR corner of witten.tif */
     pixSetPixel(pixs, 2252, 3051, 0);
     pixSetPixel(pixs, 2252, 3050, 0);
     pixSetPixel(pixs, 2251, 3050, 0);
-	    
+
     pta = pixFindCornerPixels(pixs);
     ptaWriteStream(stderr, pta, 1);
 
@@ -72,22 +79,21 @@ static char  mainName[] = "cornertest";
     ptaaDestroy(&ptaa3);
 #endif
 
-	/* mark corner pixels */
+        /* mark corner pixels */
     n = ptaGetCount(pta);
     for (i = 0; i < n; i++) {
-	ptaGetIPt(pta, i, &x, &y);
-	pixRenderLine(pixs, x - LINE_SIZE, y, x + LINE_SIZE, y, 3,
-	              L_FLIP_PIXELS);
-	pixRenderLine(pixs, x, y - LINE_SIZE, x, y + LINE_SIZE, 3,
-	              L_FLIP_PIXELS);
+        ptaGetIPt(pta, i, &x, &y);
+        pixRenderLine(pixs, x - LINE_SIZE, y, x + LINE_SIZE, y, 5,
+                      L_FLIP_PIXELS);
+        pixRenderLine(pixs, x, y - LINE_SIZE, x, y + LINE_SIZE, 5,
+                      L_FLIP_PIXELS);
     }
 
     pixWrite(fileout, pixs, IFF_PNG);
-    
+
     pixDestroy(&pixs);
     ptaDestroy(&pta);
     ptaDestroy(&pta);
-
-    exit(0);
+    return 0;
 }
 

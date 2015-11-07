@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -49,14 +60,15 @@
  *
  *    FPixa addition
  *          l_int32        fpixaAddFPix()
- *          l_int32        fpixaExtendArray()
- *          l_int32        fpixaExtendArrayToSize()
+ *          static l_int32 fpixaExtendArray()
+ *          static l_int32 fpixaExtendArrayToSize()
  *
  *    FPixa accessors
  *          l_int32        fpixaGetCount()
  *          l_int32        fpixaChangeRefcount()
  *          FPIX          *fpixaGetFPix()
  *          l_int32        fpixaGetFPixDimensions()
+ *          l_float32     *fpixaGetData()
  *          l_int32        fpixaGetPixel()
  *          l_int32        fpixaSetPixel()
  *
@@ -96,7 +108,7 @@
  *          l_int32        dpixWrite()
  *          l_int32        dpixWriteStream()
  *          DPIX          *dpixEndianByteSwap()
- * 
+ *
  *    Print FPix (subsampled, for debugging)
  *          l_int32        fpixPrintStream()
  */
@@ -105,6 +117,10 @@
 #include "allheaders.h"
 
 static const l_int32  INITIAL_PTR_ARRAYSIZE = 20;   /* must be > 0 */
+
+    /* Static functions */
+static l_int32 fpixaExtendArray(FPIXA *fpixa);
+static l_int32 fpixaExtendArrayToSize(FPIXA *fpixa, l_int32 size);
 
 
 /*--------------------------------------------------------------------*
@@ -126,6 +142,7 @@ fpixCreate(l_int32  width,
            l_int32  height)
 {
 l_float32  *data;
+l_uint64    bignum;
 FPIX       *fpixd;
 
     PROCNAME("fpixCreate");
@@ -135,10 +152,17 @@ FPIX       *fpixd;
     if (height <= 0)
         return (FPIX *)ERROR_PTR("height must be > 0", procName, NULL);
 
+        /* Avoid overflow in malloc arg, malicious or otherwise */
+    bignum = 4L * width * height;   /* max number of bytes requested */
+    if (bignum > ((1LL << 31) - 1)) {
+        L_ERROR("requested w = %d, h = %d\n", procName, width, height);
+        return (FPIX *)ERROR_PTR("requested bytes >= 2^31", procName, NULL);
+    }
+
     if ((fpixd = (FPIX *)CALLOC(1, sizeof(FPIX))) == NULL)
         return (FPIX *)ERROR_PTR("CALLOC fail for fpixd", procName, NULL);
     fpixSetDimensions(fpixd, width, height);
-    fpixSetWpl(fpixd, width);
+    fpixSetWpl(fpixd, width);  /* 4-byte words */
     fpixd->refcount = 1;
 
     data = (l_float32 *)CALLOC(width * height, sizeof(l_float32));
@@ -331,7 +355,7 @@ FPIX       *fpix;
     PROCNAME("fpixDestroy");
 
     if (!pfpix) {
-        L_WARNING("ptr address is null!", procName);
+        L_WARNING("ptr address is null!\n", procName);
         return;
     }
 
@@ -368,6 +392,10 @@ fpixGetDimensions(FPIX     *fpix,
 {
     PROCNAME("fpixGetDimensions");
 
+    if (!pw && !ph)
+        return ERROR_INT("no return val requested", procName, 1);
+    if (pw) *pw = 0;
+    if (ph) *ph = 0;
     if (!fpix)
         return ERROR_INT("fpix not defined", procName, 1);
     if (pw) *pw = fpix->w;
@@ -404,7 +432,7 @@ fpixGetWpl(FPIX  *fpix)
     PROCNAME("fpixGetWpl");
 
     if (!fpix)
-        return ERROR_INT("fpix not defined", procName, 1);
+        return ERROR_INT("fpix not defined", procName, UNDEF);
     return fpix->wpl;
 }
 
@@ -683,7 +711,7 @@ FPIXA   *fpixa;
     PROCNAME("fpixaDestroy");
 
     if (pfpixa == NULL) {
-        L_WARNING("ptr address is NULL!", procName);
+        L_WARNING("ptr address is NULL!\n", procName);
         return;
     }
 
@@ -760,7 +788,7 @@ FPIX    *fpixc;
  *  Notes:
  *      (1) Doubles the size of the fpixa ptr array.
  */
-l_int32
+static l_int32
 fpixaExtendArray(FPIXA  *fpixa)
 {
     PROCNAME("fpixaExtendArray");
@@ -781,7 +809,7 @@ fpixaExtendArray(FPIXA  *fpixa)
  *  Notes:
  *      (1) If necessary, reallocs new fpixa ptrs array to @size.
  */
-l_int32
+static l_int32
 fpixaExtendArrayToSize(FPIXA   *fpixa,
                        l_int32  size)
 {
@@ -889,6 +917,10 @@ FPIX  *fpix;
 
     PROCNAME("fpixaGetFPixDimensions");
 
+    if (!pw && !ph)
+        return ERROR_INT("no return val requested", procName, 1);
+    if (pw) *pw = 0;
+    if (ph) *ph = 0;
     if (!fpixa)
         return ERROR_INT("fpixa not defined", procName, 1);
     if (index < 0 || index >= fpixa->n)
@@ -899,6 +931,36 @@ FPIX  *fpix;
     fpixGetDimensions(fpix, pw, ph);
     fpixDestroy(&fpix);
     return 0;
+}
+
+
+/*!
+ *  fpixaGetData()
+ *
+ *      Input:  fpixa
+ *              index (into fpixa array)
+ *      Return: data (not a copy), or null on error
+ */
+l_float32 *
+fpixaGetData(FPIXA      *fpixa,
+             l_int32     index)
+{
+l_int32     n;
+l_float32  *data;
+FPIX       *fpix;
+
+    PROCNAME("fpixaGetData");
+
+    if (!fpixa)
+        return (l_float32 *)ERROR_PTR("fpixa not defined", procName, NULL);
+    n = fpixaGetCount(fpixa);
+    if (index < 0 || index >= n)
+        return (l_float32 *)ERROR_PTR("invalid index", procName, NULL);
+
+    fpix = fpixaGetFPix(fpixa, index, L_CLONE);
+    data = fpixGetData(fpix);
+    fpixDestroy(&fpix);
+    return data;
 }
 
 
@@ -992,6 +1054,7 @@ dpixCreate(l_int32  width,
            l_int32  height)
 {
 l_float64  *data;
+l_uint64    bignum;
 DPIX       *dpix;
 
     PROCNAME("dpixCreate");
@@ -1001,10 +1064,17 @@ DPIX       *dpix;
     if (height <= 0)
         return (DPIX *)ERROR_PTR("height must be > 0", procName, NULL);
 
+        /* Avoid overflow in malloc arg, malicious or otherwise */
+    bignum = 8L * width * height;   /* max number of bytes requested */
+    if (bignum > ((1LL << 31) - 1)) {
+        L_ERROR("requested w = %d, h = %d\n", procName, width, height);
+        return (DPIX *)ERROR_PTR("requested bytes >= 2^31", procName, NULL);
+    }
+
     if ((dpix = (DPIX *)CALLOC(1, sizeof(DPIX))) == NULL)
         return (DPIX *)ERROR_PTR("CALLOC fail for dpix", procName, NULL);
     dpixSetDimensions(dpix, width, height);
-    dpixSetWpl(dpix, width);  /* Note: 8 byte words here */
+    dpixSetWpl(dpix, width);  /* 8 byte words */
     dpix->refcount = 1;
 
     data = (l_float64 *)CALLOC(width * height, sizeof(l_float64));
@@ -1161,7 +1231,7 @@ l_float64  *data;
         return 0;
 
     dpixSetDimensions(dpixd, ws, hs);
-    dpixSetWpl(dpixd, ws);  /* Note: 8 byte words */
+    dpixSetWpl(dpixd, ws);  /* 8 byte words */
     bytes = 8 * ws * hs;
     data = dpixGetData(dpixd);
     if (data) FREE(data);
@@ -1191,7 +1261,7 @@ DPIX       *dpix;
     PROCNAME("dpixDestroy");
 
     if (!pdpix) {
-        L_WARNING("ptr address is null!", procName);
+        L_WARNING("ptr address is null!\n", procName);
         return;
     }
 
@@ -1228,6 +1298,10 @@ dpixGetDimensions(DPIX     *dpix,
 {
     PROCNAME("dpixGetDimensions");
 
+    if (!pw && !ph)
+        return ERROR_INT("no return val requested", procName, 1);
+    if (pw) *pw = 0;
+    if (ph) *ph = 0;
     if (!dpix)
         return ERROR_INT("dpix not defined", procName, 1);
     if (pw) *pw = dpix->w;
@@ -1488,7 +1562,8 @@ FPIX  *fpix;
 FPIX *
 fpixReadStream(FILE  *fp)
 {
-l_int32     w, h, nbytes, version;
+char        buf[256];
+l_int32     w, h, nbytes, xres, yres, version;
 l_float32  *data;
 FPIX       *fpix;
 
@@ -1504,11 +1579,23 @@ FPIX       *fpix;
     if (fscanf(fp, "w = %d, h = %d, nbytes = %d\n", &w, &h, &nbytes) != 3)
         return (FPIX *)ERROR_PTR("read fail for data size", procName, NULL);
 
+        /* Use fgets() and sscanf(); not fscanf(), for the last
+         * bit of header data before the float data.  The reason is
+         * that fscanf throws away white space, and if the float data
+         * happens to begin with ascii character(s) that are white
+         * space, it will swallow them and all will be lost!  */
+    if (fgets(buf, sizeof(buf), fp) == NULL)
+        return (FPIX *)ERROR_PTR("fgets read fail", procName, NULL);
+    if (sscanf(buf, "xres = %d, yres = %d\n", &xres, &yres) != 2)
+        return (FPIX *)ERROR_PTR("read fail for xres, yres", procName, NULL);
+
     if ((fpix = fpixCreate(w, h)) == NULL)
         return (FPIX *)ERROR_PTR("fpix not made", procName, NULL);
+    fpixSetResolution(fpix, xres, yres);
     data = fpixGetData(fpix);
     if (fread(data, 1, nbytes, fp) != nbytes)
         return (FPIX *)ERROR_PTR("read error for nbytes", procName, NULL);
+    fgetc(fp);  /* ending nl */
 
         /* Convert to little-endian if necessary */
     fpixEndianByteSwap(fpix, fpix);
@@ -1557,7 +1644,7 @@ l_int32
 fpixWriteStream(FILE  *fp,
                 FPIX  *fpix)
 {
-l_int32     w, h, nbytes;
+l_int32     w, h, nbytes, xres, yres;
 l_float32  *data;
 FPIX       *fpixt;
 
@@ -1573,10 +1660,13 @@ FPIX       *fpixt;
 
     fpixGetDimensions(fpixt, &w, &h);
     data = fpixGetData(fpixt);
-    nbytes = 4 * h * fpixGetWpl(fpixt);
+    nbytes = w * h * sizeof(l_float32);
+    fpixGetResolution(fpixt, &xres, &yres);
     fprintf(fp, "\nFPix Version %d\n", FPIX_VERSION_NUMBER);
     fprintf(fp, "w = %d, h = %d, nbytes = %d\n", w, h, nbytes);
+    fprintf(fp, "xres = %d, yres = %d\n", xres, yres);
     fwrite(data, 1, nbytes, fp);
+    fprintf(fp, "\n");
 
     fpixDestroy(&fpixt);
     return 0;
@@ -1605,7 +1695,7 @@ fpixEndianByteSwap(FPIX  *fpixd,
                    FPIX  *fpixs)
 {
     PROCNAME("fpixEndianByteSwap");
-        
+
     if (!fpixs)
         return (FPIX *)ERROR_PTR("fpixs not defined", procName, fpixd);
     if (fpixd && (fpixs != fpixd))
@@ -1684,7 +1774,8 @@ DPIX  *dpix;
 DPIX *
 dpixReadStream(FILE  *fp)
 {
-l_int32     w, h, nbytes, version;
+char        buf[256];
+l_int32     w, h, nbytes, version, xres, yres;
 l_float64  *data;
 DPIX       *dpix;
 
@@ -1700,11 +1791,23 @@ DPIX       *dpix;
     if (fscanf(fp, "w = %d, h = %d, nbytes = %d\n", &w, &h, &nbytes) != 3)
         return (DPIX *)ERROR_PTR("read fail for data size", procName, NULL);
 
+        /* Use fgets() and sscanf(); not fscanf(), for the last
+         * bit of header data before the float data.  The reason is
+         * that fscanf throws away white space, and if the float data
+         * happens to begin with ascii character(s) that are white
+         * space, it will swallow them and all will be lost!  */
+    if (fgets(buf, sizeof(buf), fp) == NULL)
+        return (DPIX *)ERROR_PTR("fgets read fail", procName, NULL);
+    if (sscanf(buf, "xres = %d, yres = %d\n", &xres, &yres) != 2)
+        return (DPIX *)ERROR_PTR("read fail for xres, yres", procName, NULL);
+
     if ((dpix = dpixCreate(w, h)) == NULL)
         return (DPIX *)ERROR_PTR("dpix not made", procName, NULL);
+    dpixSetResolution(dpix, xres, yres);
     data = dpixGetData(dpix);
     if (fread(data, 1, nbytes, fp) != nbytes)
         return (DPIX *)ERROR_PTR("read error for nbytes", procName, NULL);
+    fgetc(fp);  /* ending nl */
 
         /* Convert to little-endian if necessary */
     dpixEndianByteSwap(dpix, dpix);
@@ -1753,7 +1856,7 @@ l_int32
 dpixWriteStream(FILE  *fp,
                 DPIX  *dpix)
 {
-l_int32     w, h, nbytes;
+l_int32     w, h, nbytes, xres, yres;
 l_float64  *data;
 DPIX       *dpixt;
 
@@ -1768,11 +1871,14 @@ DPIX       *dpixt;
     dpixt = dpixEndianByteSwap(NULL, dpix);
 
     dpixGetDimensions(dpixt, &w, &h);
+    dpixGetResolution(dpixt, &xres, &yres);
     data = dpixGetData(dpixt);
-    nbytes = 8 * h * dpixGetWpl(dpixt);
+    nbytes = w * h * sizeof(l_float64);
     fprintf(fp, "\nDPix Version %d\n", DPIX_VERSION_NUMBER);
     fprintf(fp, "w = %d, h = %d, nbytes = %d\n", w, h, nbytes);
+    fprintf(fp, "xres = %d, yres = %d\n", xres, yres);
     fwrite(data, 1, nbytes, fp);
+    fprintf(fp, "\n");
 
     dpixDestroy(&dpixt);
     return 0;
@@ -1801,7 +1907,7 @@ dpixEndianByteSwap(DPIX  *dpixd,
                    DPIX  *dpixs)
 {
     PROCNAME("dpixEndianByteSwap");
-        
+
     if (!dpixs)
         return (DPIX *)ERROR_PTR("dpixs not defined", procName, dpixd);
     if (dpixd && (dpixs != dpixd))
@@ -1883,4 +1989,3 @@ l_float32  val;
      fprintf(fp, "\n");
      return 0;
 }
-

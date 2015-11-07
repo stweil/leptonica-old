@@ -1,21 +1,32 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  *  colorquant2.c
- *                     
+ *
  *  Modified median cut color quantization
  *
  *      High level
@@ -155,8 +166,6 @@
  *         dividing the color space up in the most heavily populated regions.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -239,7 +248,7 @@ static const l_int32  DIF_CAP = 100;
  *  Notes:
  *      (1) Simple interface.  See pixMedianCutQuantGeneral() for
  *          use of defaulted parameters.
- */ 
+ */
 PIX *
 pixMedianCutQuant(PIX     *pixs,
                   l_int32  ditherflag)
@@ -288,7 +297,7 @@ pixMedianCutQuant(PIX     *pixs,
  *          reason is that median cut divides the color space into rectangular
  *          regions, and it does a very poor job if all the pixels are
  *          near the diagonal of the color space cube.
- */ 
+ */
 PIX *
 pixMedianCutQuantGeneral(PIX     *pixs,
                          l_int32  ditherflag,
@@ -326,9 +335,9 @@ PIXCMAP   *cmap;
         maxsub = 10;  /* default will prevail for 10^7 pixels or less */
 
         /* Determine if the image has sufficient color content.
-	 * If pixfract << 1, most pixels are close to black or white.
-	 * If colorfract << 1, the pixels that are not near
-	 *   black or white have very little color.
+         * If pixfract << 1, most pixels are close to black or white.
+         * If colorfract << 1, the pixels that are not near
+         *   black or white have very little color.
          * If with little color, quantize with a grayscale colormap. */
     pixGetDimensions(pixs, &w, &h, NULL);
     if (checkbw) {
@@ -336,21 +345,21 @@ PIXCMAP   *cmap;
         factor = L_MAX(1, minside / 400);
         pixColorFraction(pixs, 20, 244, 20, factor, &pixfract, &colorfract);
         if (pixfract * colorfract < 0.00025) {
-            L_INFO_FLOAT2("\n  Pixel fraction neither white nor black = %6.3f"
-                          "\n  Color fraction of those pixels = %6.3f"
-                          "\n  Quantizing in gray",
-                          procName, pixfract, colorfract);
+            L_INFO("\n  Pixel fraction neither white nor black = %6.3f"
+                   "\n  Color fraction of those pixels = %6.3f"
+                   "\n  Quantizing in gray\n",
+                   procName, pixfract, colorfract);
             return pixConvertTo8(pixs, 1);
         }
     }
 
         /* Compute the color space histogram.  Default sampling
-	 * is about 10^5 pixels.  */
-    if (maxsub == 1)
+         * is about 10^5 pixels.  */
+    if (maxsub == 1) {
         subsample = 1;
-    else {
+    } else {
         subsample = (l_int32)(sqrt((l_float64)(w * h) / 100000.));
-	subsample = L_MAX(1, L_MIN(maxsub, subsample));
+        subsample = L_MAX(1, L_MIN(maxsub, subsample));
     }
     histo = pixMedianCutHisto(pixs, sigbits, subsample);
     histosize = 1 << (3 * sigbits);
@@ -374,7 +383,7 @@ PIXCMAP   *cmap;
                 outdepth = 2;
             else if (ncolors <= 16)
                 outdepth = 4;
-            else 
+            else
                 outdepth = 8;
         }
         cmap = pixcmapGenerateFromHisto(pixs, outdepth,
@@ -411,7 +420,7 @@ PIXCMAP   *cmap;
         }
         medianCutApply(histo, sigbits, vbox, &vbox1, &vbox2);
         if (!vbox1) {
-            L_WARNING("vbox1 not defined; shouldn't happen!", procName);
+            L_WARNING("vbox1 not defined; shouldn't happen!\n", procName);
             break;
         }
         if (vbox1->vol > 1)
@@ -427,13 +436,13 @@ PIXCMAP   *cmap;
         if (ncolors >= popcolors)
             break;
         if (niters++ > MAX_ITERS_ALLOWED) {
-            L_WARNING("infinite loop; perhaps too few pixels!", procName);
+            L_WARNING("infinite loop; perhaps too few pixels!\n", procName);
             break;
         }
     }
 
         /* Re-sort by the product of pixel occupancy times the size
-	 * in color space. */
+         * in color space. */
     lhs = lheapCreate(0, L_SORT_DECREASING);
     while ((vbox = (L_BOX3D *)lheapRemove(lh))) {
         vbox->sortparam = vbox->npix * vbox->vol;
@@ -451,7 +460,7 @@ PIXCMAP   *cmap;
         }
         medianCutApply(histo, sigbits, vbox, &vbox1, &vbox2);
         if (!vbox1) {
-            L_WARNING("vbox1 not defined; shouldn't happen!", procName);
+            L_WARNING("vbox1 not defined; shouldn't happen!\n", procName);
             break;
         }
         if (vbox1->vol > 1)
@@ -467,7 +476,7 @@ PIXCMAP   *cmap;
         if (ncolors >= maxcolors)
             break;
         if (niters++ > MAX_ITERS_ALLOWED) {
-            L_WARNING("infinite loop; perhaps too few pixels!", procName);
+            L_WARNING("infinite loop; perhaps too few pixels!\n", procName);
             break;
         }
     }
@@ -492,7 +501,7 @@ PIXCMAP   *cmap;
             outdepth = 2;
         else if (ncolors <= 16)
             outdepth = 4;
-        else 
+        else
             outdepth = 8;
     }
     pixd = pixQuantizeWithColormap(pixs, ditherflag, outdepth, cmap,
@@ -596,9 +605,9 @@ PIXCMAP   *cmap;
     pixColorFraction(pixs, darkthresh, lightthresh, diffthresh, factor,
                      &pixfract, &colorfract);
     if (pixfract * colorfract < 0.0001) {
-        L_INFO_FLOAT2("\n  Pixel fraction neither white nor black = %6.3f"
+        L_INFO("\n  Pixel fraction neither white nor black = %6.3f"
                       "\n  Color fraction of those pixels = %6.3f"
-                      "\n  Quantizing in gray",
+                      "\n  Quantizing in gray\n",
                       procName, pixfract, colorfract);
         pixg = pixConvertTo8(pixs, 0);
         pixd = pixThresholdOn8bpp(pixg, ngray, 1);
@@ -651,9 +660,9 @@ PIXCMAP   *cmap;
     nc = pixcmapGetCount(cmap);
     unused = ncolor  + 1 - nc;
     if (unused < 0)
-        L_ERROR_INT("Too many colors: extra = %d", procName, -unused);
+        L_ERROR("Too many colors: extra = %d\n", procName, -unused);
     if (unused > 0) {  /* fill in with black; these won't be used */
-        L_INFO_INT("%d unused colors", procName, unused);
+        L_INFO("%d unused colors\n", procName, unused);
         for (i = 0; i < unused; i++)
             pixcmapAddColor(cmap, 0, 0, 0);
     }
@@ -753,11 +762,11 @@ PIX     *pixg, *pixd;
     if (lightthresh <= 0) lightthresh = 244;
     if (diffthresh <= 0) diffthresh = 15;
     if (ncolor < maxncolors) {
-        L_WARNING_INT("ncolor too small; setting to %d", procName, maxncolors);
+        L_WARNING("ncolor too small; setting to %d\n", procName, maxncolors);
         ncolor = maxncolors;
     }
     if (ngray < maxncolors) {
-        L_WARNING_INT("ngray too small; setting to %d", procName, maxncolors);
+        L_WARNING("ngray too small; setting to %d\n", procName, maxncolors);
         ngray = maxncolors;
     }
 
@@ -833,10 +842,10 @@ l_uint32  *data, *line;
     data = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
     for (i = 0; i < h; i += subsample) {
-        line = data + i * wpl; 
+        line = data + i * wpl;
         for (j = 0; j < w; j += subsample) {
             pixel = line[j];
-	    getColorIndexMedianCut(pixel, rshift, mask, sigbits, &index);
+            getColorIndexMedianCut(pixel, rshift, mask, sigbits, &index);
             histo[index]++;
         }
     }
@@ -885,15 +894,15 @@ PIXCMAP  *cmap;
         return (PIXCMAP *)ERROR_PTR("histo not defined", procName, NULL);
 
         /* Capture the rgb values of each occupied cube in the histo,
-	 * and re-label the histo value with the colormap index. */
+         * and re-label the histo value with the colormap index. */
     cmap = pixcmapCreate(depth);
     shift = 8 - sigbits;
     mask = 0xff >> shift;
     for (i = 0, index = 0; i < histosize; i++) {
         if (histo[i]) {
             rval = (i >> (2 * sigbits)) << shift;
-	    gval = ((i >> sigbits) & mask) << shift;
-	    bval = (i & mask) << shift;
+            gval = ((i >> sigbits) & mask) << shift;
+            bval = (i & mask) << shift;
             pixcmapAddColor(cmap, rval, gval, bval);
             histo[i] = index++;
         }
@@ -974,24 +983,21 @@ PIX       *pixd;
                     if (indexmap[index])
                         SET_DATA_BIT(lined, j);
                 }
-            }
-            else if (outdepth == 2) {
+            } else if (outdepth == 2) {
                 for (j = 0; j < w; j++) {
                     pixel = lines[j];
                     getColorIndexMedianCut(pixel, rshift, mask,
                                            sigbits, &index);
                     SET_DATA_DIBIT(lined, j, indexmap[index]);
                 }
-            }
-            else if (outdepth == 4) {
+            } else if (outdepth == 4) {
                 for (j = 0; j < w; j++) {
                     pixel = lines[j];
                     getColorIndexMedianCut(pixel, rshift, mask,
                                            sigbits, &index);
                     SET_DATA_QBIT(lined, j, indexmap[index]);
                 }
-            }
-            else {  /* outdepth == 8 */
+            } else {  /* outdepth == 8 */
                 for (j = 0; j < w; j++) {
                     pixel = lines[j];
                     getColorIndexMedianCut(pixel, rshift, mask,
@@ -999,9 +1005,8 @@ PIX       *pixd;
                     SET_DATA_BYTE(lined, j, indexmap[index]);
                 }
             }
-	}
-    }
-    else {  /* ditherflag == 1 */
+        }
+    } else {  /* ditherflag == 1 */
         bufu8r = (l_uint8 *)CALLOC(w, sizeof(l_uint8));
         bufu8g = (l_uint8 *)CALLOC(w, sizeof(l_uint8));
         bufu8b = (l_uint8 *)CALLOC(w, sizeof(l_uint8));
@@ -1059,8 +1064,7 @@ PIX       *pixd;
                         buf1r[j + 1] = L_MIN(16383, val1);
                         buf2r[j] = L_MIN(16383, val2);
                         buf2r[j + 1] = L_MIN(16383, val3);
-                    }
-                    else if (dif < 0) {
+                    } else if (dif < 0) {
                         buf1r[j + 1] = L_MAX(0, val1);
                         buf2r[j] = L_MAX(0, val2);
                         buf2r[j + 1] = L_MAX(0, val3);
@@ -1078,8 +1082,7 @@ PIX       *pixd;
                         buf1g[j + 1] = L_MIN(16383, val1);
                         buf2g[j] = L_MIN(16383, val2);
                         buf2g[j + 1] = L_MIN(16383, val3);
-                    }
-                    else if (dif < 0) {
+                    } else if (dif < 0) {
                         buf1g[j + 1] = L_MAX(0, val1);
                         buf2g[j] = L_MAX(0, val2);
                         buf2g[j + 1] = L_MAX(0, val3);
@@ -1097,8 +1100,7 @@ PIX       *pixd;
                         buf1b[j + 1] = L_MIN(16383, val1);
                         buf2b[j] = L_MIN(16383, val2);
                         buf2b[j + 1] = L_MIN(16383, val3);
-                    }
-                    else if (dif < 0) {
+                    } else if (dif < 0) {
                         buf1b[j + 1] = L_MAX(0, val1);
                         buf2b[j] = L_MAX(0, val2);
                         buf2b[j + 1] = L_MAX(0, val3);
@@ -1214,17 +1216,17 @@ l_uint32  *data, *line;
             rval = pixel >> (24 + rshift);
             gval = (pixel >> (16 + rshift)) & mask;
             bval = (pixel >> (8 + rshift)) & mask;
-	    if (rval < rmin)
+            if (rval < rmin)
                 rmin = rval;
-	    else if (rval > rmax)
+            else if (rval > rmax)
                 rmax = rval;
-	    if (gval < gmin)
+            if (gval < gmin)
                 gmin = gval;
-	    else if (gval > gmax)
+            else if (gval > gmax)
                 gmax = gval;
-	    if (bval < bmin)
+            if (bval < bmin)
                 bmin = bval;
-	    else if (bval > bmax)
+            else if (bval > bmax)
                 bmax = bval;
         }
     }
@@ -1256,11 +1258,11 @@ L_BOX3D  *vbox1, *vbox2;
 
     PROCNAME("medianCutApply");
 
-    if (!histo) 
+    if (!histo)
         return ERROR_INT("histo not defined", procName, 1);
-    if (!vbox) 
+    if (!vbox)
         return ERROR_INT("vbox not defined", procName, 1);
-    if (!pvbox1 || !pvbox2) 
+    if (!pvbox1 || !pvbox2)
         return ERROR_INT("&vbox1 and &vbox2 not both defined", procName, 1);
 
     *pvbox1 = *pvbox2 = NULL;
@@ -1306,8 +1308,7 @@ L_BOX3D  *vbox1, *vbox2;
             total += sum;
             partialsum[i] = total;
         }
-    }
-    else if (maxw == gw) {
+    } else if (maxw == gw) {
         for (i = vbox->g1; i <= vbox->g2; i++) {
             sum = 0;
             for (j = vbox->r1; j <= vbox->r2; j++) {
@@ -1319,8 +1320,7 @@ L_BOX3D  *vbox1, *vbox2;
             total += sum;
             partialsum[i] = total;
         }
-    }
-    else {  /* maxw == bw */
+    } else {  /* maxw == bw */
         for (i = vbox->b1; i <= vbox->b2; i++) {
             sum = 0;
             for (j = vbox->r1; j <= vbox->r2; j++) {
@@ -1358,8 +1358,7 @@ L_BOX3D  *vbox1, *vbox2;
                 break;
             }
         }
-    }
-    else if (maxw == gw) {
+    } else if (maxw == gw) {
         for (i = vbox->g1; i <= vbox->g2; i++) {
             if (partialsum[i] > total / 2) {
                 vbox1 = box3dCopy(vbox);
@@ -1374,8 +1373,7 @@ L_BOX3D  *vbox1, *vbox2;
                 break;
             }
         }
-    }
-    else {  /* maxw == bw */
+    } else {  /* maxw == bw */
         for (i = vbox->b1; i <= vbox->b2; i++) {
             if (partialsum[i] > total / 2) {
                 vbox1 = box3dCopy(vbox);
@@ -1429,9 +1427,9 @@ PIXCMAP  *cmap;
 
     PROCNAME("pixcmapGenerateFromMedianCuts");
 
-    if (!lh) 
+    if (!lh)
         return (PIXCMAP *)ERROR_PTR("lh not defined", procName, NULL);
-    if (!histo) 
+    if (!histo)
         return (PIXCMAP *)ERROR_PTR("histo not defined", procName, NULL);
 
     rval = gval = bval = 0;  /* make compiler happy */
@@ -1439,10 +1437,10 @@ PIXCMAP  *cmap;
     index = 0;
     while (lheapGetCount(lh) > 0) {
         vbox = (L_BOX3D *)lheapRemove(lh);
-	vboxGetAverageColor(vbox, histo, sigbits, index, &rval, &gval, &bval);
-	pixcmapAddColor(cmap, rval, gval, bval);
-	FREE(vbox);
-	index++;
+        vboxGetAverageColor(vbox, histo, sigbits, index, &rval, &gval, &bval);
+        pixcmapAddColor(cmap, rval, gval, bval);
+        FREE(vbox);
+        index++;
     }
 
     return cmap;
@@ -1465,6 +1463,12 @@ PIXCMAP  *cmap;
  *          the histo corresponding to the vbox are labeled with this
  *          cmap index for that vbox.  Otherwise, the histo array
  *          is not changed.
+ *      (3) The vbox is quantized in sigbits.  So the actual 8-bit color
+ *          components are found by multiplying the quantized value
+ *          by either 4 or 8.  We must add 0.5 to the quantized index
+ *          before multiplying to get the approximate 8-bit color in
+ *          the center of the vbox; otherwise we get values on
+ *          the lower corner.
  */
 static l_int32
 vboxGetAverageColor(L_BOX3D  *vbox,
@@ -1479,9 +1483,9 @@ l_int32  i, j, k, ntot, mult, histoindex, rsum, gsum, bsum;
 
     PROCNAME("vboxGetAverageColor");
 
-    if (!vbox) 
+    if (!vbox)
         return ERROR_INT("vbox not defined", procName, 1);
-    if (!histo) 
+    if (!histo)
         return ERROR_INT("histo not defined", procName, 1);
     if (!prval || !pgval || !pbval)
         return ERROR_INT("&p*val not all defined", procName, 1);
@@ -1508,8 +1512,7 @@ l_int32  i, j, k, ntot, mult, histoindex, rsum, gsum, bsum;
         *prval = mult * (vbox->r1 + vbox->r2 + 1) / 2;
         *pgval = mult * (vbox->g1 + vbox->g2 + 1) / 2;
         *pbval = mult * (vbox->b1 + vbox->b2 + 1) / 2;
-    }
-    else {
+    } else {
         *prval = rsum / ntot;
         *pgval = gsum / ntot;
         *pbval = bsum / ntot;
@@ -1543,9 +1546,9 @@ l_int32  i, j, k, npix, index;
 
     PROCNAME("vboxGetCount");
 
-    if (!vbox) 
+    if (!vbox)
         return ERROR_INT("vbox not defined", procName, 0);
-    if (!histo) 
+    if (!histo)
         return ERROR_INT("histo not defined", procName, 0);
 
     npix = 0;
@@ -1573,7 +1576,7 @@ vboxGetVolume(L_BOX3D  *vbox)
 {
     PROCNAME("vboxGetVolume");
 
-    if (!vbox) 
+    if (!vbox)
         return ERROR_INT("vbox not defined", procName, 0);
 
     return ((vbox->r2 - vbox->r1 + 1) * (vbox->g2 - vbox->g1 + 1) *
@@ -1612,7 +1615,7 @@ L_BOX3D  *vboxc;
 
     PROCNAME("box3dCopy");
 
-    if (!vbox) 
+    if (!vbox)
         return (L_BOX3D *)ERROR_PTR("vbox not defined", procName, NULL);
 
     vboxc = box3dCreate(vbox->r1, vbox->r2, vbox->g1, vbox->g2,
@@ -1621,5 +1624,3 @@ L_BOX3D  *vboxc;
     vboxc->vol = vbox->vol;
     return vboxc;
 }
-    
-

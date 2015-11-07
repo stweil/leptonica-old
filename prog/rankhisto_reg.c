@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -32,8 +43,8 @@
 static PIXA *PixSavePlots1(void);
 static PIXA *PixSavePlots2(void);
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char          fname[256];
 l_int32       i, w, h, nbins, factor;
@@ -52,14 +63,15 @@ L_REGPARAMS  *rp;
     pixGetDimensions(pixs, &w, &h, NULL);
     factor = L_MAX(1, (l_int32)sqrt((l_float64)(w * h / 20000.0)));
     nbins = 10;
-    pixGetRankColorArray(pixs, nbins, L_SELECT_MIN, factor, &array, 2);
+    pixGetRankColorArray(pixs, nbins, L_SELECT_MIN, factor, &array,
+                         2, "./fonts");
     if (!array)
         return ERROR_INT("\n\n\nFAILURE!\n\n\n", rp->testname, 1);
     for (i = 0; i < nbins; i++)
         fprintf(stderr, "%d: %x\n", i, array[i]);
-    pixd = pixDisplayColorArray(array, nbins, 200, 5, 1);
-    pixWrite("/tmp/rankhisto.0.png", pixd, IFF_PNG);
-    regTestCheckFile(rp, "/tmp/rankhisto.0.png");  /* 0 */
+    pixd = pixDisplayColorArray(array, nbins, 200, 5, "./fonts");
+    pixWrite("/tmp/regout/rankhisto.0.png", pixd, IFF_PNG);
+    regTestCheckFile(rp, "/tmp/regout/rankhisto.0.png");  /* 0 */
     pixDisplayWithTitle(pixd, 100, 100, NULL, rp->display);
     pixDestroy(&pixd);
 
@@ -69,9 +81,9 @@ L_REGPARAMS  *rp;
     for (i = 0; i < nbins; i++)
         pixelLinearMapToTargetColor(array[i], array[nbins - 1],
                                     0xffffff00, &marray[i]);
-    pixd = pixDisplayColorArray(marray, nbins, 200, 5, 1);
-    pixWrite("/tmp/rankhisto.1.png", pixd, IFF_PNG);
-    regTestCheckFile(rp, "/tmp/rankhisto.1.png");  /* 1 */
+    pixd = pixDisplayColorArray(marray, nbins, 200, 5, "./fonts");
+    pixWrite("/tmp/regout/rankhisto.1.png", pixd, IFF_PNG);
+    regTestCheckFile(rp, "/tmp/regout/rankhisto.1.png");  /* 1 */
     pixDisplayWithTitle(pixd, 100, 600, NULL, rp->display);
     pixDestroy(&pixd);
     lept_free(marray);
@@ -84,8 +96,8 @@ L_REGPARAMS  *rp;
 #endif  /* _WIN32 */
     pixa = PixSavePlots1();
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/rankhisto.2.png", pixd, IFF_PNG);
-    regTestCheckFile(rp, "/tmp/rankhisto.2.png");  /* 2 */
+    pixWrite("/tmp/regout/rankhisto.2.png", pixd, IFF_PNG);
+    regTestCheckFile(rp, "/tmp/regout/rankhisto.2.png");  /* 2 */
     pixDisplayWithTitle(pixd, 100, 600, NULL, rp->display);
     pixaDestroy(&pixa);
     pixDestroy(&pixd);
@@ -93,14 +105,14 @@ L_REGPARAMS  *rp;
         /* Map to the lightest bin; then do TRC adjustment */
     pixt = pixLinearMapToTargetColor(NULL, pixs, array[nbins - 1], 0xffffff00);
     pixd = pixGammaTRC(NULL, pixt, 1.0, 0, 240);
-    pixWrite("/tmp/rankhisto.3.png", pixd, IFF_PNG);
-    regTestCheckFile(rp, "/tmp/rankhisto.3.png");  /* 3 */
+    pixWrite("/tmp/regout/rankhisto.3.png", pixd, IFF_PNG);
+    regTestCheckFile(rp, "/tmp/regout/rankhisto.3.png");  /* 3 */
     pixDisplayWithTitle(pixd, 600, 100, NULL, rp->display);
     pixDestroy(&pixt);
     pixDestroy(&pixd);
 
         /* Now test the edge cases for the histogram and rank LUT,
-         * where all the histo data is piled up at one place. 
+         * where all the histo data is piled up at one place.
          * We only require that the result be sensible. */
     for (i = 0; i < 3; i++) {
         if (i == 0)
@@ -113,11 +125,11 @@ L_REGPARAMS  *rp;
         numaReplaceNumber(na, spike, 200.0);
         nan = numaNormalizeHistogram(na, 1.0);
         numaDiscretizeRankAndIntensity(nan, 10, &narbin, &nai, NULL, NULL);
-        snprintf(fname, sizeof(fname), "/tmp/rtnan%d", i + 1);
+        snprintf(fname, sizeof(fname), "/tmp/regout/rtnan%d", i + 1);
         gplotSimple1(nan, GPLOT_PNG, fname, "Normalized Histogram");
-        snprintf(fname, sizeof(fname), "/tmp/rtnai%d", i + 1);
+        snprintf(fname, sizeof(fname), "/tmp/regout/rtnai%d", i + 1);
         gplotSimple1(nai, GPLOT_PNG, fname, "Intensity vs. rank bin");
-        snprintf(fname, sizeof(fname), "/tmp/rtnarbin%d", i + 1);
+        snprintf(fname, sizeof(fname), "/tmp/regout/rtnarbin%d", i + 1);
         gplotSimple1(narbin, GPLOT_PNG, fname, "LUT: rank bin vs. Intensity");
         numaDestroy(&na);
         numaDestroy(&nan);
@@ -131,16 +143,15 @@ L_REGPARAMS  *rp;
 #endif  /* _WIN32 */
     pixa = PixSavePlots2();
     pixd = pixaDisplay(pixa, 0, 0);
-    pixWrite("/tmp/rankhisto.4.png", pixd, IFF_PNG);
-    regTestCheckFile(rp, "/tmp/rankhisto.4.png");  /* 4 */
+    pixWrite("/tmp/regout/rankhisto.4.png", pixd, IFF_PNG);
+    regTestCheckFile(rp, "/tmp/regout/rankhisto.4.png");  /* 4 */
     pixDisplayWithTitle(pixd, 500, 600, NULL, rp->display);
     pixaDestroy(&pixa);
     pixDestroy(&pixd);
 
     pixDestroy(&pixs);
     lept_free(array);
-    regTestCleanup(rp);
-    return 0;
+    return regTestCleanup(rp);
 }
 
 
@@ -151,29 +162,29 @@ PIX    *pixt;
 PIXA   *pixa;
 
     pixa = pixaCreate(8);
-    pixt = pixRead("/tmp/rtnan.png");
-    pixSaveTiled(pixt, pixa, 1, 1, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnan.png");
+    pixSaveTiled(pixt, pixa, 1.0, 1, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnar.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnar.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnai.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnai.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnarbin.png");
-    pixSaveTiled(pixt, pixa, 1, 1, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnarbin.png");
+    pixSaveTiled(pixt, pixa, 1.0, 1, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnabb.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnabb.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnared.png");
-    pixSaveTiled(pixt, pixa, 1, 1, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnared.png");
+    pixSaveTiled(pixt, pixa, 1.0, 1, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnagreen.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnagreen.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnablue.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnablue.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
     return pixa;
 }
@@ -186,33 +197,32 @@ PIX    *pixt;
 PIXA   *pixa;
 
     pixa = pixaCreate(9);
-    pixt = pixRead("/tmp/rtnan1.png");
-    pixSaveTiled(pixt, pixa, 1, 1, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnan1.png");
+    pixSaveTiled(pixt, pixa, 1.0, 1, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnai1.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnai1.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnarbin1.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnarbin1.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnan2.png");
-    pixSaveTiled(pixt, pixa, 1, 1, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnan2.png");
+    pixSaveTiled(pixt, pixa, 1.0, 1, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnai2.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnai2.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnarbin2.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnarbin2.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnan3.png");
-    pixSaveTiled(pixt, pixa, 1, 1, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnan3.png");
+    pixSaveTiled(pixt, pixa, 1.0, 1, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnai3.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnai3.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/rtnarbin3.png");
-    pixSaveTiled(pixt, pixa, 1, 0, 20, 8);
+    pixt = pixRead("/tmp/regout/rtnarbin3.png");
+    pixSaveTiled(pixt, pixa, 1.0, 0, 20, 8);
     pixDestroy(&pixt);
     return pixa;
 }
-

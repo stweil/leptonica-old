@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 
@@ -19,8 +30,11 @@
  *
  *    Font layout
  *       PIX             *pixAddSingleTextblock()
+ *       PIX             *pixAddSingleTextline()
  *       l_int32          pixSetTextblock()
  *       l_int32          pixSetTextline()
+ *       PIXA            *pixaAddTextNumber()
+ *       PIXA            *pixaAddTextline()
  *
  *    Text size estimation and partitioning
  *       SARRAY          *bmfGetLineStrings()
@@ -29,8 +43,8 @@
  *
  *    Text splitting
  *       SARRAY          *splitStringToParagraphs()
- *       static l_int32   stringAllWhitespace() 
- *       static l_int32   stringLeadingWhitespace() 
+ *       static l_int32   stringAllWhitespace()
+ *       static l_int32   stringLeadingWhitespace()
  *
  *    This is a simple utility to put text on images.  One font and style
  *    is provided, with a variety of pt sizes.  For example, to put a
@@ -40,8 +54,8 @@
  *        const char *textstr = "This is a funny cat";
  *        pixSetTextline(pixs, bmf, textstr, 0x00ff0000, 50, 50, NULL, NULL);
  *
- *    A simpler interface for adding text to an image is pixAddTextblock().
- *    See prog/writetext_reg.c for examples of its use.
+ *    The simplest interfaces for adding text to an image are
+ *    pixAddSingleTextline() and pixAddSingleTextblock().
  */
 
 #include <string.h>
@@ -61,11 +75,11 @@ static l_int32 stringLeadingWhitespace(char *textstr, l_int32 *pval);
  *              bmf (bitmap font data)
  *              textstr (<optional> text string to be added)
  *              val (color to set the text)
- *              location (L_ADD_ABOVE, L_ADD_AT_TOP, L_ADD_AT_BOTTOM,
- *                        L_ADD_BELOW)
+ *              location (L_ADD_ABOVE, L_ADD_AT_TOP, L_ADD_AT_BOT, L_ADD_BELOW)
  *              &overflow (<optional return> 1 if text overflows
  *                         allocated region and is clipped; 0 otherwise)
- *      Return: pixd (new pix with rendered text), or null on error
+ *      Return: pixd (new pix with rendered text), or either a copy
+ *                    or null on error
  *
  *  Notes:
  *      (1) This function paints a set of lines of text over an image.
@@ -99,20 +113,20 @@ SARRAY   *salines;
 
     PROCNAME("pixAddSingleTextblock");
 
+    if (poverflow) *poverflow = 0;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
-    if (!bmf)
-        return (PIX *)ERROR_PTR("bmf not defined", procName, NULL);
-    if (val < 0)
-        return (PIX *)ERROR_PTR("val must be >= 0", procName, NULL);
     if (location != L_ADD_ABOVE && location != L_ADD_AT_TOP &&
-        location != L_ADD_AT_BOTTOM && location != L_ADD_BELOW)
+        location != L_ADD_AT_BOT && location != L_ADD_BELOW)
         return (PIX *)ERROR_PTR("invalid location", procName, NULL);
-
+    if (!bmf) {
+        L_ERROR("no bitmap fonts; returning a copy\n", procName);
+        return pixCopy(NULL, pixs);
+    }
     if (!textstr)
         textstr = pixGetText(pixs);
     if (!textstr) {
-        L_ERROR("no textstring defined", procName);
+        L_ERROR("no textstring defined; returning a copy\n", procName);
         return pixCopy(NULL, pixs);
     }
 
@@ -145,18 +159,15 @@ SARRAY   *salines;
     if (location == L_ADD_ABOVE || location == L_ADD_BELOW) {
         extra = htext + 2 * spacer;
         pixd = pixCreate(w, h + extra, d);
-        if (cmap) {
-            cmapd = pixcmapCopy(cmap);
-            pixSetColormap(pixd, cmapd);
-        }
+        pixCopyColormap(pixd, pixs);
         pixSetBlackOrWhite(pixd, L_BRING_IN_WHITE);
         if (location == L_ADD_ABOVE)
             pixRasterop(pixd, 0, extra, w, h, PIX_SRC, pixs, 0, 0);
         else  /* add below */
             pixRasterop(pixd, 0, 0, w, h, PIX_SRC, pixs, 0, 0);
-    }
-    else
+    } else {
         pixd = pixCopy(NULL, pixs);
+    }
     cmapd = pixGetColormap(pixd);
 
         /* bmf->baselinetab[93] is the approximate distance from
@@ -166,7 +177,7 @@ SARRAY   *salines;
     offset = bmf->baselinetab[93];
     if (location == L_ADD_ABOVE || location == L_ADD_AT_TOP)
         ystart = offset + spacer;
-    else if (location == L_ADD_AT_BOTTOM)
+    else if (location == L_ADD_AT_BOT)
         ystart = h - htext - spacer + offset;
     else   /* add below */
         ystart = h + offset + spacer;
@@ -178,8 +189,9 @@ SARRAY   *salines;
         pixcmapAddNearestColor(cmapd, rval, gval, bval, &index);
         pixcmapGetColor(cmapd, index, &rval, &gval, &bval);
         composeRGBPixel(rval, gval, bval, &textcolor);
-    } else
+    } else {
         textcolor = val;
+    }
 
         /* Keep track of overflow condition on line width */
     overflow = 0;
@@ -193,16 +205,146 @@ SARRAY   *salines;
     }
 
        /* Also consider vertical overflow where there is too much text to
-        * fit inside the image: the cases L_ADD_AT_TOP and L_ADD_AT_BOTTOM.
+        * fit inside the image: the cases L_ADD_AT_TOP and L_ADD_AT_BOT.
         *  The text requires a total of htext + 2 * spacer vertical pixels. */
-    if (location == L_ADD_AT_TOP || location == L_ADD_AT_BOTTOM) {
+    if (location == L_ADD_AT_TOP || location == L_ADD_AT_BOT) {
         if (h < htext + 2 * spacer)
             overflow = 1;
     }
-    if (poverflow)
-        *poverflow = overflow;
+    if (poverflow) *poverflow = overflow;
 
     sarrayDestroy(&salines);
+    return pixd;
+}
+
+
+/*!
+ *  pixAddSingleTextline()
+ *
+ *      Input:  pixs (input pix; colormap ok)
+ *              bmf (bitmap font data)
+ *              textstr (<optional> text string to be added)
+ *              val (color to set the text)
+ *              location (L_ADD_ABOVE, L_ADD_BELOW, L_ADD_LEFT, L_ADD_RIGHT)
+ *      Return: pixd (new pix with rendered text), or either a copy
+ *                    or null on error
+ *
+ *  Notes:
+ *      (1) This function expands an image as required to paint a single
+ *          line of text adjacent to the image.  If @bmf == NULL, this
+ *          returns a copy.
+ *      (2) @val is the pixel value to be painted through the font mask.
+ *          It should be chosen to agree with the depth of pixs.
+ *          If it is out of bounds, an intermediate value is chosen.
+ *          For RGB, use hex notation: 0xRRGGBB00, where RR is the
+ *          hex representation of the red intensity, etc.
+ *      (3) If textstr == NULL, use the text field in the pix.
+ *      (4) If there is a colormap, this does the best it can to use
+ *          the requested color, or something similar to it.
+ *      (5) Typical usage is for labelling a pix with some text data.
+ */
+PIX *
+pixAddSingleTextline(PIX         *pixs,
+                     L_BMF       *bmf,
+                     const char  *textstr,
+                     l_uint32     val,
+                     l_int32      location)
+{
+l_int32   w, h, d, wtext, htext, wadd, hadd, spacer, hbaseline;
+l_int32   rval, gval, bval, index;
+l_uint32  textcolor;
+PIX      *pixd;
+PIXCMAP  *cmap, *cmapd;
+
+    PROCNAME("pixAddSingleTextline");
+
+    if (!pixs)
+        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+    if (location != L_ADD_ABOVE && location != L_ADD_BELOW &&
+        location != L_ADD_LEFT && location != L_ADD_RIGHT)
+        return (PIX *)ERROR_PTR("invalid location", procName, NULL);
+    if (!bmf) {
+        L_ERROR("no bitmap fonts; returning a copy\n", procName);
+        return pixCopy(NULL, pixs);
+    }
+    if (!textstr)
+        textstr = pixGetText(pixs);
+    if (!textstr) {
+        L_ERROR("no textstring defined; returning a copy\n", procName);
+        return pixCopy(NULL, pixs);
+    }
+
+        /* Make sure the "color" value for the text will work
+         * for the pix.  If the pix is not colormapped and the
+         * value is out of range, set it to mid-range. */
+    pixGetDimensions(pixs, &w, &h, &d);
+    cmap = pixGetColormap(pixs);
+    if (d == 1 && val > 1)
+        val = 1;
+    else if (d == 2 && val > 3 && !cmap)
+        val = 2;
+    else if (d == 4 && val > 15 && !cmap)
+        val = 8;
+    else if (d == 8 && val > 0xff && !cmap)
+        val = 128;
+    else if (d == 16 && val > 0xffff)
+        val = 0x8000;
+    else if (d == 32 && val < 256)
+        val = 0x80808000;
+
+        /* Get the necessary text size */
+    bmfGetStringWidth(bmf, textstr, &wtext);
+    hbaseline = bmf->baselinetab[93];
+    htext = 1.5 * hbaseline;
+
+        /* Add white border */
+    spacer = 10;  /* pixels away from the added border */
+    if (location == L_ADD_ABOVE || location == L_ADD_BELOW) {
+        hadd = htext + spacer;
+        pixd = pixCreate(w, h + hadd, d);
+        pixCopyColormap(pixd, pixs);
+        pixSetBlackOrWhite(pixd, L_BRING_IN_WHITE);
+        if (location == L_ADD_ABOVE)
+            pixRasterop(pixd, 0, hadd, w, h, PIX_SRC, pixs, 0, 0);
+        else  /* add below */
+            pixRasterop(pixd, 0, 0, w, h, PIX_SRC, pixs, 0, 0);
+    } else {  /*  L_ADD_LEFT or L_ADD_RIGHT */
+        wadd = wtext + spacer;
+        pixd = pixCreate(w + wadd, h, d);
+        pixCopyColormap(pixd, pixs);
+        pixSetBlackOrWhite(pixd, L_BRING_IN_WHITE);
+        if (location == L_ADD_LEFT)
+            pixRasterop(pixd, wadd, 0, w, h, PIX_SRC, pixs, 0, 0);
+        else  /* add to right */
+            pixRasterop(pixd, 0, 0, w, h, PIX_SRC, pixs, 0, 0);
+    }
+
+        /* If cmapped, add the color if necessary to the cmap.  If the
+         * cmap is full, use the nearest color to the requested color. */
+    cmapd = pixGetColormap(pixd);
+    if (cmapd) {
+        extractRGBValues(val, &rval, &gval, &bval);
+        pixcmapAddNearestColor(cmapd, rval, gval, bval, &index);
+        pixcmapGetColor(cmapd, index, &rval, &gval, &bval);
+        composeRGBPixel(rval, gval, bval, &textcolor);
+    } else {
+        textcolor = val;
+    }
+
+        /* Add the text */
+    if (location == L_ADD_ABOVE)
+        pixSetTextline(pixd, bmf, textstr, textcolor,
+                       (w - wtext) / 2, hbaseline, NULL, NULL);
+    else if (location == L_ADD_BELOW)
+        pixSetTextline(pixd, bmf, textstr, textcolor,
+                       (w - wtext) / 2, h + spacer + hbaseline, NULL, NULL);
+    else if (location == L_ADD_LEFT)
+        pixSetTextline(pixd, bmf, textstr, textcolor,
+                       0, (h - htext) / 2 + hbaseline, NULL, NULL);
+    else  /* location == L_ADD_RIGHT */
+        pixSetTextline(pixd, bmf, textstr, textcolor,
+                       w + spacer, (h - htext) / 2 + hbaseline, NULL, NULL);
+
     return pixd;
 }
 
@@ -230,7 +372,7 @@ SARRAY   *salines;
  *          For RGB, use hex notation: 0xRRGGBB00, where RR is the
  *          hex representation of the red intensity, etc.
  *          The last two hex digits are 00 (byte value 0), assigned to
- *          the A component.  Note that, as usual, RGBA proceeds from 
+ *          the A component.  Note that, as usual, RGBA proceeds from
  *          left to right in the order from MSB to LSB (see pix.h
  *          for details).
  *      (3) If there is a colormap, this does the best it can to use
@@ -260,8 +402,6 @@ PIXCMAP  *cmap;
         return ERROR_INT("bmf not defined", procName, 1);
     if (!textstr)
         return ERROR_INT("textstr not defined", procName, 1);
-    if (val < 0)
-        return ERROR_INT("val must be >= 0", procName, 1);
 
         /* Make sure the "color" value for the text will work
          * for the pix.  If the pix is not colormapped and the
@@ -282,7 +422,7 @@ PIXCMAP  *cmap;
         val = 0x80808000;
 
     if (w < x0 + wtext) {
-        L_WARNING("reducing width of textblock", procName);
+        L_WARNING("reducing width of textblock\n", procName);
         wtext = w - x0 - w / 10;
         if (wtext <= 0)
             return ERROR_INT("wtext too small; no room for text", procName, 1);
@@ -343,7 +483,7 @@ PIXCMAP  *cmap;
  *          For RGB, use hex notation: 0xRRGGBB00, where RR is the
  *          hex representation of the red intensity, etc.
  *          The last two hex digits are 00 (byte value 0), assigned to
- *          the A component.  Note that, as usual, RGBA proceeds from 
+ *          the A component.  Note that, as usual, RGBA proceeds from
  *          left to right in the order from MSB to LSB (see pix.h
  *          for details).
  *      (3) If there is a colormap, this does the best it can to use
@@ -359,7 +499,7 @@ pixSetTextline(PIX         *pixs,
                l_int32     *pwidth,
                l_int32     *poverflow)
 {
-char      chr; 
+char      chr;
 l_int32   d, i, x, w, nchar, baseline, index, rval, gval, bval;
 l_uint32  textcolor;
 PIX      *pix;
@@ -373,10 +513,6 @@ PIXCMAP  *cmap;
         return ERROR_INT("bmf not defined", procName, 1);
     if (!textstr)
         return ERROR_INT("teststr not defined", procName, 1);
-    if (val < 0) {
-        L_WARNING("val must be non-negative; setting to 0", procName);
-        val = 0;
-    }
 
     d = pixGetDepth(pixs);
     cmap = pixGetColormap(pixs);
@@ -421,6 +557,137 @@ PIXCMAP  *cmap;
     if (poverflow)
         *poverflow = (x > pixGetWidth(pixs) - 1) ? 1 : 0;
     return 0;
+}
+
+
+/*!
+ *  pixaAddTextNumber()
+ *
+ *      Input:  pixas (input pixa; colormap ok)
+ *              bmf (bitmap font data)
+ *              numa (<optional> number array; use 1 ... n if null)
+ *              val (color to set the text)
+ *              location (L_ADD_ABOVE, L_ADD_BELOW, L_ADD_LEFT, L_ADD_RIGHT)
+ *      Return: pixad (new pixa with rendered numbers), or null on error
+ *
+ *  Notes:
+ *      (1) Typical usage is for labelling each pix in a pixa with a number.
+ *      (2) This function paints numbers external to each pix, in a position
+ *          given by @location.  In all cases, the pix is expanded on
+ *          on side and the number is painted over white in the added region.
+ *      (3) @val is the pixel value to be painted through the font mask.
+ *          It should be chosen to agree with the depth of pixs.
+ *          If it is out of bounds, an intermediate value is chosen.
+ *          For RGB, use hex notation: 0xRRGGBB00, where RR is the
+ *          hex representation of the red intensity, etc.
+ *      (4) If na == NULL, number each pix sequentially, starting with 1.
+ *      (5) If there is a colormap, this does the best it can to use
+ *          the requested color, or something similar to it.
+ */
+PIXA *
+pixaAddTextNumber(PIXA     *pixas,
+                  L_BMF    *bmf,
+                  NUMA     *na,
+                  l_uint32  val,
+                  l_int32   location)
+{
+char     textstr[128];
+l_int32  i, n, index;
+PIX     *pix1, *pix2;
+PIXA    *pixad;
+
+    PROCNAME("pixaAddTextNumber");
+
+    if (!pixas)
+        return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
+    if (!bmf)
+        return (PIXA *)ERROR_PTR("bmf not defined", procName, NULL);
+    if (location != L_ADD_ABOVE && location != L_ADD_BELOW &&
+        location != L_ADD_LEFT && location != L_ADD_RIGHT)
+        return (PIXA *)ERROR_PTR("invalid location", procName, NULL);
+
+    n = pixaGetCount(pixas);
+    pixad = pixaCreate(n);
+    for (i = 0; i < n; i++) {
+        pix1 = pixaGetPix(pixas, i, L_CLONE);
+        if (na)
+            numaGetIValue(na, i, &index);
+        else
+            index = i + 1;
+        snprintf(textstr, sizeof(textstr), "%d", index);
+        pix2 = pixAddSingleTextline(pix1, bmf, textstr, val, location);
+        pixaAddPix(pixad, pix2, L_INSERT);
+        pixDestroy(&pix1);
+    }
+
+    return pixad;
+}
+
+
+/*!
+ *  pixaAddTextline()
+ *
+ *      Input:  pixas (input pixa; colormap ok)
+ *              bmf (bitmap font data)
+ *              sa (<optional> sarray; use text embedded in each pix if null)
+ *              val (color to set the text)
+ *              location (L_ADD_ABOVE, L_ADD_BELOW, L_ADD_LEFT, L_ADD_RIGHT)
+ *      Return: pixad (new pixa with rendered text), or null on error
+ *
+ *  Notes:
+ *      (1) This function paints a line of text external to each pix,
+ *          in a position given by @location.  In all cases, the pix is
+ *          expanded as necessary to accommodate the text.
+ *      (2) @val is the pixel value to be painted through the font mask.
+ *          It should be chosen to agree with the depth of pixs.
+ *          If it is out of bounds, an intermediate value is chosen.
+ *          For RGB, use hex notation: 0xRRGGBB00, where RR is the
+ *          hex representation of the red intensity, etc.
+ *      (3) If sa == NULL, use the text embedded in each pix.
+ *      (4) If sa has a smaller count than pixa, issue a warning
+ *          but do not use any embedded text.
+ *      (5) If there is a colormap, this does the best it can to use
+ *          the requested color, or something similar to it.
+ */
+PIXA *
+pixaAddTextline(PIXA     *pixas,
+                L_BMF    *bmf,
+                SARRAY   *sa,
+                l_uint32  val,
+                l_int32   location)
+{
+char    *textstr;
+l_int32  i, n, nstr;
+PIX     *pix1, *pix2;
+PIXA    *pixad;
+
+    PROCNAME("pixaAddTextline");
+
+    if (!pixas)
+        return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
+    if (!bmf)
+        return (PIXA *)ERROR_PTR("bmf not defined", procName, NULL);
+    if (location != L_ADD_ABOVE && location != L_ADD_BELOW &&
+        location != L_ADD_LEFT && location != L_ADD_RIGHT)
+        return (PIXA *)ERROR_PTR("invalid location", procName, NULL);
+
+    n = pixaGetCount(pixas);
+    pixad = pixaCreate(n);
+    nstr = (sa) ? sarrayGetCount(sa) : 0;
+    if (nstr > 0 && nstr < n)
+        L_WARNING("There are %d strings and %d pix\n", procName, nstr, n);
+    for (i = 0; i < n; i++) {
+        pix1 = pixaGetPix(pixas, i, L_CLONE);
+        if (i < nstr)
+            textstr = sarrayGetString(sa, i, L_NOCOPY);
+        else
+            textstr = pixGetText(pix1);
+        pix2 = pixAddSingleTextline(pix1, bmf, textstr, val, location);
+        pixaAddPix(pixad, pix2, L_INSERT);
+        pixDestroy(&pix1);
+    }
+
+    return pixad;
 }
 
 
@@ -560,7 +827,7 @@ bmfGetStringWidth(L_BMF       *bmf,
                   const char  *textstr,
                   l_int32     *pw)
 {
-char     chr; 
+char     chr;
 l_int32  i, w, width, nchar;
 
     PROCNAME("bmfGetStringWidth");
@@ -698,5 +965,3 @@ stringLeadingWhitespace(char     *textstr,
 
     return 0;
 }
-
-

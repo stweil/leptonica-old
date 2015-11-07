@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*!
@@ -1068,7 +1079,7 @@ fdilate_3_0(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1092,7 +1103,7 @@ ferode_3_0(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1116,7 +1127,7 @@ fdilate_3_1(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1141,7 +1152,7 @@ ferode_3_1(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1166,7 +1177,7 @@ fdilate_3_2(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1192,7 +1203,7 @@ ferode_3_2(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1218,7 +1229,7 @@ fdilate_3_3(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1245,7 +1256,7 @@ ferode_3_3(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1272,7 +1283,7 @@ fdilate_3_4(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1300,7 +1311,7 @@ ferode_3_4(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1328,7 +1339,7 @@ fdilate_3_5(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1357,7 +1368,7 @@ ferode_3_5(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1386,7 +1397,7 @@ fdilate_3_6(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1416,7 +1427,7 @@ ferode_3_6(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1446,7 +1457,7 @@ fdilate_3_7(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1477,7 +1488,7 @@ ferode_3_7(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1508,7 +1519,7 @@ fdilate_3_8(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1540,7 +1551,7 @@ ferode_3_8(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1572,7 +1583,7 @@ fdilate_3_9(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1605,7 +1616,7 @@ ferode_3_9(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1638,7 +1649,7 @@ fdilate_3_10(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1672,7 +1683,7 @@ ferode_3_10(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1706,7 +1717,7 @@ fdilate_3_11(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1741,7 +1752,7 @@ ferode_3_11(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1776,7 +1787,7 @@ fdilate_3_12(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1812,7 +1823,7 @@ ferode_3_12(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1848,7 +1859,7 @@ fdilate_3_13(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1885,7 +1896,7 @@ ferode_3_13(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1922,7 +1933,7 @@ fdilate_3_14(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1960,7 +1971,7 @@ ferode_3_14(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -1998,7 +2009,7 @@ fdilate_3_15(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2037,7 +2048,7 @@ ferode_3_15(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2076,7 +2087,7 @@ fdilate_3_16(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2116,7 +2127,7 @@ ferode_3_16(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2156,7 +2167,7 @@ fdilate_3_17(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2197,7 +2208,7 @@ ferode_3_17(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2238,7 +2249,7 @@ fdilate_3_18(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2280,7 +2291,7 @@ ferode_3_18(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2322,7 +2333,7 @@ fdilate_3_19(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2365,7 +2376,7 @@ ferode_3_19(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2408,7 +2419,7 @@ fdilate_3_20(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2452,7 +2463,7 @@ ferode_3_20(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2496,7 +2507,7 @@ fdilate_3_21(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2541,7 +2552,7 @@ ferode_3_21(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2586,7 +2597,7 @@ fdilate_3_22(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2632,7 +2643,7 @@ ferode_3_22(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2678,7 +2689,7 @@ fdilate_3_23(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2725,7 +2736,7 @@ ferode_3_23(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2772,7 +2783,7 @@ fdilate_3_24(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2820,7 +2831,7 @@ ferode_3_24(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2868,7 +2879,7 @@ fdilate_3_25(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2917,7 +2928,7 @@ ferode_3_25(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -2966,7 +2977,7 @@ fdilate_3_26(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3016,7 +3027,7 @@ ferode_3_26(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3066,7 +3077,7 @@ fdilate_3_27(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3117,7 +3128,7 @@ ferode_3_27(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3168,7 +3179,7 @@ fdilate_3_28(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3220,7 +3231,7 @@ ferode_3_28(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3272,7 +3283,7 @@ fdilate_3_29(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3325,7 +3336,7 @@ ferode_3_29(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3378,7 +3389,7 @@ fdilate_3_30(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3432,7 +3443,7 @@ ferode_3_30(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3486,7 +3497,7 @@ fdilate_3_31(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3541,7 +3552,7 @@ ferode_3_31(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3596,7 +3607,7 @@ fdilate_3_32(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3652,7 +3663,7 @@ ferode_3_32(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3708,7 +3719,7 @@ fdilate_3_33(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3765,7 +3776,7 @@ ferode_3_33(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3822,7 +3833,7 @@ fdilate_3_34(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3880,7 +3891,7 @@ ferode_3_34(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3938,7 +3949,7 @@ fdilate_3_35(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -3997,7 +4008,7 @@ ferode_3_35(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4056,7 +4067,7 @@ fdilate_3_36(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4116,7 +4127,7 @@ ferode_3_36(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4176,7 +4187,7 @@ fdilate_3_37(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4237,7 +4248,7 @@ ferode_3_37(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4298,7 +4309,7 @@ fdilate_3_38(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4360,7 +4371,7 @@ ferode_3_38(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4422,7 +4433,7 @@ fdilate_3_39(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4485,7 +4496,7 @@ ferode_3_39(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4548,7 +4559,7 @@ fdilate_3_40(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4612,7 +4623,7 @@ ferode_3_40(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4676,7 +4687,7 @@ fdilate_3_41(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4741,7 +4752,7 @@ ferode_3_41(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4806,7 +4817,7 @@ fdilate_3_42(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4872,7 +4883,7 @@ ferode_3_42(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -4938,7 +4949,7 @@ fdilate_3_43(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5005,7 +5016,7 @@ ferode_3_43(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5072,7 +5083,7 @@ fdilate_3_44(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5140,7 +5151,7 @@ ferode_3_44(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5208,7 +5219,7 @@ fdilate_3_45(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5277,7 +5288,7 @@ ferode_3_45(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5346,7 +5357,7 @@ fdilate_3_46(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5416,7 +5427,7 @@ ferode_3_46(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5486,7 +5497,7 @@ fdilate_3_47(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5557,7 +5568,7 @@ ferode_3_47(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5628,7 +5639,7 @@ fdilate_3_48(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5700,7 +5711,7 @@ ferode_3_48(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5772,7 +5783,7 @@ fdilate_3_49(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5845,7 +5856,7 @@ ferode_3_49(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5918,7 +5929,7 @@ fdilate_3_50(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -5992,7 +6003,7 @@ ferode_3_50(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6066,7 +6077,7 @@ fdilate_3_51(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6141,7 +6152,7 @@ ferode_3_51(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6216,7 +6227,7 @@ fdilate_3_52(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6292,7 +6303,7 @@ ferode_3_52(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6368,7 +6379,7 @@ fdilate_3_53(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6445,7 +6456,7 @@ ferode_3_53(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6522,7 +6533,7 @@ fdilate_3_54(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6600,7 +6611,7 @@ ferode_3_54(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6678,7 +6689,7 @@ fdilate_3_55(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6757,7 +6768,7 @@ ferode_3_55(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6836,7 +6847,7 @@ fdilate_3_56(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6916,7 +6927,7 @@ ferode_3_56(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -6996,7 +7007,7 @@ fdilate_3_57(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7077,7 +7088,7 @@ ferode_3_57(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7158,7 +7169,7 @@ fdilate_3_58(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7240,7 +7251,7 @@ ferode_3_58(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7322,7 +7333,7 @@ fdilate_3_59(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7405,7 +7416,7 @@ ferode_3_59(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7488,7 +7499,7 @@ fdilate_3_60(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7572,7 +7583,7 @@ ferode_3_60(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7656,7 +7667,7 @@ fdilate_3_61(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7741,7 +7752,7 @@ ferode_3_61(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7826,7 +7837,7 @@ fdilate_3_62(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7850,7 +7861,7 @@ ferode_3_62(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7874,7 +7885,7 @@ fdilate_3_63(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7899,7 +7910,7 @@ ferode_3_63(l_uint32  *datad,
 l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
-    
+
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
     for (i = 0; i < h; i++) {
@@ -7925,7 +7936,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2;
-    
+
     wpls2 = 2 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
@@ -7953,7 +7964,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2;
-    
+
     wpls2 = 2 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
@@ -7981,7 +7992,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2;
-    
+
     wpls2 = 2 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
@@ -8010,7 +8021,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2;
-    
+
     wpls2 = 2 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
 
@@ -8039,7 +8050,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
@@ -8070,7 +8081,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
@@ -8101,7 +8112,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
@@ -8133,7 +8144,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     pwpls = (l_uint32)(w + 31) / 32;  /* proper wpl of src */
@@ -8165,7 +8176,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8199,7 +8210,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8233,7 +8244,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8268,7 +8279,7 @@ l_int32             i;
 register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8304,7 +8315,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8342,7 +8353,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8380,7 +8391,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8419,7 +8430,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8458,7 +8469,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8499,7 +8510,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8540,7 +8551,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8582,7 +8593,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8624,7 +8635,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8668,7 +8679,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8712,7 +8723,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8757,7 +8768,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8802,7 +8813,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8849,7 +8860,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8896,7 +8907,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8944,7 +8955,7 @@ register l_int32    j, pwpls;
 register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -8993,7 +9004,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9044,7 +9055,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9095,7 +9106,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9147,7 +9158,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9199,7 +9210,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9253,7 +9264,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9307,7 +9318,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9362,7 +9373,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9417,7 +9428,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9474,7 +9485,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9531,7 +9542,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9589,7 +9600,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9647,7 +9658,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9707,7 +9718,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9767,7 +9778,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9828,7 +9839,7 @@ register l_uint32  *sptr, *dptr;
 l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9890,7 +9901,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -9954,7 +9965,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10018,7 +10029,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10083,7 +10094,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10148,7 +10159,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10215,7 +10226,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10282,7 +10293,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10350,7 +10361,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10418,7 +10429,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10488,7 +10499,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10558,7 +10569,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10629,7 +10640,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10700,7 +10711,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10773,7 +10784,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10846,7 +10857,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10920,7 +10931,7 @@ l_int32             wpls2, wpls3, wpls4;
 l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -10995,7 +11006,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11072,7 +11083,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11149,7 +11160,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11227,7 +11238,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11305,7 +11316,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11385,7 +11396,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11465,7 +11476,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11546,7 +11557,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11627,7 +11638,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11710,7 +11721,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11793,7 +11804,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11877,7 +11888,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -11961,7 +11972,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12047,7 +12058,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12133,7 +12144,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12220,7 +12231,7 @@ l_int32             wpls5, wpls6, wpls7, wpls8;
 l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12308,7 +12319,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12398,7 +12409,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12488,7 +12499,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12579,7 +12590,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12670,7 +12681,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12763,7 +12774,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12856,7 +12867,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -12950,7 +12961,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13044,7 +13055,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13140,7 +13151,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13236,7 +13247,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13333,7 +13344,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13430,7 +13441,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13529,7 +13540,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13628,7 +13639,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13728,7 +13739,7 @@ l_int32             wpls9, wpls10, wpls11, wpls12;
 l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13829,7 +13840,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -13932,7 +13943,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14035,7 +14046,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14139,7 +14150,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14243,7 +14254,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14349,7 +14360,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14455,7 +14466,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14562,7 +14573,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14669,7 +14680,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14778,7 +14789,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14887,7 +14898,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -14997,7 +15008,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15107,7 +15118,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15219,7 +15230,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15331,7 +15342,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15444,7 +15455,7 @@ l_int32             wpls13, wpls14, wpls15, wpls16;
 l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15558,7 +15569,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15674,7 +15685,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15790,7 +15801,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -15907,7 +15918,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16024,7 +16035,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16143,7 +16154,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16262,7 +16273,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16382,7 +16393,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16502,7 +16513,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30, wpls31;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16624,7 +16635,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30, wpls31;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16746,7 +16757,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30, wpls31;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;
@@ -16869,7 +16880,7 @@ l_int32             wpls17, wpls18, wpls19, wpls20;
 l_int32             wpls21, wpls22, wpls23, wpls24;
 l_int32             wpls25, wpls26, wpls27, wpls28;
 l_int32             wpls29, wpls30, wpls31;
-    
+
     wpls2 = 2 * wpls;
     wpls3 = 3 * wpls;
     wpls4 = 4 * wpls;

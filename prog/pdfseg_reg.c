@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -29,8 +40,8 @@
     /* All images scaled to this width  */
 static const l_int32  WIDTH = 800;
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 l_int32      h;
 l_float32    scalefactor;
@@ -43,15 +54,14 @@ L_REGPARAMS  *rp;
     if (regTestSetup(argc, argv, &rp))
         return 1;
 
-    lept_rmdir("segtest");
-    lept_mkdir("segtest");
+    lept_mkdir("pdfseg");
     baa = boxaaCreate(5);
 
         /* Image region input.  */
     pix1 = pixRead("wet-day.jpg");
     pix2 = pixScaleToSize(pix1, WIDTH, 0);
-    pixWrite("/tmp/segtest/0.jpg", pix2, IFF_JFIF_JPEG);
-    regTestCheckFile(rp, "/tmp/segtest/0.jpg");   /* 0 */
+    pixWrite("/tmp/pdfseg/0.jpg", pix2, IFF_JFIF_JPEG);
+    regTestCheckFile(rp, "/tmp/pdfseg/0.jpg");   /* 0 */
     box = boxCreate(105, 161, 620, 872);   /* image region */
     boxa1 = boxaCreate(1);
     boxaAddBox(boxa1, box, L_INSERT);
@@ -69,8 +79,8 @@ L_REGPARAMS  *rp;
     pix7 = pixMaskConnComp(pix6, 8, &boxa1);
     pix8 = pixReduceBinary2(pix7, NULL);  /* back to w = WIDTH */
     pix9 = pixBackgroundNormSimple(pix2, pix8, NULL);
-    pixWrite("/tmp/segtest/1.jpg", pix9, IFF_JFIF_JPEG);
-    regTestCheckFile(rp, "/tmp/segtest/1.jpg");   /* 1 */
+    pixWrite("/tmp/pdfseg/1.jpg", pix9, IFF_JFIF_JPEG);
+    regTestCheckFile(rp, "/tmp/pdfseg/1.jpg");   /* 1 */
     boxa2 = boxaTransform(boxa1, 0, 0, 0.5, 0.5);  /* back to w = WIDTH */
     boxaaAddBoxa(baa, boxa2, L_INSERT);
     pixDestroy(&pix1);
@@ -82,13 +92,12 @@ L_REGPARAMS  *rp;
     pixDestroy(&pix7);
     pixDestroy(&pix8);
     pixDestroy(&pix9);
-    boxaDestroy(&boxa1);
 
         /* Use mask to find image region */
     pix1 = pixRead("lion-page.00016.jpg");
     pix2 = pixScaleToSize(pix1, WIDTH, 0);
-    pixWrite("/tmp/segtest/2.jpg", pix2, IFF_JFIF_JPEG);
-    regTestCheckFile(rp, "/tmp/segtest/2.jpg");   /* 2 */
+    pixWrite("/tmp/pdfseg/2.jpg", pix2, IFF_JFIF_JPEG);
+    regTestCheckFile(rp, "/tmp/pdfseg/2.jpg");   /* 2 */
     pix3 = pixRead("lion-mask.00016.tif");
     pix4 = pixScaleToSize(pix3, WIDTH, 0);
     boxa1 = pixConnComp(pix4, NULL, 8);
@@ -102,8 +111,8 @@ L_REGPARAMS  *rp;
     pix1 = pixRead("rabi.png");
     scalefactor = (l_float32)WIDTH / (l_float32)pixGetWidth(pix1);
     pix2 = pixScaleToGray(pix1, scalefactor);
-    pixWrite("/tmp/segtest/3.jpg", pix2, IFF_JFIF_JPEG);
-    regTestCheckFile(rp, "/tmp/segtest/3.jpg");   /* 3 */
+    pixWrite("/tmp/pdfseg/3.jpg", pix2, IFF_JFIF_JPEG);
+    regTestCheckFile(rp, "/tmp/pdfseg/3.jpg");   /* 3 */
     pix3 = pixGenHalftoneMask(pix1, NULL, NULL, 0);
     pix4 = pixMorphSequence(pix3, "c20.1 + c1.20", 0);
     boxa1 = pixConnComp(pix4, NULL, 8);
@@ -119,8 +128,8 @@ L_REGPARAMS  *rp;
     pix1 = pixRead("lucasta-47.jpg");
     pix2 = pixScaleToSize(pix1, WIDTH, 0);
     boxa1 = boxaCreate(1);
-    pixWrite("/tmp/segtest/4.jpg", pix2, IFF_JFIF_JPEG);
-    regTestCheckFile(rp, "/tmp/segtest/4.jpg");   /* 4 */
+    pixWrite("/tmp/pdfseg/4.jpg", pix2, IFF_JFIF_JPEG);
+    regTestCheckFile(rp, "/tmp/pdfseg/4.jpg");   /* 4 */
     boxaaAddBoxa(baa, boxa1, L_INSERT);
     pixDestroy(&pix1);
     pixDestroy(&pix2);
@@ -128,8 +137,8 @@ L_REGPARAMS  *rp;
         /* Page that is all image */
     pix1 = pixRead("map1.jpg");
     pix2 = pixScaleToSize(pix1, WIDTH, 0);
-    pixWrite("/tmp/segtest/5.jpg", pix2, IFF_JFIF_JPEG);
-    regTestCheckFile(rp, "/tmp/segtest/5.jpg");   /* 5 */
+    pixWrite("/tmp/pdfseg/5.jpg", pix2, IFF_JFIF_JPEG);
+    regTestCheckFile(rp, "/tmp/pdfseg/5.jpg");   /* 5 */
     h = pixGetHeight(pix2);
     box = boxCreate(0, 0, WIDTH, h);
     boxa1 = boxaCreate(1);
@@ -139,17 +148,18 @@ L_REGPARAMS  *rp;
     pixDestroy(&pix2);
 
         /* Save the boxaa file */
-    boxaaWrite("/tmp/segtest/seg.baa", baa);
-    regTestCheckFile(rp, "/tmp/segtest/seg.baa");   /* 6 */
+    boxaaWrite("/tmp/pdfseg/images.baa", baa);
+    regTestCheckFile(rp, "/tmp/pdfseg/images.baa");   /* 6 */
 
         /* Do the conversion */
     l_pdfSetDateAndVersion(FALSE);
-    convertSegmentedFilesToPdf("/tmp/segtest", ".jpg", 100, L_G4_ENCODE,
+    convertSegmentedFilesToPdf("/tmp/pdfseg", "jpg", 100, L_G4_ENCODE,
                                140, baa, 75, 0.6, "Segmentation Test",
-                               "/tmp/pdfseg.7.pdf");
-    regTestCheckFile(rp, "/tmp/pdfseg.7.pdf");   /* 7 */
+                               "/tmp/regout/pdfseg.7.pdf");
+    L_INFO("Generated pdf file: /tmp/regout/pdfseg.7.pdf\n", rp->testname);
+    regTestCheckFile(rp, "/tmp/regout/pdfseg.7.pdf");   /* 7 */
 
+    lept_rmdir("pdfseg");
     boxaaDestroy(&baa);
-    regTestCleanup(rp); 
-    return 0;
+    return regTestCleanup(rp);
 }

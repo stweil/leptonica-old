@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -19,11 +30,12 @@
  *    Regression test for compressed pix and compressed pix arrays
  *    in memory.
  *
- *    Most of the functions tested here requires the ability to write
+ *    Most of the functions tested here require the ability to write
  *    a pix to a compressed string in memory, and conversely to
  *    read a compressed image string from memory to generate a pix.
- *    This functionality is not enabled by default, because it requires
- *    the gnu runtime.  If we detect a failure, we bomb out early.
+ *    The gnu runtime provides fmemopen() and open_memstream().  If
+ *    these are not available, we work around this by writing data
+ *    to a temp file.
  */
 
 #include <math.h>
@@ -35,8 +47,8 @@ static void get_format_data(l_int32 i, l_uint8 *data, size_t size);
 
 #define  DO_PNG     1  /* set to 0 for valgrind to remove most png errors */
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 l_int32     i, n;
 BOX        *box;
@@ -44,7 +56,6 @@ PIX        *pix, *pixs, *pixd, *pixd2;
 PIXA       *pixad, *pixa1, *pixa2, *pixa3;
 PIXC       *pixc;
 PIXAC      *pixac, *pixac1, *pixac2;
-static char     mainName[] = "pixcomp_reg";
 
     pixad = pixaCreate(0);
 
@@ -52,10 +63,6 @@ static char     mainName[] = "pixcomp_reg";
     pixac = pixacompCreate(1);
     pixs = pixRead("marge.jpg");
     pixc = pixcompCreateFromPix(pixs, IFF_JFIF_JPEG);
-    if (!pixc) {
-        L_ERROR("Exiting because jpeg write to memory is not enabled", mainName);
-        return 1;
-    }
     pixd = pixCreateFromPixcomp(pixc);
     pixSaveTiledOutline(pixd, pixad, 1, 1, 30, 2, 32);
     pixDestroy(&pixd);
@@ -67,7 +74,7 @@ static char     mainName[] = "pixcomp_reg";
     pixs = pixScaleToGray6(pix);
     pixc = pixcompCreateFromPix(pixs, IFF_JFIF_JPEG);
     pixd = pixCreateFromPixcomp(pixc);
-    pixSaveTiledOutline(pixd, pixad, 1, 0, 30, 2, 32);
+    pixSaveTiledOutline(pixd, pixad, 1.0, 0, 30, 2, 32);
     pixDestroy(&pixd);
     pixcompDestroy(&pixc);
     pixacompAddPix(pixac, pixs, IFF_DEFAULT);
@@ -77,7 +84,7 @@ static char     mainName[] = "pixcomp_reg";
     pixs = pixClipRectangle(pix, box, NULL);
     pixc = pixcompCreateFromPix(pixs, IFF_TIFF_G4);
     pixd = pixCreateFromPixcomp(pixc);
-    pixSaveTiledOutline(pixd, pixad, 1, 0, 30, 2, 32);
+    pixSaveTiledOutline(pixd, pixad, 1.0, 0, 30, 2, 32);
     pixDestroy(&pixd);
     pixcompDestroy(&pixc);
     pixacompAddPix(pixac, pixs, IFF_DEFAULT);
@@ -89,7 +96,7 @@ static char     mainName[] = "pixcomp_reg";
     pixs = pixRead("weasel4.11c.png");
     pixc = pixcompCreateFromPix(pixs, IFF_PNG);
     pixd = pixCreateFromPixcomp(pixc);
-    pixSaveTiledOutline(pixd, pixad, 1, 0, 30, 2, 32);
+    pixSaveTiledOutline(pixd, pixad, 1.0, 0, 30, 2, 32);
     pixDestroy(&pixd);
     pixcompDestroy(&pixc);
     pixacompAddPix(pixac, pixs, IFF_DEFAULT);
@@ -100,7 +107,7 @@ static char     mainName[] = "pixcomp_reg";
     n = pixacompGetCount(pixac);
     for (i = 0; i < n; i++) {
         pixs = pixacompGetPix(pixac, i);
-        pixSaveTiledOutline(pixs, pixad, 1, i == 0 ? 1 : 0, 30, 2, 32);
+        pixSaveTiledOutline(pixs, pixad, 1.0, i == 0 ? 1 : 0, 30, 2, 32);
         pixDestroy(&pixs);
     }
 
@@ -108,7 +115,7 @@ static char     mainName[] = "pixcomp_reg";
     pixa1 = pixaCreateFromPixacomp(pixac, L_CLONE);
     for (i = 0; i < n; i++) {
         pixs = pixaGetPix(pixa1, i, L_CLONE);
-        pixSaveTiledOutline(pixs, pixad, 1, i == 0 ? 1 : 0, 30, 2, 32);
+        pixSaveTiledOutline(pixs, pixad, 1.0, i == 0 ? 1 : 0, 30, 2, 32);
         pixDestroy(&pixs);
     }
 

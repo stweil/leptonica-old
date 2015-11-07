@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -30,13 +41,13 @@
 #include "allheaders.h"
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 l_int32       i, n, w, h;
 BOXA         *boxa;
 NUMA         *naindex, *naw, *nah, *naw_med, *nah_med;
-PIX          *pixs, *pixt, *pixd;
+PIX          *pixs, *pixt;
 L_REGPARAMS  *rp;
 
     if (regTestSetup(argc, argv, &rp))
@@ -57,11 +68,15 @@ L_REGPARAMS  *rp;
     numaDestroy(&naindex);
 
         /* Make the rank bin arrays of median values, with 10 bins */
+    lept_rmfile("/tmp/regout/w_10bin.png");  /* remove existing ones */
+    lept_rmfile("/tmp/regout/h_10bin.png");
+    lept_rmfile("/tmp/regout/w_30bin.png");
+    lept_rmfile("/tmp/regout/h_30bin.png");
     numaGetRankBinValues(naw, 10, NULL, &naw_med);
     numaGetRankBinValues(nah, 10, NULL, &nah_med);
-    gplotSimple1(naw_med, GPLOT_PNG, "/tmp/w_10bin", 
+    gplotSimple1(naw_med, GPLOT_PNG, "/tmp/regout/w_10bin",
                  "width vs rank bins (10)");
-    gplotSimple1(nah_med, GPLOT_PNG, "/tmp/h_10bin", 
+    gplotSimple1(nah_med, GPLOT_PNG, "/tmp/regout/h_10bin",
                  "height vs rank bins (10)");
     numaDestroy(&naw_med);
     numaDestroy(&nah_med);
@@ -69,9 +84,9 @@ L_REGPARAMS  *rp;
         /* Make the rank bin arrays of median values, with 30 bins */
     numaGetRankBinValues(naw, 30, NULL, &naw_med);
     numaGetRankBinValues(nah, 30, NULL, &nah_med);
-    gplotSimple1(naw_med, GPLOT_PNG, "/tmp/w_30bin", 
+    gplotSimple1(naw_med, GPLOT_PNG, "/tmp/regout/w_30bin",
                  "width vs rank bins (30)");
-    gplotSimple1(nah_med, GPLOT_PNG, "/tmp/h_30bin", 
+    gplotSimple1(nah_med, GPLOT_PNG, "/tmp/regout/h_30bin",
                  "height vs rank bins (30)");
     numaDestroy(&naw_med);
     numaDestroy(&nah_med);
@@ -84,29 +99,27 @@ L_REGPARAMS  *rp;
 #endif  /* _WIN32 */
 
         /* Save as golden files, or check against them */
-    regTestCheckFile(rp, "/tmp/w_10bin.png");  /* 0 */
-    regTestCheckFile(rp, "/tmp/h_10bin.png");  /* 1 */
-    regTestCheckFile(rp, "/tmp/w_30bin.png");  /* 2 */
-    regTestCheckFile(rp, "/tmp/h_30bin.png");  /* 3 */
+    regTestCheckFile(rp, "/tmp/regout/w_10bin.png");  /* 0 */
+    regTestCheckFile(rp, "/tmp/regout/h_10bin.png");  /* 1 */
+    regTestCheckFile(rp, "/tmp/regout/w_30bin.png");  /* 2 */
+    regTestCheckFile(rp, "/tmp/regout/h_30bin.png");  /* 3 */
 
         /* Display results for debugging */
-    pixt = pixRead("/tmp/w_10bin.png");
+    pixt = pixRead("/tmp/regout/w_10bin.png");
     pixDisplayWithTitle(pixt, 0, 0, NULL, rp->display);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/h_10bin.png");
+    pixt = pixRead("/tmp/regout/h_10bin.png");
     pixDisplayWithTitle(pixt, 650, 0, NULL, rp->display);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/w_30bin.png");
+    pixt = pixRead("/tmp/regout/w_30bin.png");
     pixDisplayWithTitle(pixt, 0, 550, NULL, rp->display);
     pixDestroy(&pixt);
-    pixt = pixRead("/tmp/h_30bin.png");
+    pixt = pixRead("/tmp/regout/h_30bin.png");
     pixDisplayWithTitle(pixt, 650, 550, NULL, rp->display);
     pixDestroy(&pixt);
 
     pixDestroy(&pixs);
     numaDestroy(&naw);
     numaDestroy(&nah);
-    regTestCleanup(rp);
-    return 0;
+    return regTestCleanup(rp);
 }
-

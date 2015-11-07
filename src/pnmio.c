@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -23,15 +34,16 @@
  *          l_int32          pixWriteStreamPnm()
  *          l_int32          pixWriteStreamAsciiPnm()
  *
- *      Read/write to memory   [not on windows]
+ *      Read/write to memory
  *          PIX             *pixReadMemPnm()
- *          l_int32          sreadHeaderPnm()
+ *          l_int32          readHeaderMemPnm()
  *          l_int32          pixWriteMemPnm()
  *
  *      Local helpers
  *          static l_int32   pnmReadNextAsciiValue();
+ *          static l_int32   pnmReadNextNumber();
  *          static l_int32   pnmSkipCommentLines();
- *       
+ *
  *      These are here by popular demand, with the help of Mattias
  *      Kregert (mattias@kregert.se), who provided the first implementation.
  *
@@ -46,7 +58,7 @@
  *      format, because 2 characters are used to represent every bit
  *      (pixel) in the image.  Reading is slow because we check for extra
  *      white space and EOL at every sample value.
- * 
+ *
  *      The packed pnm formats ("raw") give file sizes similar to
  *      bmp files, which are uncompressed packed.  However, bmp
  *      are more flexible, because they can support colormaps.
@@ -65,9 +77,15 @@
  *      with image processing before you write it out to file.
  *      The I/O routines just try to make the closest connection
  *      possible between the file and the Pix in memory.
+ *
+ *      On systems like windows without fmemopen() and open_memstream(),
+ *      we write data to a temp file and read it back for operations
+ *      between pix and compressed-data, such as pixReadMemPnm() and
+ *      pixWriteMemPnm().
  */
 
 #include <string.h>
+#include <ctype.h>
 #include "allheaders.h"
 
 /* --------------------------------------------*/
@@ -76,6 +94,7 @@
 
 
 static l_int32 pnmReadNextAsciiValue(FILE  *fp, l_int32 *pval);
+static l_int32 pnmReadNextNumber(FILE *fp, l_int32 *pval);
 static l_int32 pnmSkipCommentLines(FILE  *fp);
 
     /* a sanity check on the size read from file */
@@ -108,7 +127,9 @@ PIX       *pix;
     if (!fp)
         return (PIX *)ERROR_PTR("fp not defined", procName, NULL);
 
-    if (freadHeaderPnm(fp, &pix, &w, &h, &d, &type, NULL, NULL))
+    if (freadHeaderPnm(fp, &w, &h, &d, &type, NULL, NULL))
+        return (PIX *)ERROR_PTR( "header read failed", procName, NULL);
+    if ((pix = pixCreate(w, h, d)) == NULL)
         return (PIX *)ERROR_PTR( "pix not made", procName, NULL);
     data = pixGetData(pix);
     wpl = pixGetWpl(pix);
@@ -121,8 +142,7 @@ PIX       *pix;
                     if (pnmReadNextAsciiValue(fp, &val))
                         return (PIX *)ERROR_PTR( "read abend", procName, pix);
                     pixSetPixel(pix, j, i, val);
-                }
-                else {  /* type == 3 */
+                } else {  /* type == 3 */
                     if (pnmReadNextAsciiValue(fp, &rval))
                         return (PIX *)ERROR_PTR( "read abend", procName, pix);
                     if (pnmReadNextAsciiValue(fp, &gval))
@@ -167,8 +187,7 @@ PIX       *pix;
                     else  /* d == 8 */
                         SET_DATA_BYTE(line, j, val8);
                 }
-            }
-            else {  /* d == 16 */
+            } else {  /* d == 16 */
                 for (j = 0; j < w; j++) {
                     if (fread(&val16, 2, 1, fp) != 1)
                         return (PIX *)ERROR_PTR( "16 bpp error", procName, pix);
@@ -201,37 +220,40 @@ PIX       *pix;
  *  readHeaderPnm()
  *
  *      Input:  filename
- *              &pix (<optional return> use null to return only header data)
- *              &width (<return>)
- *              &height (<return>)
- *              &depth (<return>)
- *              &type (<return> pnm type)
+ *              &w (<optional return>)
+ *              &h (<optional return>)
+ *              &d (<optional return>)
+ *              &type (<optional return> pnm type)
  *              &bps (<optional return>, bits/sample)
  *              &spp (<optional return>, samples/pixel)
  *      Return: 0 if OK, 1 on error
  */
 l_int32
 readHeaderPnm(const char *filename,
-              PIX     **ppix,
-              l_int32  *pwidth,
-              l_int32  *pheight,
-              l_int32  *pdepth,
-              l_int32  *ptype,
-              l_int32  *pbps,
-              l_int32  *pspp)
+              l_int32    *pw,
+              l_int32    *ph,
+              l_int32    *pd,
+              l_int32    *ptype,
+              l_int32    *pbps,
+              l_int32    *pspp)
 {
 l_int32  ret;
 FILE    *fp;
 
     PROCNAME("readHeaderPnm");
 
+    if (pw) *pw = 0;
+    if (ph) *ph = 0;
+    if (pd) *pd = 0;
+    if (ptype) *ptype = 0;
+    if (pbps) *pbps = 0;
+    if (pspp) *pspp = 0;
     if (!filename)
         return ERROR_INT("filename not defined", procName, 1);
-    if (!pwidth || !pheight || !pbps || !pspp)
-        return ERROR_INT("input ptr(s) not defined", procName, 1);
+
     if ((fp = fopenReadStream(filename)) == NULL)
         return ERROR_INT("image file not found", procName, 1);
-    ret = freadHeaderPnm(fp, ppix, pwidth, pheight, pdepth, ptype, pbps, pspp);
+    ret = freadHeaderPnm(fp, pw, ph, pd, ptype, pbps, pspp);
     fclose(fp);
     return ret;
 }
@@ -241,34 +263,38 @@ FILE    *fp;
  *  freadHeaderPnm()
  *
  *      Input:  stream opened for read
- *              &pix (<optional return> use null to return only header data)
- *              &width (<return>)
- *              &height (<return>)
- *              &depth (<return>)
- *              &type (<return> pnm type)
+ *              &w (<optional return>)
+ *              &h (<optional return>)
+ *              &d (<optional return>)
+ *              &type (<optional return> pnm type)
  *              &bps (<optional return>, bits/sample)
  *              &spp (<optional return>, samples/pixel)
  *      Return: 0 if OK, 1 on error
  */
 l_int32
 freadHeaderPnm(FILE     *fp,
-               PIX     **ppix,
-               l_int32  *pwidth,
-               l_int32  *pheight,
-               l_int32  *pdepth,
+               l_int32  *pw,
+               l_int32  *ph,
+               l_int32  *pd,
                l_int32  *ptype,
                l_int32  *pbps,
                l_int32  *pspp)
 {
 l_int32  w, h, d, type;
 l_int32  maxval;
+char     whitespace;
+char     buf[64];
 
     PROCNAME("freadHeaderPnm");
 
+    if (pw) *pw = 0;
+    if (ph) *ph = 0;
+    if (pd) *pd = 0;
+    if (ptype) *ptype = 0;
+    if (pbps) *pbps = 0;
+    if (pspp) *pspp = 0;
     if (!fp)
         return ERROR_INT("fp not defined", procName, 1);
-    if (!pwidth || !pheight || !pdepth || !ptype)
-        return ERROR_INT("input ptr(s) not defined", procName, 1);
 
     if (fscanf(fp, "P%d\n", &type) != 1)
         return ERROR_INT("invalid read for type", procName, 1);
@@ -280,47 +306,50 @@ l_int32  maxval;
 
     if (fscanf(fp, "%d %d\n", &w, &h) != 2)
         return ERROR_INT("invalid read for w,h", procName, 1);
-    if (w <= 0 || h <= 0 || w > MAX_PNM_WIDTH || h > MAX_PNM_HEIGHT)
-        return ERROR_INT("invalid sizes", procName, 1);
+    if (w <= 0 || h <= 0 || w > MAX_PNM_WIDTH || h > MAX_PNM_HEIGHT) {
+        L_INFO("invalid size: w = %d, h = %d\n", procName, w, h);
+        return 1;
+    }
 
-        /* Get depth of pix */
-    if (type == 1 || type == 4)
+       /* Get depth of pix.  For types 2 and 5, we use the maxval.
+        * Important implementation note:
+        *   - You can't use fscanf(), which throws away whitespace,
+        *     and will discard binary data if it starts with whitespace(s).
+        *   - You can't use fgets(), which stops at newlines, but this
+        *     dumb format doesn't require a newline after the maxval
+        *     number -- it just requires one whitespace character.
+        *   - Which leaves repeated calls to fgetc, including swallowing
+        *     the single whitespace character. */
+    if (type == 1 || type == 4) {
         d = 1;
-    else if (type == 2 || type == 5) {
-        if (fscanf(fp, "%d\n", &maxval) != 1)
+    } else if (type == 2 || type == 5) {
+        if (pnmReadNextNumber(fp, &maxval))
             return ERROR_INT("invalid read for maxval (2,5)", procName, 1);
-        if (maxval == 3)
+        if (maxval == 3) {
             d = 2;
-        else if (maxval == 15)
+        } else if (maxval == 15) {
             d = 4;
-        else if (maxval == 255)
+        } else if (maxval == 255) {
             d = 8;
-        else if (maxval == 0xffff)
+        } else if (maxval == 0xffff) {
             d = 16;
-        else {
+        } else {
             fprintf(stderr, "maxval = %d\n", maxval);
             return ERROR_INT("invalid maxval", procName, 1);
         }
-    }
-    else {  /* type == 3 || type == 6; this is rgb  */
-        if (fscanf(fp, "%d\n", &maxval) != 1)
+    } else {  /* type == 3 || type == 6; this is rgb  */
+        if (pnmReadNextNumber(fp, &maxval))
             return ERROR_INT("invalid read for maxval (3,6)", procName, 1);
         if (maxval != 255)
-            L_WARNING_INT("unexpected maxval = %d", procName, maxval);
+            L_WARNING("unexpected maxval = %d\n", procName, maxval);
         d = 32;
     }
-    *pwidth = w;
-    *pheight = h;
-    *pdepth = d;
-    *ptype = type;
+    if (pw) *pw = w;
+    if (ph) *ph = h;
+    if (pd) *pd = d;
+    if (ptype) *ptype = type;
     if (pbps) *pbps = (d == 32) ? 8 : d;
     if (pspp) *pspp = (d == 32) ? 3 : 1;
-    
-    if (!ppix)
-        return 0;
-
-    if ((*ppix = pixCreate(w, h, d)) == NULL)  /* return pix initialized to 0 */
-        return ERROR_INT( "pix not made", procName, 1);
     return 0;
 }
 
@@ -384,8 +413,7 @@ PIX       *pixs;
                 fwrite(&val8, 1, 1, fp);
             }
         }
-    }
-    else if (ds == 2 || ds == 4 || ds == 8 || ds == 16) {  /* grayscale */
+    } else if (ds == 2 || ds == 4 || ds == 8 || ds == 16) {  /* grayscale */
         maxval = (1 << ds) - 1;
         fprintf(fp, "P5\n# Raw PGM file written by leptonica "
                     "(www.leptonica.com)\n%d %d\n%d\n", w, h, maxval);
@@ -403,8 +431,7 @@ PIX       *pixs;
                     fwrite(&val8, 1, 1, fp);
                 }
             }
-        }
-        else {  /* ds == 16 */
+        } else {  /* ds == 16 */
             for (i = 0; i < h; i++) {
                 lines = datas + i * wpls;
                 for (j = 0; j < w; j++) {
@@ -413,8 +440,7 @@ PIX       *pixs;
                 }
             }
         }
-    }
-    else {  /* rgb color */
+    } else {  /* rgb color */
         fprintf(fp, "P6\n# Raw PPM file written by leptonica "
                     "(www.leptonica.com)\n%d %d\n255\n", w, h);
 
@@ -425,16 +451,15 @@ PIX       *pixs;
                 if (fwrite(lines, 1, filebpl, fp) != filebpl)
                     writeerror = 1;
             }
-        }
-        else {  /* 32 bpp rgb */
+        } else {  /* 32 bpp rgb */
             for (i = 0; i < h; i++) {
                 lines = datas + i * wpls;
                 for (j = 0; j < wpls; j++) {
                     pword = lines + j;
-                    pel[0] = *((l_uint8 *)pword + 3);   /* red   */
-                    pel[1] = *((l_uint8 *)pword + 2);   /* green */
-                    pel[2] = *((l_uint8 *)pword + 1);   /* blue  */
-                    if (fwrite(&pel, 1, 3, fp) != 3)
+                    pel[0] = GET_DATA_BYTE(pword, COLOR_RED);
+                    pel[1] = GET_DATA_BYTE(pword, COLOR_GREEN);
+                    pel[2] = GET_DATA_BYTE(pword, COLOR_BLUE);
+                    if (fwrite(pel, 1, 3, fp) != 3)
                         writeerror = 1;
                 }
             }
@@ -502,12 +527,13 @@ PIX       *pixs;
                     fputc('1', fp);
                 fputc(' ', fp);
                 count += 2;
-                if (count >= 70)
+                if (count >= 70) {
                     fputc('\n', fp);
+                    count = 0;
+                }
             }
         }
-    }
-    else if (ds == 2 || ds == 4 || ds == 8 || ds == 16) {  /* grayscale */
+    } else if (ds == 2 || ds == 4 || ds == 8 || ds == 16) {  /* grayscale */
         maxval = (1 << ds) - 1;
         fprintf(fp, "P2\n# Ascii PGM file written by leptonica "
                     "(www.leptonica.com)\n%d %d\n%d\n", w, h, maxval);
@@ -520,18 +546,15 @@ PIX       *pixs;
                     sprintf(buffer, "%1d ", val);
                     fwrite(buffer, 1, 2, fp);
                     count += 2;
-                }
-                else if (ds == 4) {
+                } else if (ds == 4) {
                     sprintf(buffer, "%2d ", val);
                     fwrite(buffer, 1, 3, fp);
                     count += 3;
-                }
-                else if (ds == 8) {
+                } else if (ds == 8) {
                     sprintf(buffer, "%3d ", val);
                     fwrite(buffer, 1, 4, fp);
                     count += 4;
-                }
-                else {  /* ds == 16 */
+                } else {  /* ds == 16 */
                     sprintf(buffer, "%5d ", val);
                     fwrite(buffer, 1, 6, fp);
                     count += 6;
@@ -542,11 +565,9 @@ PIX       *pixs;
                 }
             }
         }
-    }
-    else {  /* rgb color */
+    } else {  /* rgb color */
         fprintf(fp, "P3\n# Ascii PPM file written by leptonica "
                     "(www.leptonica.com)\n%d %d\n255\n", w, h);
-
         count = 0;
         for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
@@ -580,9 +601,9 @@ PIX       *pixs;
 #endif  /* HAVE_CONFIG_H */
 
 #if HAVE_FMEMOPEN
-
 extern FILE *open_memstream(char **data, size_t *size);
 extern FILE *fmemopen(void *data, size_t size, const char *mode);
+#endif  /* HAVE_FMEMOPEN */
 
 /*!
  *  pixReadMemPnm()
@@ -598,60 +619,73 @@ PIX *
 pixReadMemPnm(const l_uint8  *cdata,
               size_t          size)
 {
-l_uint8  *data;
-FILE     *fp;
-PIX      *pix;
+FILE  *fp;
+PIX   *pix;
 
     PROCNAME("pixReadMemPnm");
 
     if (!cdata)
         return (PIX *)ERROR_PTR("cdata not defined", procName, NULL);
 
-    data = (l_uint8 *)cdata;  /* we're really not going to change this */
-    if ((fp = fmemopen(data, size, "r")) == NULL)
+#if HAVE_FMEMOPEN
+    if ((fp = fmemopen((l_uint8 *)cdata, size, "r")) == NULL)
         return (PIX *)ERROR_PTR("stream not opened", procName, NULL);
+#else
+    L_WARNING("work-around: writing to a temp file\n", procName);
+    if ((fp = tmpfile()) == NULL)
+        return (PIX *)ERROR_PTR("tmpfile stream not opened", procName, NULL);
+    fwrite(cdata, 1, size, fp);
+    rewind(fp);
+#endif  /* HAVE_FMEMOPEN */
     pix = pixReadStreamPnm(fp);
     fclose(fp);
+    if (!pix) L_ERROR("pix not read\n", procName);
     return pix;
 }
 
 
 /*!
- *  sreadHeaderPnm()
+ *  readHeaderMemPnm()
  *
  *      Input:  cdata (const; pnm-encoded)
  *              size (of data)
- *              &width (<return>)
- *              &height (<return>)
- *              &depth (<return>)
- *              &type (<return> pnm type)
+ *              &w (<optional return>)
+ *              &h (<optional return>)
+ *              &d (<optional return>)
+ *              &type (<optional return> pnm type)
  *              &bps (<optional return>, bits/sample)
  *              &spp (<optional return>, samples/pixel)
  *      Return: 0 if OK, 1 on error
  */
 l_int32
-sreadHeaderPnm(const l_uint8  *cdata,
-               size_t          size,
-               l_int32        *pwidth,
-               l_int32        *pheight,
-               l_int32        *pdepth,
-               l_int32        *ptype,
-               l_int32        *pbps,
-               l_int32        *pspp)
+readHeaderMemPnm(const l_uint8  *cdata,
+                 size_t          size,
+                 l_int32        *pw,
+                 l_int32        *ph,
+                 l_int32        *pd,
+                 l_int32        *ptype,
+                 l_int32        *pbps,
+                 l_int32        *pspp)
 {
-l_int32   ret;
-l_uint8  *data;
-FILE     *fp;
+l_int32  ret;
+FILE    *fp;
 
-    PROCNAME("sreadHeaderPnm");
+    PROCNAME("readHeaderMemPnm");
 
     if (!cdata)
         return ERROR_INT("cdata not defined", procName, 1);
 
-    data = (l_uint8 *)cdata;  /* we're really not going to change this */
-    if ((fp = fmemopen(data, size, "r")) == NULL)
+#if HAVE_FMEMOPEN
+    if ((fp = fmemopen((l_uint8 *)cdata, size, "r")) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
-    ret = freadHeaderPnm(fp, NULL, pwidth, pheight, pdepth, ptype, pbps, pspp);
+#else
+    L_WARNING("work-around: writing to a temp file\n", procName);
+    if ((fp = tmpfile()) == NULL)
+        return ERROR_INT("tmpfile stream not opened", procName, 1);
+    fwrite(cdata, 1, size, fp);
+    rewind(fp);
+#endif  /* HAVE_FMEMOPEN */
+    ret = freadHeaderPnm(fp, pw, ph, pd, ptype, pbps, pspp);
     fclose(fp);
     if (ret)
         return ERROR_INT("header data read failed", procName, 1);
@@ -681,6 +715,8 @@ FILE    *fp;
 
     PROCNAME("pixWriteMemPnm");
 
+    if (pdata) *pdata = NULL;
+    if (psize) *psize = 0;
     if (!pdata)
         return ERROR_INT("&data not defined", procName, 1 );
     if (!psize)
@@ -688,52 +724,21 @@ FILE    *fp;
     if (!pix)
         return ERROR_INT("&pix not defined", procName, 1 );
 
+#if HAVE_FMEMOPEN
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = pixWriteStreamPnm(fp, pix);
+#else
+    L_WARNING("work-around: writing to a temp file\n", procName);
+    if ((fp = tmpfile()) == NULL)
+        return ERROR_INT("tmpfile stream not opened", procName, 1);
+    ret = pixWriteStreamPnm(fp, pix);
+    rewind(fp);
+    *pdata = l_binaryReadStream(fp, psize);
+#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
     return ret;
 }
-
-#else
-
-PIX *
-pixReadMemPnm(const l_uint8  *cdata,
-              size_t          size)
-{
-    return (PIX *)ERROR_PTR(
-        "pnm read from memory not implemented on this platform",
-        "pixReadMemPnm", NULL);
-}
-
-
-l_int32
-sreadHeaderPnm(const l_uint8  *cdata,
-               size_t          size,
-               l_int32        *pwidth,
-               l_int32        *pheight,
-               l_int32        *pdepth,
-               l_int32        *ptype,
-               l_int32        *pbps,
-               l_int32        *pspp)
-{
-    return ERROR_INT(
-        "pnm read header from memory not implemented on this platform",
-        "sreadHeaderPnm", 1);
-}
-
-
-l_int32
-pixWriteMemPnm(l_uint8  **pdata,
-               size_t    *psize,
-               PIX       *pix)
-{
-    return ERROR_INT(
-        "pnm write to memory not implemented on this platform",
-        "pixWriteMemPnm", 1);
-}
-
-#endif  /* HAVE_FMEMOPEN */
 
 
 /*--------------------------------------------------------------------*
@@ -748,18 +753,18 @@ pixWriteMemPnm(l_uint8  **pdata,
  *      (1) This reads the next sample value in ascii from the the file.
  */
 static l_int32
-pnmReadNextAsciiValue(FILE  *fp,
-                      l_int32 *pval)
+pnmReadNextAsciiValue(FILE     *fp,
+                      l_int32  *pval)
 {
 l_int32   c, ignore;
 
     PROCNAME("pnmReadNextAsciiValue");
 
-    if (!fp)
-        return ERROR_INT("stream not open", procName, 1);
     if (!pval)
         return ERROR_INT("&val not defined", procName, 1);
     *pval = 0;
+    if (!fp)
+        return ERROR_INT("stream not open", procName, 1);
     do {  /* skip whitespace */
         if ((c = fgetc(fp)) == EOF)
             return 1;
@@ -767,6 +772,57 @@ l_int32   c, ignore;
 
     fseek(fp, -1L, SEEK_CUR);        /* back up one byte */
     ignore = fscanf(fp, "%d", pval);
+    return 0;
+}
+
+
+/*!
+ *  pnmReadNextNumber()
+ *
+ *      Input:  file stream
+ *              &val (<return> value as an integer)
+ *      Return: 0 if OK, 1 on error or EOF.
+ *
+ *  Notes:
+ *      (1) This reads the next set of numeric chars, returning
+ *          the value and swallowing the trailing whitespace character.
+ *          This is needed to read the maxval in the header, which
+ *          preceeds the binary data.
+ */
+static l_int32
+pnmReadNextNumber(FILE     *fp,
+                  l_int32  *pval)
+{
+char      buf[8];
+l_int32   i, c, foundws, ignore;
+
+    PROCNAME("pnmReadNextNumber");
+
+    if (!pval)
+        return ERROR_INT("&val not defined", procName, 1);
+    *pval = 0;
+    if (!fp)
+        return ERROR_INT("stream not open", procName, 1);
+
+        /* The ascii characters for the number are followed by exactly
+         * one whitespace character. */
+    foundws = FALSE;
+    for (i = 0; i < 8; i++) {
+        if ((c = fgetc(fp)) == EOF)
+            return ERROR_INT("end of file reached", procName, 1);
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+            foundws = TRUE;
+            buf[i] = '\n';
+            break;
+        }
+        if (!isdigit(c))
+            return ERROR_INT("char read is not a digit", procName, 1);
+        buf[i] = c;
+    }
+    if (!foundws)
+        return ERROR_INT("no whitespace found", procName, 1);
+    if (sscanf(buf, "%d", pval) != 1)
+        return ERROR_INT("invalid read", procName, 1);
     return 0;
 }
 
@@ -780,7 +836,7 @@ l_int32   c, ignore;
  *      (1) Comment lines begin with '#'
  *      (2) Usage: caller should check return value for EOF
  */
-static l_int32 
+static l_int32
 pnmSkipCommentLines(FILE  *fp)
 {
 l_int32  c;

@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -62,26 +73,30 @@
 #include <string.h>
 #include "allheaders.h"
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char      *pagedir, *pagestr, *maskdir, *maskstr, *fileout;
-l_int32    threshold, numpre, numpost, maxnum;
-l_float32  textscale, imagescale;    
+l_int32    threshold, page_numpre, mask_numpre, numpost, maxnum;
+l_float32  textscale, imagescale;
 
-    if (argc != 12) {
+    if (argc != 13) {
 	fprintf(stderr,
-            " Syntax: convertsegfilestops pagedir pagestr maskdir maskstr \\ \n"
-            "                             numpre numpost maxnum \\ \n"
-            "                             textscale imagescale thresh fileout\n"
+            " Syntax: convertsegfilestops pagedir pagestr page_numpre \\ \n"
+            "                             maskdir maskstr mask_numpre \\ \n"
+            "                             numpost maxnum textscale \\ \n"
+            "                             imagescale thresh fileout\n"
             "     where\n"
             "         pagedir:  Input directory for page image files\n"
             "         pagestr:  Substring for matching; use 'allfiles' to\n"
             "                   convert all files in the page directory\n"
+            "         page_numpre:  Number of characters in page name "
+                      "before number\n"
             "         maskdir:  Input directory for mask image files\n"
             "         maskstr:  Substring for matching; use 'allfiles' to\n"
             "                   convert all files in the mask directory\n"
-            "         numpre:  Number of characters in name before number\n"
+            "         mask_numpre:  Number of characters in mask name "
+                      "before number\n"
             "         numpost:  Number of characters in name after number\n"
             "         maxnum:  Only consider page numbers up to this value\n"
             "         textscale:  Scale of text output relative to pixs\n"
@@ -94,24 +109,25 @@ l_float32  textscale, imagescale;
 
     pagedir = argv[1];
     pagestr = argv[2];
-    maskdir = argv[3];
-    maskstr = argv[4];
-    numpre = atoi(argv[5]);
-    numpost = atoi(argv[6]);
-    maxnum = atoi(argv[7]);
-    textscale = atof(argv[8]);
-    imagescale = atof(argv[9]);
-    threshold = atoi(argv[10]);
-    fileout = argv[11];
+    page_numpre = atoi(argv[3]);
+    maskdir = argv[4];
+    maskstr = argv[5];
+    mask_numpre = atoi(argv[6]);
+    numpost = atoi(argv[7]);
+    maxnum = atoi(argv[8]);
+    textscale = atof(argv[9]);
+    imagescale = atof(argv[10]);
+    threshold = atoi(argv[11]);
+    fileout = argv[12];
 
     if (!strcmp(pagestr, "allfiles"))
         pagestr = NULL;
     if (!strcmp(maskstr, "allfiles"))
         maskstr = NULL;
 
-    return convertSegmentedPagesToPS(pagedir, pagestr, maskdir, maskstr,
-                                     numpre, numpost, maxnum, textscale,
+    return convertSegmentedPagesToPS(pagedir, pagestr, page_numpre,
+                                     maskdir, maskstr, mask_numpre,
+                                     numpost, maxnum, textscale,
                                      imagescale, threshold, fileout);
 }
-
 

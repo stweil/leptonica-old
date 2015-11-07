@@ -1,7 +1,7 @@
 AC_PREREQ([2.50])
-AC_INIT([leptonica], [1.68], [dan.bloomberg@gmail.com])
+AC_INIT([leptonica], [1.72])
 AC_CONFIG_AUX_DIR([config])
-AM_CONFIG_HEADER([config_auto.h:config/config.h.in])
+AC_CONFIG_HEADERS([config_auto.h:config/config.h.in])
 AC_CONFIG_SRCDIR([src/adaptmap.c])
 
 AC_CONFIG_MACRO_DIR([m4])
@@ -26,6 +26,8 @@ AC_ARG_WITH([libpng], AS_HELP_STRING([--without-libpng], [do not include libpng 
 AC_ARG_WITH([jpeg], AS_HELP_STRING([--without-jpeg], [do not include jpeg support]))
 AC_ARG_WITH([giflib], AS_HELP_STRING([--without-giflib], [do not include giflib support]))
 AC_ARG_WITH([libtiff], AS_HELP_STRING([--without-libtiff], [do not include libtiff support]))
+AC_ARG_WITH([libwebp], AS_HELP_STRING([--without-libwebp], [do not include libwebp support]))
+AC_ARG_WITH([libopenjpeg], AS_HELP_STRING([--without-libopenjpeg], [do not include libopenjpeg support]))
 
 AC_ARG_ENABLE([programs], AS_HELP_STRING([--disable-programs], [do not build additional programs]))
 AM_CONDITIONAL([ENABLE_PROGRAMS], [test "x$enable_programs" != xno])
@@ -43,7 +45,8 @@ AS_IF([test "x$with_zlib" != xno],
 AS_IF([test "x$with_libpng" != xno],
   AC_CHECK_LIB([png], [png_read_png],
     AC_DEFINE([HAVE_LIBPNG], 1, [Define to 1 if you have libpng.]) AC_SUBST([LIBPNG_LIBS], [-lpng]),
-    AS_IF([test "x$with_libpng" = xyes], AC_MSG_ERROR([libpng support requested but library not found]))
+    AS_IF([test "x$with_libpng" = xyes], AC_MSG_ERROR([libpng support requested but library not found])),
+    ${LIBM} ${ZLIB_LIBS}
   )
 )
 
@@ -61,23 +64,45 @@ AS_IF([test "x$with_giflib" != xno],
   )
 )
 
+AM_CONDITIONAL([HAVE_LIBGIF], [test "x$ac_cv_lib_gif_DGifOpenFileHandle" = xyes])
+
 AS_IF([test "x$with_libtiff" != xno],
   AC_CHECK_LIB([tiff], [TIFFOpen],
     AC_DEFINE([HAVE_LIBTIFF], 1, [Define to 1 if you have libtiff.]) AC_SUBST([LIBTIFF_LIBS], [-ltiff]),
-    AS_IF([test "x$with_libtiff" = xyes], AC_MSG_ERROR([libtiff support requested but library not found]))
+    AS_IF([test "x$with_libtiff" = xyes], AC_MSG_ERROR([libtiff support requested but library not found])),
+    ${LIBM} ${ZLIB_LIBS} ${JPEG_LIBS}
   )
 )
 
 AS_IF([test "x$with_libwebp" != xno],
   AC_CHECK_LIB([webp], [WebPGetInfo],
     AC_DEFINE([HAVE_LIBWEBP], 1, [Define to 1 if you have libwebp.]) AC_SUBST([LIBWEBP_LIBS], [-lwebp]),
-    AS_IF([test "x$with_libwebp" = xyes], AC_MSG_ERROR([libwebp support requested but library not found]))
+    AS_IF([test "x$with_libwebp" = xyes], AC_MSG_ERROR([libwebp support requested but library not found])),
+    ${LIBM}
   )
 )
+
+AM_CONDITIONAL([HAVE_LIBWEBP], [test "x$ac_cv_lib_webp_WebPGetInfo" = xyes])
+
+AS_IF([test "x$with_libopenjpeg" != xno],
+  AC_CHECK_LIB([openjp2], [opj_create_decompress],
+    [
+      AC_DEFINE([HAVE_LIBJP2K], 1, [Define to 1 if you have libopenjp2.]) AC_SUBST([LIBJP2K_LIBS], [-lopenjp2])
+      [AC_CHECK_HEADERS([openjpeg-2.2/openjpeg.h openjpeg-2.1/openjpeg.h openjpeg-2.0/openjpeg.h],
+       AC_DEFINE_UNQUOTED([LIBJP2K_HEADER], [<$ac_header>], [Path to <openjpeg.h> header file.]) break)]
+    ],
+    AS_IF([test "x$with_libopenjpeg" = xyes], AC_MSG_ERROR([libopenjp2 support requested but library not found]))
+  )
+)
+
+AM_CONDITIONAL([HAVE_LIBJP2K], [test "x$ac_cv_lib_openjp2_opj_create_decompress" = xyes])
 
 case "$host_os" in
   mingw32*) AC_SUBST([GDI_LIBS], [-lgdi32]) ;;
 esac
+
+# Enable less verbose output when building.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
@@ -104,5 +129,5 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM()],
 # Checks for library functions.
 AC_CHECK_FUNCS([fmemopen])
 
-AC_CONFIG_FILES([Makefile src/endianness.h src/Makefile prog/Makefile])
+AC_CONFIG_FILES([Makefile src/endianness.h src/Makefile prog/Makefile lept.pc])
 AC_OUTPUT

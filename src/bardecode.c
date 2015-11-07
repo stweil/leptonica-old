@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -46,8 +57,6 @@
  *          static char     *barcodeDecodeEan13()
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "allheaders.h"
 #include "readbarcode.h"
@@ -142,8 +151,8 @@ l_int32  i, format, valid;
        format = SupportedBarcodeFormat[i];
        barcodeVerifyFormat(barstr, format, &valid, NULL);
        if (valid) {
-           L_INFO_STRING("Barcode format: %s", procName,
-                         SupportedBarcodeFormatName[i]);
+           L_INFO("Barcode format: %s\n", procName,
+                   SupportedBarcodeFormatName[i]);
            return format;
        }
    }
@@ -211,9 +220,9 @@ l_int32  i, start, len, stop, mid;
         start = !strncmp(barstr, Code2of5[C25_START], 3);
         len = strlen(barstr);
         stop = !strncmp(&barstr[len - 5], Code2of5[C25_STOP], 5);
-        if (start && stop)
+        if (start && stop) {
             *pvalid = 1;
-        else {
+        } else {
             revbarstr = stringReverse(barstr);
             start = !strncmp(revbarstr, Code2of5[C25_START], 3);
             stop = !strncmp(&revbarstr[len - 5], Code2of5[C25_STOP], 5);
@@ -228,9 +237,9 @@ l_int32  i, start, len, stop, mid;
         start = !strncmp(barstr, CodeI2of5[CI25_START], 4);
         len = strlen(barstr);
         stop = !strncmp(&barstr[len - 3], CodeI2of5[CI25_STOP], 3);
-        if (start && stop)
+        if (start && stop) {
             *pvalid = 1;
-        else {
+        } else {
             revbarstr = stringReverse(barstr);
             start = !strncmp(revbarstr, CodeI2of5[CI25_START], 4);
             stop = !strncmp(&revbarstr[len - 3], CodeI2of5[CI25_STOP], 3);
@@ -245,9 +254,9 @@ l_int32  i, start, len, stop, mid;
         start = !strncmp(barstr, Code93[C93_START], 6);
         len = strlen(barstr);
         stop = !strncmp(&barstr[len - 7], Code93[C93_STOP], 6);
-        if (start && stop)
+        if (start && stop) {
             *pvalid = 1;
-        else {
+        } else {
             revbarstr = stringReverse(barstr);
             start = !strncmp(revbarstr, Code93[C93_START], 6);
             stop = !strncmp(&revbarstr[len - 7], Code93[C93_STOP], 6);
@@ -262,9 +271,9 @@ l_int32  i, start, len, stop, mid;
         start = !strncmp(barstr, Code39[C39_START], 9);
         len = strlen(barstr);
         stop = !strncmp(&barstr[len - 9], Code39[C39_STOP], 9);
-        if (start && stop)
+        if (start && stop) {
             *pvalid = 1;
-        else {
+        } else {
             revbarstr = stringReverse(barstr);
             start = !strncmp(revbarstr, Code39[C39_START], 9);
             stop = !strncmp(&revbarstr[len - 9], Code39[C39_STOP], 9);
@@ -282,9 +291,9 @@ l_int32  i, start, len, stop, mid;
             start += !strncmp(barstr, Codabar[i], 7);
         for (i = 16; i <= 19; i++)  /* ditto */
             stop += !strncmp(&barstr[len - 7], Codabar[i], 7);
-        if (start && stop)
+        if (start && stop) {
             *pvalid = 1;
-        else {
+        } else {
             start = stop = 0;
             revbarstr = stringReverse(barstr);
             for (i = 16; i <= 19; i++)
@@ -584,7 +593,7 @@ l_int32     *index;
     for (i = 0; i < nsymb - 2; i++)  /* skip the "C" and "K" */
         sum += ((i % 20) + 1) * index[nsymb - 3 - i];
     if (data[nsymb - 2] != Code93Val[sum % 47])
-        L_WARNING("Error for check C", procName);
+        L_WARNING("Error for check C\n", procName);
 
     if (debugflag) {
         checkc = Code93[sum % 47];
@@ -595,7 +604,7 @@ l_int32     *index;
     for (i = 0; i < nsymb - 1; i++)  /* skip the "K" */
         sum += ((i % 15) + 1) * index[nsymb - 2 - i];
     if (data[nsymb - 1] != Code93Val[sum % 47])
-        L_WARNING("Error for check K", procName);
+        L_WARNING("Error for check K\n", procName);
 
     if (debugflag) {
         checkk = Code93[sum % 47];
@@ -872,7 +881,7 @@ l_int32   valid, i, j, len, error, start, found, sum, checkdigit;
     if (checkdigit)  /* not 0 */
         checkdigit = 10 - checkdigit;
     if (checkdigit + 0x30 != data[11])
-        L_WARNING("Error for UPC-A check character", procName);
+        L_WARNING("Error for UPC-A check character\n", procName);
 
     return data;
 }
@@ -990,9 +999,7 @@ l_int32   valid, i, j, len, error, start, found, sum, checkdigit;
     if (checkdigit)  /* not 0 */
         checkdigit = 10 - checkdigit;
     if (checkdigit + 0x30 != data[11])
-        L_WARNING("Error for EAN-13 check character", procName);
+        L_WARNING("Error for EAN-13 check character\n", procName);
 
     return data;
 }
-
-

@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -23,9 +34,11 @@
 #include <string.h>
 #include "allheaders.h"
 
-    /* MS VC++ can't handle array initialization with static consts ! */
-#define L_BUF_SIZE      512
+#ifdef _WIN32
+#include <windows.h>   /* for CreateDirectory() */
+#endif
 
+static const l_int32  L_BUF_SIZE = 512;
 static const l_int32  DEFAULT_THUMB_WIDTH = 120;
 static const l_int32  DEFAULT_VIEW_WIDTH = 800;
 static const l_int32  MIN_THUMB_WIDTH = 50;
@@ -74,7 +87,7 @@ char      *shtml, *slink;
 char       charbuf[L_BUF_SIZE];
 char       htmlstring[] = "<html>";
 char       framestring[] = "</frameset></html>";
-l_int32    i, nfiles, index, w, nimages, ignore;
+l_int32    i, nfiles, index, w, nimages, ret;
 l_float32  factor;
 PIX       *pix, *pixthumb, *pixview;
 SARRAY    *safiles, *sathumbs, *saviews, *sahtml, *salink;
@@ -91,19 +104,27 @@ SARRAY    *safiles, *sathumbs, *saviews, *sahtml, *salink;
     if (thumbwidth == 0)
         thumbwidth = DEFAULT_THUMB_WIDTH;
     if (thumbwidth < MIN_THUMB_WIDTH) {
-        L_WARNING("thumbwidth too small; using min value", procName);
+        L_WARNING("thumbwidth too small; using min value\n", procName);
         thumbwidth = MIN_THUMB_WIDTH;
     }
     if (viewwidth == 0)
         viewwidth = DEFAULT_VIEW_WIDTH;
     if (viewwidth < MIN_VIEW_WIDTH) {
-        L_WARNING("viewwidth too small; using min value", procName);
+        L_WARNING("viewwidth too small; using min value\n", procName);
         viewwidth = MIN_VIEW_WIDTH;
     }
 
         /* Make the output directory if it doesn't already exist */
+#ifndef _WIN32
     sprintf(charbuf, "mkdir -p %s", dirout);
-    ignore = system(charbuf);
+    ret = system(charbuf);
+#else
+    ret = CreateDirectory(dirout, NULL) ? 0 : 1;
+#endif  /* !_WIN32 */
+    if (ret) {
+        L_ERROR("output directory %s not made\n", procName, dirout);
+        return 1;
+    }
 
         /* Capture the filenames in the input directory */
     if ((safiles = getFilenamesInDirectory(dirin)) == NULL)
@@ -154,9 +175,9 @@ SARRAY    *safiles, *sathumbs, *saviews, *sahtml, *salink;
 
             /* Make and store the view */
         factor = (l_float32)viewwidth / (l_float32)w;
-        if (factor >= 1.0)
+        if (factor >= 1.0) {
             pixview = pixClone(pix);   /* no upscaling */
-        else {
+        } else {
             if ((pixview = pixScale(pix, factor, factor)) == NULL)
                 return ERROR_INT("pixview not made", procName, 1);
         }
@@ -177,10 +198,10 @@ SARRAY    *safiles, *sathumbs, *saviews, *sahtml, *salink;
     sarrayAddString(sahtml, htmlstring, L_COPY);
     sprintf(charbuf, "<frameset cols=\"%d, *\">", thumbwidth + 30);
     sarrayAddString(sahtml, charbuf, L_COPY);
-    sprintf(charbuf, "<frame name=\"thumbs\" src=\"%s\">", linknameshort); 
+    sprintf(charbuf, "<frame name=\"thumbs\" src=\"%s\">", linknameshort);
     sarrayAddString(sahtml, charbuf, L_COPY);
     sprintf(charbuf, "<frame name=\"views\" src=\"%s\">",
-            sarrayGetString(saviews, 0, L_NOCOPY)); 
+            sarrayGetString(saviews, 0, L_NOCOPY));
     sarrayAddString(sahtml, charbuf, L_COPY);
     sarrayAddString(sahtml, framestring, L_COPY);
     shtml = sarrayToString(sahtml, 1);
@@ -214,4 +235,3 @@ SARRAY    *safiles, *sathumbs, *saviews, *sahtml, *salink;
 
     return 0;
 }
-

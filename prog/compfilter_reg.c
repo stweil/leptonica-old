@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -19,8 +30,6 @@
  *     Tests filters that select components based on size, etc.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 static void count_pieces(PIX  *pix, l_int32 nexp);
@@ -44,17 +53,16 @@ static const l_int32 total[12] = {24, 319, 809, 1626, 3394, 4356, 12527,
 #endif
 
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-l_int32      w, h, n, i, sum, sumi, empty;
-BOX         *box1, *box2, *box3, *box4;
-BOXA        *boxa, *boxat;
-NUMA        *na1, *na2, *na3, *na4, *na5;
-NUMA        *na2i, *na3i, *na4i, *nat, *naw, *nah;
-PIX         *pixs, *pixc, *pixt, *pixt2, *pixd, *pixcount;
-PIXA        *pixas, *pixad, *pixac;
-static char  mainName[] = "compfilter_reg";
+l_int32  w, h, n, i, sum, sumi, empty;
+BOX     *box1, *box2, *box3, *box4;
+BOXA    *boxa, *boxat;
+NUMA    *na1, *na2, *na3, *na4, *na5;
+NUMA    *na2i, *na3i, *na4i, *nat, *naw, *nah;
+PIX     *pixs, *pixc, *pixt, *pixt2, *pixd, *pixcount;
+PIXA    *pixas, *pixad, *pixac;
 
     pixDisplayWrite(NULL, -1);
 
@@ -120,13 +128,22 @@ static char  mainName[] = "compfilter_reg";
                            L_SELECT_IF_GT, NULL);
     count_pieces(pixd, 1);
 
-    pixd = pixSelectByAreaPerimRatio(pixt, 1.7, 8, L_SELECT_IF_LT, NULL);
+    pixd = pixSelectByPerimToAreaRatio(pixt, 0.3, 8, L_SELECT_IF_GT, NULL);
     count_pieces(pixd, 2);
-    pixd = pixSelectByAreaPerimRatio(pixt, 5.5, 8, L_SELECT_IF_LT, NULL);
+    pixd = pixSelectByPerimToAreaRatio(pixt, 0.15, 8, L_SELECT_IF_GT, NULL);
     count_pieces(pixd, 3);
-    pixd = pixSelectByAreaPerimRatio(pixt, 1.5, 8, L_SELECT_IF_GTE, NULL);
+    pixd = pixSelectByPerimToAreaRatio(pixt, 0.4, 8, L_SELECT_IF_LTE, NULL);
     count_pieces(pixd, 2);
-    pixd = pixSelectByAreaPerimRatio(pixt, 13.0/12.0, 8, L_SELECT_IF_GT, NULL);
+    pixd = pixSelectByPerimToAreaRatio(pixt, 0.45, 8, L_SELECT_IF_LT, NULL);
+    count_pieces(pixd, 3);
+
+    pixd = pixSelectByPerimSizeRatio(pixt2, 2.3, 8, L_SELECT_IF_GT, NULL);
+    count_pieces(pixd, 2);
+    pixd = pixSelectByPerimSizeRatio(pixt2, 1.2, 8, L_SELECT_IF_GT, NULL);
+    count_pieces(pixd, 3);
+    pixd = pixSelectByPerimSizeRatio(pixt2, 1.7, 8, L_SELECT_IF_LTE, NULL);
+    count_pieces(pixd, 1);
+    pixd = pixSelectByPerimSizeRatio(pixt2, 2.9, 8, L_SELECT_IF_LT, NULL);
     count_pieces(pixd, 3);
 
     pixd = pixSelectByAreaFraction(pixt2, 0.3, 8, L_SELECT_IF_LT, NULL);
@@ -209,7 +226,7 @@ static char  mainName[] = "compfilter_reg";
 
             /* Remove band successively from full image */
         pixRemoveWithIndicator(pixc, pixas, na4);
-        pixSaveTiled(pixc, pixac, 4, 1 - i % 2, 25, 8);
+        pixSaveTiled(pixc, pixac, 0.25, 1 - i % 2, 25, 8);
 
         numaDestroy(&na2);
         numaDestroy(&na3);
@@ -234,22 +251,22 @@ static char  mainName[] = "compfilter_reg";
 
         /* One last extraction.  Get all components that have either
          * a height of at least 50 or a width of between 30 and 35,
-         * and also do not have a large area/perimeter ratio. */
-    pixs = pixRead("feyn.tif"); 
+         * and also have a relatively large perimeter/area ratio. */
+    pixs = pixRead("feyn.tif");
     boxa = pixConnComp(pixs, &pixas, 8);
     n = boxaGetCount(boxa);
     pixaFindDimensions(pixas, &naw, &nah);
-    na1 = pixaFindAreaPerimRatio(pixas);
+    na1 = pixaFindPerimToAreaRatio(pixas);
     na2 = numaMakeThresholdIndicator(nah, 50, L_SELECT_IF_GTE);
     na3 = numaMakeThresholdIndicator(naw, 30, L_SELECT_IF_GTE);
     na4 = numaMakeThresholdIndicator(naw, 35, L_SELECT_IF_LTE);
-    na5 = numaMakeThresholdIndicator(na1, 2.5, L_SELECT_IF_LTE);
+    na5 = numaMakeThresholdIndicator(na1, 0.4, L_SELECT_IF_GTE);
     numaLogicalOp(na3, na3, na4, L_INTERSECTION);
     numaLogicalOp(na2, na2, na3, L_UNION);
     numaLogicalOp(na2, na2, na5, L_INTERSECTION);
     numaInvert(na2, na2);  /* get components to be removed */
     pixRemoveWithIndicator(pixs, pixas, na2);
-    pixSaveTiled(pixs, pixac, 4, 1, 25, 8);
+    pixSaveTiled(pixs, pixac, 0.25, 1, 25, 8);
     pixDestroy(&pixs);
     boxaDestroy(&boxa);
     pixaDestroy(&pixas);
@@ -261,15 +278,12 @@ static char  mainName[] = "compfilter_reg";
     numaDestroy(&na4);
     numaDestroy(&na5);
 
-
-    pixDisplayMultiple("/tmp/junk_write_display*");
-
+    pixDisplayMultiple("/tmp/display/file*");
     pixd = pixaDisplay(pixac, 0, 0);
     pixDisplay(pixd, 100, 100);
-    pixWrite("/tmp/junkcomp.jpg", pixd, IFF_JFIF_JPEG);
+    pixWrite("/tmp/comp.jpg", pixd, IFF_JFIF_JPEG);
     pixDestroy(&pixd);
     pixaDestroy(&pixac);
-
     return 0;
 }
 

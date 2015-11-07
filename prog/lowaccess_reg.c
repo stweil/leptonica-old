@@ -1,28 +1,39 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
  * lowaccess_reg.c
  *
- *    Test low-level accessors 
+ *    Test low-level accessors
  *
  *    Note that the gnu C++ compiler:
  *      * allows a non-void* ptr to be passed to a function f(void *ptr)
  *      * forbids a void* ptr to be passed to a function f(non-void *ptr)
  *        ('forbids' may be too strong: it issues a warning)
- *    
+ *
  *    For this reason, the l_getData*() and l_setData*() accessors
  *    now take a (void *)lineptr, but internally cast to (l_uint32 *)
  *    so that the addressing arithmetic works properly.
@@ -38,16 +49,15 @@ static l_int32 compareResults(PIX *pixs, PIX *pixt1, PIX *pixt2,
                               l_int32 count1, l_int32 count2,
                               const char *descr);
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
-l_int32      x, y, i, j, k, w, h, w2, w4, w8, w16, w32, wpl, nerrors;
-l_int32      count1, count2, count3, ret, val1, val2;
-l_uint32     val32;
-l_uint32    *data, *line, *line1, *line2, *data1, *data2;
-void       **lines1, **linet1, **linet2;
-PIX         *pixs, *pixt1, *pixt2;
-static char  mainName[] = "lowaccess_reg";
+l_int32    i, j, k, w, h, w2, w4, w8, w16, w32, wpl, nerrors;
+l_int32    count1, count2, count3, ret, val1, val2;
+l_uint32   val32;
+l_uint32  *data, *line, *line2, *data2;
+void     **lines1, **linet1, **linet2;
+PIX       *pixs, *pixt1, *pixt2;
 
     pixs = pixRead("feyn.tif");   /* width divisible by 16 */
     pixGetDimensions(pixs, &w, &h, NULL);
@@ -97,7 +107,6 @@ static char  mainName[] = "lowaccess_reg";
             stopTimer(), count3);
 
     pixt1 = pixCreateTemplate(pixs);
-    data1 = pixGetData(pixt1);
     linet1 = pixGetLinePtrs(pixt1, NULL);
     pixt2 = pixCreateTemplate(pixs);
     data2 = pixGetData(pixt2);

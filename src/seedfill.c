@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -21,11 +32,12 @@
  *               PIX      *pixSeedfillBinaryRestricted()
  *
  *      Applications of binary seedfill to find and fill holes,
- *      and to remove c.c. touching the border:
+ *      remove c.c. touching the border and fill bg from border:
  *               PIX      *pixHolesByFilling()
  *               PIX      *pixFillClosedBorders()
  *               PIX      *pixExtractBorderConnComps()
  *               PIX      *pixRemoveBorderConnComps()
+ *               PIX      *pixFillBgFromBorder()
  *
  *      Hole-filling of components to bounding rectangle
  *               PIX      *pixFillHolesToBoundingRect()
@@ -142,8 +154,6 @@
  *              setting the out-of-bound pixels in m to OFF.)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "allheaders.h"
 
 #ifndef  NO_CONSOLE_IO
@@ -456,6 +466,9 @@ PIX  *pixd;
  *              filling connectivity (4 or 8)
  *      Return: pixd  (all pixels in the src that are not touching the
  *                     border) or null on error
+ *
+ *  Notes:
+ *      (1) This removes all fg components touching the border.
  */
 PIX *
 pixRemoveBorderConnComps(PIX     *pixs,
@@ -476,7 +489,55 @@ PIX  *pixd;
 
        /* Save in pixd only those components in pixs not touching the border */
     pixXor(pixd, pixd, pixs);
+    return pixd;
+}
 
+
+/*!
+ *  pixFillBgFromBorder()
+ *
+ *      Input:  pixs (1 bpp)
+ *              filling connectivity (4 or 8)
+ *      Return: pixd (with the background c.c. touching the border
+ *                    filled to foreground), or null on error
+ *
+ *  Notes:
+ *      (1) This fills all bg components touching the border to fg.
+ *          It is the photometric inverse of pixRemoveBorderConnComps().
+ *      (2) Invert the result to get the "holes" left after this fill.
+ *          This can be done multiple times, extracting holes within
+ *          holes after each pair of fillings.  Specifically, this code
+ *          peels away n successive embeddings of components:
+ *              pix1 = <initial image>
+ *              for (i = 0; i < 2 * n; i++) {
+ *                   pix2 = pixFillBgFromBorder(pix1, 8);
+ *                   pixInvert(pix2, pix2);
+ *                   pixDestroy(&pix1);
+ *                   pix1 = pix2;
+ *              }
+
+ */
+PIX *
+pixFillBgFromBorder(PIX     *pixs,
+                    l_int32  connectivity)
+{
+PIX  *pixd;
+
+    PROCNAME("pixFillBgFromBorder");
+
+    if (!pixs || pixGetDepth(pixs) != 1)
+        return (PIX *)ERROR_PTR("pixs undefined or not 1 bpp", procName, NULL);
+    if (connectivity != 4 && connectivity != 8)
+        return (PIX *)ERROR_PTR("connectivity not 4 or 8", procName, NULL);
+
+       /* Invert to turn bg touching the border to a fg component.
+        * Extract this by filling from a 1 pixel wide seed at the border. */
+    pixInvert(pixs, pixs);
+    pixd = pixExtractBorderConnComps(pixs, connectivity);
+    pixInvert(pixs, pixs);  /* restore pixs */
+
+       /* Bit-or the filled bg component with pixs */
+    pixOr(pixd, pixd, pixs);
     return pixd;
 }
 
@@ -553,8 +614,7 @@ PIXA      *pixa;
         if (fgfract >= minfgfract) {  /* fill to bounding rect */
             pixSetAll(pixfg);
             pixRasterop(pixd, x, y, w, h, PIX_SRC, pixfg, 0, 0);
-        }
-        else if (hfract <= maxhfract) {  /* fill just the holes */
+        } else if (hfract <= maxhfract) {  /* fill just the holes */
             pixRasterop(pixd, x, y, w, h, PIX_DST | PIX_SRC , pixh, 0, 0);
         }
         pixDestroy(&pixfg);
@@ -743,7 +803,7 @@ PIX       *pixt;
         pixEqual(pixs, pixt, &boolval);
         if (boolval == 1) {
 #if DEBUG_PRINT_ITERS
-            L_INFO_INT("Gray seed fill converged: %d iters", procName, i + 1);
+            L_INFO("Gray seed fill converged: %d iters\n", procName, i + 1);
 #endif  /* DEBUG_PRINT_ITERS */
             break;
         }
@@ -812,7 +872,7 @@ PIX       *pixt;
         pixEqual(pixs, pixt, &boolval);
         if (boolval == 1) {
 #if DEBUG_PRINT_ITERS
-            L_INFO_INT("Gray seed fill converged: %d iters", procName, i + 1);
+            L_INFO("Gray seed fill converged: %d iters\n", procName, i + 1);
 #endif  /* DEBUG_PRINT_ITERS */
             break;
         }
@@ -873,7 +933,7 @@ PIX  *pixbi, *pixmi, *pixsd;
         return (PIX *)ERROR_PTR("connectivity not in {4,8}", procName, NULL);
 
     if (delta <= 0) {
-        L_WARNING("delta <= 0; returning a copy of pixm", procName);
+        L_WARNING("delta <= 0; returning a copy of pixm\n", procName);
         return pixCopy(NULL, pixm);
     }
 
@@ -974,9 +1034,9 @@ PIX       *pixd;
         /* Initialize the fg pixels to 1 and the bg pixels to 0 */
     pixSetMasked(pixd, pixs, 1);
 
-    if (boundcond == L_BOUNDARY_BG)
+    if (boundcond == L_BOUNDARY_BG) {
         distanceFunctionLow(datad, w, h, outdepth, wpld, connectivity);
-    else {  /* L_BOUNDARY_FG: set boundary pixels to max val */
+    } else {  /* L_BOUNDARY_FG: set boundary pixels to max val */
         pixRasterop(pixd, 0, 0, w, 1, PIX_SET, NULL, 0, 0);   /* top */
         pixRasterop(pixd, 0, h - 1, w, 1, PIX_SET, NULL, 0, 0);   /* bot */
         pixRasterop(pixd, 0, 0, 1, h, PIX_SET, NULL, 0, 0);   /* left */
@@ -1106,7 +1166,7 @@ PIX       *pixm, *pixt, *pixg, *pixd;
  *          bound for the value of pixs.  Likewise, for the local maxima,
  *          @minmax is the lower bound for the value of pixs.
  *      (2) The minima are found by starting with the erosion-and-equality
- *          approach of pixSelectedLocalExtrema.  This is followed
+ *          approach of pixSelectedLocalExtrema().  This is followed
  *          by a qualification step, where each c.c. in the resulting
  *          minimum mask is extracted, the pixels bordering it are
  *          located, and they are queried.  If all of those pixels
@@ -1164,7 +1224,7 @@ PIX  *pixmin, *pixmax, *pixt1, *pixt2;
 /*!
  *  pixQualifyLocalMinima()
  *
- *      Input:  pixs  (8 bpp)
+ *      Input:  pixs  (8 bpp image from which pixm has been extracted)
  *              pixm  (1 bpp mask of values equal to min in 3x3 neighborhood)
  *              maxval (max allowed for the min in a 3x3 neighborhood;
  *                      use 0 for default which is to have no upper bound)
@@ -1172,7 +1232,13 @@ PIX  *pixmin, *pixmax, *pixt1, *pixt2;
  *
  *  Notes:
  *      (1) This function acts in-place to remove all c.c. in pixm
- *          that are not true local minima.  See notes in pixLocalExtrema().
+ *          that are not true local minima in pixs.  As seen in
+ *          pixLocalExtrema(), the input pixm are found by selecting those
+ *          pixels of pixs whose values do not change with a 3x3
+ *          grayscale erosion.  Here, we require that for each c.c.
+ *          in pixm, all pixels in pixs that correspond to the exterior
+ *          boundary pixels of the c.c. have values that are greater
+ *          than the value within the c.c.
  *      (2) The maximum allowed value for each local minimum can be
  *          bounded with @maxval.  Use 0 for default, which is to have
  *          no upper bound (equivalent to maxval == 254).
@@ -1221,6 +1287,10 @@ PIXA      *pixa;
             continue;
         }
         ismin = TRUE;
+
+            /* Check all values in pixs that correspond to the exterior
+             * boundary pixels of the c.c. in pixm.  Verify that the
+             * value in the c.c. is always less. */
         for (i = 0, y = yc - 1; i < hc + 2 && y >= 0 && y < h; i++, y++) {
             lines = datas + y * wpls;
             linec = datac + i * wplc;
@@ -1388,8 +1458,9 @@ PIX       *pixd;
  *
  *      Input:  pixs (8 bpp)
  *              pixm (1 bpp)
+ *              &pta (<return> pta of min pixel locations)
  *              &nav (<optional return> numa of minima values)
- *      Return: pta (of min pixels), or null on error
+ *      Return: 0 if OK, 1 on error.
  *
  *  Notes:
  *      (1) For each 8 connected component in pixm, this finds
@@ -1401,37 +1472,47 @@ PIX       *pixd;
  *          fastest to select one of them using a special seedfill
  *          operation.  Not yet implemented.
  */
-PTA *
+l_int32
 pixSelectMinInConnComp(PIX    *pixs,
                        PIX    *pixm,
+                       PTA   **ppta,
                        NUMA  **pnav)
 {
-l_int32    ws, hs, wm, hm, w, h, bx, by, bw, bh, i, j, c, n;
+l_int32    bx, by, bw, bh, i, j, c, n;
 l_int32    xs, ys, minx, miny, wpls, wplt, val, minval;
 l_uint32  *datas, *datat, *lines, *linet;
 BOXA      *boxa;
 NUMA      *nav;
-PIX       *pixt;
+PIX       *pixt, *pixs2, *pixm2;
 PIXA      *pixa;
 PTA       *pta;
 
     PROCNAME("pixSelectMinInConnComp");
 
+    if (!ppta)
+        return ERROR_INT("&pta not defined", procName, 1);
+    *ppta = NULL;
+    if (pnav) *pnav = NULL;
     if (!pixs || pixGetDepth(pixs) != 8)
-        return (PTA *)ERROR_PTR("pixs undefined or not 8 bpp", procName, NULL);
+        return ERROR_INT("pixs undefined or not 8 bpp", procName, 1);
     if (!pixm || pixGetDepth(pixm) != 1)
-        return (PTA *)ERROR_PTR("pixm undefined or not 1 bpp", procName, NULL);
-    pixGetDimensions(pixs, &ws, &hs, NULL);
-    pixGetDimensions(pixm, &wm, &hm, NULL);
-    w = L_MIN(ws, wm);
-    h = L_MIN(hs, hm);
+        return ERROR_INT("pixm undefined or not 1 bpp", procName, 1);
 
-    boxa = pixConnComp(pixm, &pixa, 8);
+        /* Crop to the min size if necessary */
+    if (pixCropToMatch(pixs, pixm, &pixs2, &pixm2)) {
+        pixDestroy(&pixs2);
+        pixDestroy(&pixm2);
+        return ERROR_INT("cropping failure", procName, 1);
+    }
+
+        /* Find value and location of min value pixel in each component */
+    boxa = pixConnComp(pixm2, &pixa, 8);
     n = boxaGetCount(boxa);
     pta = ptaCreate(n);
+    *ppta = pta;
     nav = numaCreate(n);
-    datas = pixGetData(pixs);
-    wpls = pixGetWpl(pixs);
+    datas = pixGetData(pixs2);
+    wpls = pixGetWpl(pixs2);
     for (c = 0; c < n; c++) {
         pixt = pixaGetPix(pixa, c, L_CLONE);
         boxaGetBoxGeometry(boxa, c, &bx, &by, &bw, &bh);
@@ -1472,7 +1553,9 @@ PTA       *pta;
         *pnav = nav;
     else
         numaDestroy(&nav);
-    return pta;
+    pixDestroy(&pixs2);
+    pixDestroy(&pixm2);
+    return 0;
 }
 
 

@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -19,6 +30,11 @@
  *     Compare the timings of various binary morphological implementations.
  */
 
+#ifndef  _WIN32
+#include <unistd.h>
+#else
+#include <windows.h>   /* for Sleep() */
+#endif  /* _WIN32 */
 #include "allheaders.h"
 
 #define  HALFWIDTH   3
@@ -28,8 +44,8 @@ PIX *pixMorphDwa_3(PIX *pixd, PIX *pixs, l_int32 operation, char *selname);
 
 static const l_int32  NTIMES = 20;
 
-main(int    argc,
-     char **argv)
+int main(int    argc,
+         char **argv)
 {
 char        *selname;
 l_int32      i, j, nsels, sx, sy;
@@ -43,12 +59,10 @@ SELA        *selalinear;
 static char  mainName[] = "dwamorph2_reg";
 
     if (argc != 1)
-	exit(ERROR_INT(" Syntax: dwamorph2_reg", mainName, 1));
+        return ERROR_INT(" Syntax: dwamorph2_reg", mainName, 1);
 
-    if ((pixs = pixRead("feyn-fract.tif")) == NULL)
-	exit(ERROR_INT("pix not made", mainName, 1));
+    pixs = pixRead("feyn-fract.tif");
     pixt = pixCreateTemplate(pixs);
-
     selalinear = selaAddDwaLinear(NULL);
     nsels = selaGetCount(selalinear);
 
@@ -60,12 +74,13 @@ static char  mainName[] = "dwamorph2_reg";
 
         /*  ---------  dilation  ----------*/
 
+    lept_mkdir("morph");
     for (i = 0; i < nsels / 2; i++)
     {
         sel = selaGetSel(selalinear, i);
         selGetParameters(sel, &sy, &sx, NULL, NULL);
         selname = selGetName(sel);
-	fprintf(stderr, " %d .", i);
+        fprintf(stderr, " %d .", i);
 
         startTimer();
         for (j = 0; j < NTIMES; j++)
@@ -97,7 +112,7 @@ static char  mainName[] = "dwamorph2_reg";
     nac2 = numaWindowedMean(na2, HALFWIDTH);
     nac3 = numaWindowedMean(na3, HALFWIDTH);
     nac4 = numaWindowedMean(na4, HALFWIDTH);
-    gplot = gplotCreate("/tmp/junkdilate", GPLOT_PNG,
+    gplot = gplotCreate("/tmp/morph/dilate", GPLOT_PNG,
                         "Dilation time vs sel size", "size", "time (ms)");
     gplotAddPlot(gplot, nax, nac1, GPLOT_LINES, "linear rasterop");
     gplotAddPlot(gplot, nax, nac2, GPLOT_LINES, "composite rasterop");
@@ -121,7 +136,7 @@ static char  mainName[] = "dwamorph2_reg";
         sel = selaGetSel(selalinear, i);
         selGetParameters(sel, &sy, &sx, NULL, NULL);
         selname = selGetName(sel);
-	fprintf(stderr, " %d .", i);
+        fprintf(stderr, " %d .", i);
 
         startTimer();
         for (j = 0; j < NTIMES; j++)
@@ -152,7 +167,7 @@ static char  mainName[] = "dwamorph2_reg";
     nac2 = numaWindowedMean(na2, HALFWIDTH);
     nac3 = numaWindowedMean(na3, HALFWIDTH);
     nac4 = numaWindowedMean(na4, HALFWIDTH);
-    gplot = gplotCreate("/tmp/junkerode", GPLOT_PNG,
+    gplot = gplotCreate("/tmp/morph/erode", GPLOT_PNG,
                         "Erosion time vs sel size", "size", "time (ms)");
     gplotAddPlot(gplot, nax, nac1, GPLOT_LINES, "linear rasterop");
     gplotAddPlot(gplot, nax, nac2, GPLOT_LINES, "composite rasterop");
@@ -176,7 +191,7 @@ static char  mainName[] = "dwamorph2_reg";
         sel = selaGetSel(selalinear, i);
         selGetParameters(sel, &sy, &sx, NULL, NULL);
         selname = selGetName(sel);
-	fprintf(stderr, " %d .", i);
+        fprintf(stderr, " %d .", i);
 
         startTimer();
         for (j = 0; j < NTIMES; j++)
@@ -207,7 +222,7 @@ static char  mainName[] = "dwamorph2_reg";
     nac2 = numaWindowedMean(na2, HALFWIDTH);
     nac3 = numaWindowedMean(na3, HALFWIDTH);
     nac4 = numaWindowedMean(na4, HALFWIDTH);
-    gplot = gplotCreate("/tmp/junkopen", GPLOT_PNG,
+    gplot = gplotCreate("/tmp/morph/open", GPLOT_PNG,
                         "Opening time vs sel size", "size", "time (ms)");
     gplotAddPlot(gplot, nax, nac1, GPLOT_LINES, "linear rasterop");
     gplotAddPlot(gplot, nax, nac2, GPLOT_LINES, "composite rasterop");
@@ -231,7 +246,7 @@ static char  mainName[] = "dwamorph2_reg";
         sel = selaGetSel(selalinear, i);
         selGetParameters(sel, &sy, &sx, NULL, NULL);
         selname = selGetName(sel);
-	fprintf(stderr, " %d .", i);
+        fprintf(stderr, " %d .", i);
 
         startTimer();
         for (j = 0; j < NTIMES; j++)
@@ -262,13 +277,19 @@ static char  mainName[] = "dwamorph2_reg";
     nac2 = numaWindowedMean(na2, HALFWIDTH);
     nac3 = numaWindowedMean(na3, HALFWIDTH);
     nac4 = numaWindowedMean(na4, HALFWIDTH);
-    gplot = gplotCreate("/tmp/junkclose", GPLOT_PNG,
+    gplot = gplotCreate("/tmp/morph/close", GPLOT_PNG,
                         "Closing time vs sel size", "size", "time (ms)");
     gplotAddPlot(gplot, nax, nac1, GPLOT_LINES, "linear rasterop");
     gplotAddPlot(gplot, nax, nac2, GPLOT_LINES, "composite rasterop");
     gplotAddPlot(gplot, nax, nac3, GPLOT_LINES, "linear dwa");
     gplotAddPlot(gplot, nax, nac4, GPLOT_LINES, "composite dwa");
     gplotMakeOutput(gplot);
+#ifndef  _WIN32
+    sleep(1);
+#else
+    Sleep(1000);
+#endif  /* _WIN32 */
+
     gplotDestroy(&gplot);
     numaDestroy(&nac1);
     numaDestroy(&nac2);
@@ -287,16 +308,16 @@ static char  mainName[] = "dwamorph2_reg";
 
         /* Display the results together */
     pixa = pixaCreate(0);
-    pixs = pixRead("/tmp/junkdilate.png");
+    pixs = pixRead("/tmp/morph/dilate.png");
     pixaAddPix(pixa, pixs, L_INSERT);
-    pixs = pixRead("/tmp/junkerode.png");
+    pixs = pixRead("/tmp/morph/erode.png");
     pixaAddPix(pixa, pixs, L_INSERT);
-    pixs = pixRead("/tmp/junkopen.png");
+    pixs = pixRead("/tmp/morph/open.png");
     pixaAddPix(pixa, pixs, L_INSERT);
-    pixs = pixRead("/tmp/junkclose.png");
+    pixs = pixRead("/tmp/morph/close.png");
     pixaAddPix(pixa, pixs, L_INSERT);
     pixt = pixaDisplayTiledInRows(pixa, 32, 1500, 1.0, 0, 40, 3);
-    pixWrite("/tmp/junktimings.png", pixt, IFF_PNG);
+    pixWrite("/tmp/morph/timings.png", pixt, IFF_PNG);
     pixDisplay(pixt, 100, 100);
     pixDestroy(&pixt);
     pixaDestroy(&pixa);

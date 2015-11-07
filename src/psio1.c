@@ -1,16 +1,27 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
 /*
@@ -148,11 +159,11 @@ SARRAY  *sa;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (res <= 0) {
-        L_INFO("setting res to 300 ppi", procName);
+        L_INFO("setting res to 300 ppi\n", procName);
         res = 300;
     }
     if (res < 10 || res > 4000)
-        L_WARNING("res is typically in the range 300-600 ppi", procName);
+        L_WARNING("res is typically in the range 300-600 ppi\n", procName);
 
         /* Get all filtered and sorted full pathnames. */
     sa = getSortedPathnamesInDirectory(dirin, substr, 0, 0);
@@ -192,11 +203,11 @@ l_int32  i, nfiles, index, firstfile, ret, format;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (res <= 0) {
-        L_INFO("setting res to 300 ppi", procName);
+        L_INFO("setting res to 300 ppi\n", procName);
         res = 300;
     }
     if (res < 10 || res > 4000)
-        L_WARNING("res is typically in the range 300-600 ppi", procName);
+        L_WARNING("res is typically in the range 300-600 ppi\n", procName);
 
     nfiles = sarrayGetCount(sa);
     firstfile = TRUE;
@@ -258,15 +269,15 @@ SARRAY  *sa;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (xpts <= 0.0) {
-        L_INFO("setting xpts to 612.0 ppi", procName);
+        L_INFO("setting xpts to 612.0 ppi\n", procName);
         xpts = 612.0;
     }
     if (ypts <= 0.0) {
-        L_INFO("setting ypts to 792.0 ppi", procName);
+        L_INFO("setting ypts to 792.0 ppi\n", procName);
         ypts = 792.0;
     }
     if (xpts < 100.0 || xpts > 2000.0 || ypts < 100.0 || ypts > 2000.0)
-        L_WARNING("xpts,ypts are typically in the range 500-800", procName);
+        L_WARNING("xpts,ypts are typically in the range 500-800\n", procName);
 
         /* Get all filtered and sorted full pathnames. */
     sa = getSortedPathnamesInDirectory(dirin, substr, 0, 0);
@@ -307,15 +318,15 @@ l_int32  ret, i, w, h, nfiles, index, firstfile, format, res;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (xpts <= 0.0) {
-        L_INFO("setting xpts to 612.0", procName);
+        L_INFO("setting xpts to 612.0\n", procName);
         xpts = 612.0;
     }
     if (ypts <= 0.0) {
-        L_INFO("setting ypts to 792.0", procName);
+        L_INFO("setting ypts to 792.0\n", procName);
         ypts = 792.0;
     }
     if (xpts < 100.0 || xpts > 2000.0 || ypts < 100.0 || ypts > 2000.0)
-        L_WARNING("xpts,ypts are typically in the range 500-800", procName);
+        L_WARNING("xpts,ypts are typically in the range 500-800\n", procName);
 
     nfiles = sarrayGetCount(sa);
     firstfile = TRUE;
@@ -377,7 +388,7 @@ l_int32      format, retval;
 
     findFileFormat(filein, &format);
     if (format == IFF_UNKNOWN) {
-        L_ERROR_STRING("format of %s not known", procName, filein);
+        L_ERROR("format of %s not known\n", procName, filein);
         return 1;
     }
 
@@ -389,16 +400,14 @@ l_int32      format, retval;
             *pfirstfile = FALSE;
             (*pindex)++;
         }
-    }
-    else if (format == IFF_TIFF_G4) {
+    } else if (format == IFF_TIFF_G4) {
         retval = convertG4ToPS(filein, fileout, op, 0, 0,
                                res, 1.0, *pindex + 1, FALSE, TRUE);
         if (retval == 0) {
             *pfirstfile = FALSE;
             (*pindex)++;
         }
-    }
-    else {  /* all other image formats */
+    } else {  /* all other image formats */
         retval = convertFlateToPS(filein, fileout, op, 0, 0,
                                   res, 1.0, *pindex + 1, TRUE);
         if (retval == 0) {
@@ -420,11 +429,12 @@ l_int32      format, retval;
  *      Input:  pagedir (input page image directory)
  *              pagestr (<optional> substring filter on page filenames;
  *                       can be NULL)
+ *              page_numpre (number of characters in page name before number)
  *              maskdir (input mask image directory)
  *              maskstr (<optional> substring filter on mask filenames;
  *                       can be NULL)
- *              numpre (number of characters in name before number)
- *              numpost (number of characters in name after number)
+ *              mask_numpre (number of characters in mask name before number)
+ *              numpost (number of characters in names after number)
  *              maxnum (only consider page numbers up to this value)
  *              textscale (scale of text output relative to pixs)
  *              imagescale (scale of image output relative to pixs)
@@ -440,7 +450,7 @@ l_int32      format, retval;
  *          substrings for string matches.
  *      (2) The page images are taken in lexicographic order.
  *          Mask images whose numbers match the page images are used to
- *          segment the page images.  Page images without a matching 
+ *          segment the page images.  Page images without a matching
  *          mask image are scaled, thresholded and rendered entirely as text.
  *      (3) Each PS page is generated as a compressed representation of
  *          the page image, where the part of the image under the mask
@@ -456,10 +466,11 @@ l_int32      format, retval;
  *      (6) Both the DCT and the G4 encoding are PostScript level 2.
  *      (7) It is assumed that the page number is contained within
  *          the basename (the filename without directory or extension).
- *          @numpre is the number of characters in the basename
- *          preceeding the actual page numer; @numpost is the number
- *          following the page number.  Note: the same numbers must be
- *          applied to both the page and mask image names.
+ *          @page_numpre is the number of characters in the page basename
+ *          preceeding the actual page number; @mask_numpre is likewise for
+ *          the mask basename; @numpost is the number of characters
+ *          following the page number.  For example, for mask name
+ *          mask_006.tif, mask_numpre = 5 ("mask_).
  *      (8) To render a page as is -- that is, with no thresholding
  *          of any pixels -- use a mask in the mask directory that is
  *          full size with all pixels set to 1.  If the page is 1 bpp,
@@ -468,9 +479,10 @@ l_int32      format, retval;
 l_int32
 convertSegmentedPagesToPS(const char  *pagedir,
                           const char  *pagestr,
+                          l_int32      page_numpre,
                           const char  *maskdir,
                           const char  *maskstr,
-                          l_int32      numpre,
+                          l_int32      mask_numpre,
                           l_int32      numpost,
                           l_int32      maxnum,
                           l_float32    textscale,
@@ -491,15 +503,15 @@ SARRAY  *sapage, *samask;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (threshold <= 0) {
-        L_INFO("setting threshold to 190", procName);
+        L_INFO("setting threshold to 190\n", procName);
         threshold = 190;
     }
 
         /* Get numbered full pathnames; max size of sarray is maxnum */
     sapage = getNumberedPathnamesInDirectory(pagedir, pagestr,
-                                             numpre, numpost, maxnum);
+                                             page_numpre, numpost, maxnum);
     samask = getNumberedPathnamesInDirectory(maskdir, maskstr,
-                                             numpre, numpost, maxnum);
+                                             mask_numpre, numpost, maxnum);
     sarrayPadToSameSize(sapage, samask, (char *)"");
     if ((npages = sarrayGetCount(sapage)) == 0) {
         sarrayDestroy(&sapage);
@@ -593,9 +605,9 @@ PIX       *pixmi, *pixmis, *pixt, *pixg, *pixsc, *pixb, *pixc;
     scaleratio = 1.0;
     if (pixm) {
         pixZero(pixm, &alltext);  /* pixm empty: all text */
-        if (alltext)
+        if (alltext) {
             pixm = NULL;  /* treat it as not existing here */
-        else {
+        } else {
             pixmi = pixInvert(NULL, pixm);
             pixZero(pixmi, &notext);  /* pixm full; no text */
             pixDestroy(&pixmi);
@@ -606,8 +618,7 @@ PIX       *pixmi, *pixmis, *pixt, *pixg, *pixsc, *pixb, *pixc;
     if (pixGetDepth(pixs) == 1) {  /* render tiff g4 */
         pixb = pixClone(pixs);
         pixc = NULL;
-    }
-    else {
+    } else {
         pixt = pixConvertTo8Or32(pixs, 0, 0);  /* this can be a clone of pixs */
 
             /* Get the binary text mask.  Note that pixg cannot be a
@@ -657,9 +668,9 @@ PIX       *pixmi, *pixmis, *pixt, *pixg, *pixsc, *pixb, *pixc;
                 pixSetMasked(pixc, pixmi, val);  /* clear non-image part */
                 pixDestroy(&pixmis);
                 pixDestroy(&pixmi);
-            }
-            else
+            } else {
                 pixc = pixClone(pixsc);
+            }
             pixDestroy(&pixsc);
         }
         pixDestroy(&pixt);
@@ -717,8 +728,8 @@ pixWriteMixedToPS(PIX         *pixb,
                   l_int32      pageno,
                   const char  *fileout)
 {
-const char   tnameb[] = "/tmp/junk_pix_write_mixed.tif";
-const char   tnamec[] = "/tmp/junk_pix_write_mixed.jpg";
+const char   tnameb[] = "/tmp/lept/psio_mixed.tif";
+const char   tnamec[] = "/tmp/lept/psio_mixed.jpg";
 const char  *op;
 l_int32      resb, resc, endpage, maskop, ret;
 
@@ -730,15 +741,16 @@ l_int32      resb, resc, endpage, maskop, ret;
         return ERROR_INT("fileout not defined", procName, 1);
 
         /* Compute the resolution that fills a letter-size page. */
-    if (!pixc)
+    if (!pixc) {
        resb = getResLetterPage(pixGetWidth(pixb), pixGetHeight(pixb), 0);
-    else {
+    } else {
        resc = getResLetterPage(pixGetWidth(pixc), pixGetHeight(pixc), 0);
        if (pixb)
            resb = (l_int32)(scale * resc);
     }
 
         /* Write the jpeg image first */
+    lept_mkdir("lept");
     if (pixc) {
         pixWrite(tnamec, pixc, IFF_JFIF_JPEG);
         endpage = (pixb) ? FALSE : TRUE;
@@ -807,7 +819,7 @@ PIX        *pix, *pixs;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (level != 1 && level != 2 && level != 3) {
-        L_ERROR("invalid level specified; using level 2", procName);
+        L_ERROR("invalid level specified; using level 2\n", procName);
         level = 2;
     }
 
@@ -821,13 +833,11 @@ PIX        *pix, *pixs;
     if (format == IFF_JFIF_JPEG) {
         convertJpegToPSEmbed(filein, fileout);
         return 0;
-    }
-    else if (format == IFF_TIFF_G4) {
+    } else if (format == IFF_TIFF_G4) {
         convertG4ToPSEmbed(filein, fileout);
         return 0;
-    }
-    else if (format == IFF_UNKNOWN) {
-        L_ERROR_STRING("format of %s not known", procName, filein);
+    } else if (format == IFF_UNKNOWN) {
+        L_ERROR("format of %s not known\n", procName, filein);
         return 1;
     }
 
@@ -852,8 +862,7 @@ PIX        *pix, *pixs;
     if (d == 1) {
         pixWrite(nametif, pix, IFF_TIFF_G4);
         convertG4ToPSEmbed(nametif, fileout);
-    }
-    else {
+    } else {
         pixWrite(namejpg, pix, IFF_JFIF_JPEG);
         convertJpegToPSEmbed(namejpg, fileout);
     }
@@ -908,16 +917,17 @@ PIXCMAP  *cmap;
     if (!fileout)
         return ERROR_INT("fileout not defined", procName, 1);
     if (level != 2 && level != 3) {
-        L_ERROR("only levels 2 and 3 permitted; using level 2", procName);
+        L_ERROR("only levels 2 and 3 permitted; using level 2\n", procName);
         level = 2;
     }
 
     n = pixaGetCount(pixa);
     firstfile = TRUE;
     index = 0;
-    g4_name = genTempFilename("/tmp", "temp_compr.tif", 0, 0);
-    jpeg_name = genTempFilename("/tmp", "temp_compr.jpg", 0, 0);
-    png_name = genTempFilename("/tmp", "temp_compr.png", 0, 0);
+    lept_mkdir("compr");
+    g4_name = genTempFilename("/tmp/compr", "temp.tif", 0, 0);
+    jpeg_name = genTempFilename("/tmp/compr", "temp.jpg", 0, 0);
+    png_name = genTempFilename("/tmp/compr", "temp.png", 0, 0);
     for (i = 0; i < n; i++) {
         writeout = TRUE;
         pix = pixaGetPix(pixa, i, L_CLONE);
@@ -926,43 +936,36 @@ PIXCMAP  *cmap;
         if (d == 1) {
             tname = g4_name;
             pixWrite(tname, pix, IFF_TIFF_G4);
-        }
-        else if (cmap) {
+        } else if (cmap) {
             if (level == 2) {
                 pixt = pixConvertForPSWrap(pix);
                 tname = jpeg_name;
                 pixWrite(tname, pixt, IFF_JFIF_JPEG);
                 pixDestroy(&pixt);
-            }
-            else {  /* level == 3 */
+            } else {  /* level == 3 */
                 tname = png_name;
                 pixWrite(tname, pix, IFF_PNG);
             }
-        }
-        else if (d == 16) {
+        } else if (d == 16) {
             if (level == 2)
-                L_WARNING("d = 16; must write out flate", procName);
+                L_WARNING("d = 16; must write out flate\n", procName);
             tname = png_name;
             pixWrite(tname, pix, IFF_PNG);
-        }
-        else if (d == 2 || d == 4) {
+        } else if (d == 2 || d == 4) {
             if (level == 2) {
                 pixt = pixConvertTo8(pix, 0);
                 tname = jpeg_name;
                 pixWrite(tname, pixt, IFF_JFIF_JPEG);
                 pixDestroy(&pixt);
-            }
-            else {  /* level == 3 */
+            } else {  /* level == 3 */
                 tname = png_name;
                 pixWrite(tname, pix, IFF_PNG);
             }
-        }
-        else if (d == 8 || d == 32) {
+        } else if (d == 8 || d == 32) {
             tname = jpeg_name;
             pixWrite(tname, pix, IFF_JFIF_JPEG);
-        }
-        else {  /* shouldn't happen */
-            L_ERROR_INT("invalid depth: %d", procName, d);
+        } else {  /* shouldn't happen */
+            L_ERROR("invalid depth: %d\n", procName, d);
             writeout = FALSE;
         }
         pixDestroy(&pix);
@@ -982,4 +985,3 @@ PIXCMAP  *cmap;
 /* --------------------------------------------*/
 #endif  /* USE_PSIO */
 /* --------------------------------------------*/
-

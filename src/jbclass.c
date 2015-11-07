@@ -1,18 +1,28 @@
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
- -  This software is distributed in the hope that it will be
- -  useful, but with NO WARRANTY OF ANY KIND.
- -  No author or distributor accepts responsibility to anyone for the
- -  consequences of using this software, or for whether it serves any
- -  particular purpose or works at all, unless he or she says so in
- -  writing.  Everyone is granted permission to copy, modify and
- -  redistribute this source code, for commercial or non-commercial
- -  purposes, with the following restrictions: (1) the origin of this
- -  source code must not be misrepresented; (2) modified versions must
- -  be plainly marked as such; and (3) this notice may not be removed
- -  or altered from any source or modified source distribution.
+ -
+ -  Redistribution and use in source and binary forms, with or without
+ -  modification, are permitted provided that the following conditions
+ -  are met:
+ -  1. Redistributions of source code must retain the above copyright
+ -     notice, this list of conditions and the following disclaimer.
+ -  2. Redistributions in binary form must reproduce the above
+ -     copyright notice, this list of conditions and the following
+ -     disclaimer in the documentation and/or other materials
+ -     provided with the distribution.
+ -
+ -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ -  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY
+ -  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ -  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ -  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ -  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ -  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ -  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
-
 
 /*
  * jbclass.c
@@ -48,7 +58,8 @@
  *     Determine the image components we start with
  *
  *         l_int32     jbGetComponents()
- *         PIX        *pixWordMaskByDilation()
+ *         l_int32     pixWordMaskByDilation()
+ *         l_int32     pixWordBoxesByDilation()
  *
  *     Build grayscale composites (templates)
  *
@@ -180,10 +191,8 @@
  *             // Reconstruct (render) the pages from the encoded data.
  *         PIXA *pixa = jbDataRender(data, FALSE);
  *
- *     Adam Langley has recently built a jbig2 standards-compliant
- *     encoder, the first one to appear in open source.  You can get
- *     this encoder at:
- *
+ *     Adam Langley has built a jbig2 standards-compliant encoder, the
+ *     first one to appear in open source.  You can get this encoder at:
  *          http://www.imperialviolet.org/jbig2.html
  *
  *     It uses arithmetic encoding throughout.  It encodes binary images
@@ -197,8 +206,7 @@
 #include <math.h>
 #include "allheaders.h"
 
-    /* MSVC can't handle arrays dimensioned by static const integers */
-#define  L_BUF_SIZE  512
+static const l_int32  L_BUF_SIZE = 512;
 
     /* For jbClassifyRankHaus(): size of border added around
      * pix of each c.c., to allow further processing.  This
@@ -224,7 +232,7 @@ static const l_int32  MAX_WORD_COMP_WIDTH = 1000;  /* default max word width */
 static const l_int32  MAX_COMP_HEIGHT = 120;  /* default max component height */
 
     /* Max allowed dilation to merge characters into words */
-#define  MAX_ALLOWED_DILATION  14
+static const l_int32  MAX_ALLOWED_DILATION = 25;
 
     /* This stores the state of a state machine which fetches
      * similar sized templates */
@@ -238,7 +246,6 @@ struct JbFindTemplatesState
     l_int32          n;          /* current element of numa               */
 };
 typedef struct JbFindTemplatesState JBFINDCTX;
-
 
     /* Static initialization function */
 static JBCLASSER * jbCorrelationInitInternal(l_int32 components,
@@ -445,11 +452,11 @@ PIX     *pix;
     for (i = 0; i < nfiles; i++) {
         fname = sarrayGetString(safiles, i, 0);
         if ((pix = pixRead(fname)) == NULL) {
-            L_WARNING_INT("image file %d not read", procName, i);
+            L_WARNING("image file %d not read\n", procName, i);
             continue;
         }
         if (pixGetDepth(pix) != 1) {
-            L_WARNING_INT("image file %d not 1 bpp", procName, i);
+            L_WARNING("image file %d not 1 bpp\n", procName, i);
             continue;
         }
         jbAddPage(classer, pix);
@@ -495,7 +502,7 @@ PIXA  *pixas;
     pixaDestroy(&pixas);
     return 0;
 }
-    
+
 
 /*!
  *  jbAddPageComponents()
@@ -538,8 +545,7 @@ l_int32  n;
     if (classer->method == JB_RANKHAUS) {
         if (jbClassifyRankHaus(classer, boxas, pixas))
             return ERROR_INT("rankhaus classification failed", procName, 1);
-    }
-    else {  /* classer->method == JB_CORRELATION */
+    } else {  /* classer->method == JB_CORRELATION */
         if (jbClassifyCorrelation(classer, boxas, pixas))
             return ERROR_INT("correlation classification failed", procName, 1);
     }
@@ -626,9 +632,9 @@ SEL        *sel;
          * These are relative to the UL corner of each (bordered) pix.  */
     pta = pixaCentroids(pixa1);  /* centroids for this page; use here */
     ptac = classer->ptac;  /* holds centroids of components up to this page */
-    ptaJoin(ptac, pta, 0, 0);  /* save centroids of all components */
+    ptaJoin(ptac, pta, 0, -1);  /* save centroids of all components */
     ptact = classer->ptact;  /* holds centroids of templates */
-        
+
         /* Use these to save the class and page of each component. */
     naclass = classer->naclass;
     napage = classer->napage;
@@ -721,14 +727,12 @@ SEL        *sel;
                 ptaAddPt(ptact, x1, y1);
                 pixaAddPix(pixat, pix1, L_INSERT);  /* bordered template */
                 pixaAddPix(pixatd, pix2, L_INSERT);  /* bordered dil template */
-            }
-            else {   /* don't save them */
+            } else {  /* don't save them */
                 pixDestroy(&pix1);
                 pixDestroy(&pix2);
             }
         }
-    }
-    else {  /* rank < 1.0 */
+    } else {  /* rank < 1.0 */
         if ((nafg = pixaCountPixels(pixas)) == NULL)  /* areas for this page */
             return ERROR_INT("nafg not made", procName, 1);
         nafgt = classer->nafgt;
@@ -785,8 +789,7 @@ SEL        *sel;
                 pixaAddPix(pixat, pix1, L_INSERT);  /* bordered template */
                 pixaAddPix(pixatd, pix2, L_INSERT);  /* ditto */
                 numaAddNumber(nafgt, area1);
-            }
-            else {   /* don't save them */
+            } else {  /* don't save them */
                 pixDestroy(&pix1);
                 pixDestroy(&pix2);
             }
@@ -920,7 +923,7 @@ PIX     *pixt;
  *  images to the nearest integer for each of the checks.
  *  The rank hausdorff checks that the dilated image of one
  *  contains the rank fraction of the pixels of the undilated
- *  image of the other.   Checks are done in both direction. 
+ *  image of the other.   Checks are done in both direction.
  *  Failure of the test in either direction results in failure
  *  of the test.
  */
@@ -1119,7 +1122,7 @@ l_uint8     byte;
     }
 
     ptac = classer->ptac;  /* holds centroids of components up to this page */
-    ptaJoin(ptac, pta, 0, 0);  /* save centroids of all components */
+    ptaJoin(ptac, pta, 0, -1);  /* save centroids of all components */
     ptact = classer->ptact;  /* holds centroids of templates */
 
     /* Store the unbordered pix in a pixaa, in a hierarchical
@@ -1177,31 +1180,26 @@ l_uint8     byte;
             if (weight > 0.0) {
                 numaGetIValue(naarea, iclass, &area);
                 threshold = thresh + (1. - thresh) * weight * area2 / area;
-            }
-            else
+            } else {
                 threshold = thresh;
+            }
 
                 /* Find score for this template */
             overthreshold = pixCorrelationScoreThresholded(pix1, pix2,
-                                                           area1, area2,
-                                                           x1 - x2, y1 - y2,
-                                                           MAX_DIFF_WIDTH,
-                                                           MAX_DIFF_HEIGHT,
-                                                           sumtab,
-                                                           pixrowcts[i],
-                                                           threshold);
+                                         area1, area2, x1 - x2, y1 - y2,
+                                         MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT,
+                                         sumtab, pixrowcts[i], threshold);
 #if DEBUG_CORRELATION_SCORE
             {
                 l_float32 score, testscore;
                 l_int32 count, testcount;
-                score = pixCorrelationScore(pix1, pix2, area1, area2,
-                                            x1 - x2, y1 - y2,
-                                            MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT,
-                                            sumtab);
+                pixCorrelationScore(pix1, pix2, area1, area2, x1 - x2, y1 - y2,
+                                    MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT,
+                                    sumtab, &score);
 
-                testscore = pixCorrelationScoreSimple(pix1, pix2, area1, area2,
-                                  x1 - x2, y1 - y2, MAX_DIFF_WIDTH,
-                                  MAX_DIFF_HEIGHT, sumtab);
+                pixCorrelationScoreSimple(pix1, pix2, area1, area2,
+                                          x1 - x2, y1 - y2, MAX_DIFF_WIDTH,
+                                          MAX_DIFF_HEIGHT, sumtab, &testscore);
                 count = (l_int32)rint(sqrt(score * area1 * area2));
                 testcount = (l_int32)rint(sqrt(testscore * area1 * area2));
                 if ((score >= threshold) != (testscore >= threshold)) {
@@ -1254,8 +1252,7 @@ l_uint8     byte;
             area = (pixGetWidth(pix1) - 2 * JB_ADDED_PIXELS) *
                    (pixGetHeight(pix1) - 2 * JB_ADDED_PIXELS);
             numaAddNumber(naarea, area);
-        }
-        else {   /* don't save it */
+        } else {  /* don't save it */
             pixDestroy(&pix1);
         }
     }
@@ -1337,15 +1334,13 @@ PIXA      *pixa, *pixat;
          * identify each of its connected components.  */
     if (components == JB_CONN_COMPS) {  /* no preprocessing */
         boxa = pixConnComp(pixs, &pixa, 8);
-    } 
-    else if (components == JB_CHARACTERS) {
+    } else if (components == JB_CHARACTERS) {
         pixt1 = pixMorphSequence(pixs, "c1.6", 0);
         boxa = pixConnComp(pixt1, &pixat, 8);
         pixa = pixaClipToPix(pixat, pixs);
         pixDestroy(&pixt1);
         pixaDestroy(&pixat);
-    } 
-    else {  /* components == JB_WORDS */
+    } else {  /* components == JB_WORDS */
 
             /* Do the operations at about 150 ppi resolution.
              * It is much faster at 75 ppi, but the results are
@@ -1356,17 +1351,17 @@ PIXA      *pixa, *pixat;
         if (res <= 200) {
             redfactor = 1;
             pixt1 = pixClone(pixs);
-        }
-        else if (res <= 400) {
+        } else if (res <= 400) {
             redfactor = 2;
             pixt1 = pixReduceRankBinaryCascade(pixs, 1, 0, 0, 0);
-        }
-        else {
+        } else {
             redfactor = 4;
             pixt1 = pixReduceRankBinaryCascade(pixs, 1, 1, 0, 0);
         }
 
-        pixt2 = pixWordMaskByDilation(pixt1, 0, NULL);
+            /* Estimate the word mask, at aproximately 150 ppi.
+             * This has both very large and very small components left in. */
+        pixWordMaskByDilation(pixt1, 8, &pixt2, NULL);
 
             /* Expand the optimally dilated word mask to full res. */
         pixt3 = pixExpandReplicate(pixt2, redfactor);
@@ -1405,103 +1400,177 @@ PIXA      *pixa, *pixat;
  *  pixWordMaskByDilation()
  *
  *      Input:  pixs (1 bpp; typ. at 75 to 150 ppi)
- *              maxsize (use 0 for default; not to exceed 14)
+ *              maxdil (maximum dilation; 0 for default; warning if > 20)
+ *              &mask (<optional return> dilated word mask)
  *              &size (<optional return> size of optimal horiz Sel)
- *      Return: pixd (dilated word mask), or null on error
+ *      Return: 0 if OK, 1 on error
  *
  *  Notes:
- *      (1) For 75 to 150 ppi, the optimal dilation should not exceed 7.
- *          This is the default size chosen if maxsize <= 0.
- *      (2) To run this on images at resolution between 200 and 300, it
- *          is advisable to use a larger maxsize, say between 10 and 14.
+ *      (1) This gives a crude estimate of the word masks.  See
+ *          pixWordBoxesByDilation() for further filtering of the word boxes.
+ *      (2) For 75 to 150 ppi, the optimal dilation will be between 5 and 11.
+ *          For 200 to 300 ppi, it is advisable to use a larger value
+ *          for @maxdil, say between 10 and 20.  Setting maxdil <= 0
+ *          results in a default dilation of 16.
  *      (3) The best size for dilating to get word masks is optionally returned.
  */
-PIX *
+l_int32
 pixWordMaskByDilation(PIX      *pixs,
-                      l_int32   maxsize,
+                      l_int32   maxdil,
+                      PIX     **ppixm,
                       l_int32  *psize)
 {
 l_int32  i, diffmin, ndiff, imin;
 l_int32  ncc[MAX_ALLOWED_DILATION + 1];
 BOXA    *boxa;
-NUMA    *nacc;
-PIX     *pixt1, *pixt2, *pixt3;
-PIXA    *pixa;
-SEL     *sel;
+NUMA    *nacc, *nadiff;
+PIX     *pix1, *pix2;
 
-    PROCNAME("pixWordMaskbyDilation");
+    PROCNAME("pixWordMaskByDilation");
 
-    if (!pixs)
-        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+    if (ppixm) *ppixm = NULL;
+    if (psize) *psize = 0;
+    if (!pixs || pixGetDepth(pixs) != 1)
+        return ERROR_INT("pixs undefined or not 1 bpp", procName, 1);
+    if (!ppixm && !psize)
+        return ERROR_INT("no output requested", procName, 1);
 
         /* Find the optimal dilation to create the word mask.
          * Look for successively increasing dilations where the
          * number of connected components doesn't decrease.
          * This is the situation where the components in the
-         * word mask should properly cover each word.  Use of
-         * 4 cc slightly reduces the likelihood that words from
-         * different lines are joined.  */
+         * word mask should properly cover each word.  If the
+         * input image had been 2x scaled, and you use 8 cc for
+         * counting, every other differential count in the series
+         * will be 0.  We avoid this possibility by using 4 cc. */
     diffmin = 1000000;
-    pixa = pixaCreate(8);
-    pixt1 = pixCopy(NULL, pixs);
-    pixaAddPix(pixa, pixt1, L_COPY); 
-
-    if (maxsize <= 0)
-        maxsize = 7;  /* default */
-    if (maxsize > MAX_ALLOWED_DILATION)
-        maxsize = MAX_ALLOWED_DILATION;
-    nacc = numaCreate(maxsize);
-    for (i = 0; i <= maxsize; i++) {
-        if (i == 0)     /* first one not dilated */
-            pixt2 = pixCopy(NULL, pixt1); 
-        else    /* successive dilation by sel_2h */
-            pixt2 = pixMorphSequence(pixt1, "d2.1", 0);
-        boxa = pixConnCompBB(pixt2, 4);
+    pix1 = pixCopy(NULL, pixs);
+    if (maxdil <= 0)
+        maxdil = 16;  /* default for 200 to 300 ppi */
+    maxdil = L_MIN(maxdil, MAX_ALLOWED_DILATION);
+    if (maxdil > 20)
+        L_WARNING("large dilation: exceeds 20\n", procName);
+    nacc = numaCreate(maxdil + 1);
+    nadiff = numaCreate(maxdil + 1);
+    for (i = 0; i <= maxdil; i++) {
+        if (i == 0)  /* first one not dilated */
+            pix2 = pixCopy(NULL, pix1);
+        else  /* successive dilation by sel_2h */
+            pix2 = pixMorphSequence(pix1, "d2.1", 0);
+        boxa = pixConnCompBB(pix2, 4);
         ncc[i] = boxaGetCount(boxa);
         numaAddNumber(nacc, ncc[i]);
         if (i > 0) {
             ndiff = ncc[i - 1] - ncc[i];
+            numaAddNumber(nadiff, ndiff);
 #if  DEBUG_PLOT_CC
             fprintf(stderr, "ndiff[%d] = %d\n", i - 1, ndiff);
 #endif  /* DEBUG_PLOT_CC */
-            if (ndiff < diffmin) {
+                /* Don't allow imin <= 2 with a 0 value of ndiff,
+                 * which is unlikely to happen.  */
+            if (ndiff < diffmin && (ndiff > 0 || i > 2)) {
                 imin = i;
                 diffmin = ndiff;
             }
         }
-        pixaAddPix(pixa, pixt2, L_COPY);
-        pixDestroy(&pixt1);
-        pixt1 = pixt2;
+        pixDestroy(&pix1);
+        pix1 = pix2;
         boxaDestroy(&boxa);
     }
-    pixDestroy(&pixt1);
+    pixDestroy(&pix1);
+    if (psize) *psize = imin + 1;
 
 #if  DEBUG_PLOT_CC
     {GPLOT *gplot;
      NUMA  *naseq;
+        L_INFO("Best dilation: %d\n", procName, imin);
         naseq = numaMakeSequence(1, 1, numaGetCount(nacc));
-        gplot = gplotCreate("/tmp/cc_output", GPLOT_PNG,
+        gplot = gplotCreate("/tmp/numcc", GPLOT_PNG,
                             "Number of cc vs. horizontal dilation",
                             "Sel horiz", "Number of cc");
         gplotAddPlot(gplot, naseq, nacc, GPLOT_LINES, "");
         gplotMakeOutput(gplot);
         gplotDestroy(&gplot);
         numaDestroy(&naseq);
+        naseq = numaMakeSequence(1, 1, numaGetCount(nadiff));
+        gplot = gplotCreate("/tmp/diffcc", GPLOT_PNG,
+                            "Diff count of cc vs. horizontal dilation",
+                            "Sel horiz", "Diff in cc");
+        gplotAddPlot(gplot, naseq, nadiff, GPLOT_LINES, "");
+        gplotMakeOutput(gplot);
+        gplotDestroy(&gplot);
+        numaDestroy(&naseq);
     }
 #endif  /* DEBUG_PLOT_CC */
 
-        /* Save the result of the optimal dilation */
-    pixt2 = pixaGetPix(pixa, imin, L_CLONE);
-    sel = selCreateBrick(1, imin, 0, imin - 1, SEL_HIT);
-    pixt3 = pixErode(NULL, pixt2, sel);  /* remove effect of dilation */
-    selDestroy(&sel);
-    pixDestroy(&pixt2);
-    pixaDestroy(&pixa);
-    if (psize)
-        *psize = imin + 1;
+        /* Optionally, save the result of the optimal closing */
+    if (ppixm) {
+        if (imin < 3)
+            L_ERROR("imin = %d is too small\n", procName, imin);
+        else
+            *ppixm = pixCloseBrick(NULL, pixs, imin + 1, 1);
+    }
 
     numaDestroy(&nacc);
-    return pixt3;
+    numaDestroy(&nadiff);
+    return 0;
+}
+
+
+/*!
+ *  pixWordBoxesByDilation()
+ *
+ *      Input:  pixs (1 bpp; typ. at 75 to 150 ppi)
+ *              maxdil (maximum dilation; 0 for default; warning if > 20)
+ *              minwidth, minheight (of saved components; smaller are discarded)
+ *              maxwidth, maxheight (of saved components; larger are discarded)
+ *              &boxa (<return> dilated word mask)
+ *              &size (<optional return> size of optimal horiz Sel)
+ *      Return: 0 if OK, 1 on error
+ *
+ *  Notes:
+ *      (1) Returns a pruned set of word boxes.
+ *      (2) See pixWordMaskByDilation().
+ */
+l_int32
+pixWordBoxesByDilation(PIX      *pixs,
+                       l_int32   maxdil,
+                       l_int32   minwidth,
+                       l_int32   minheight,
+                       l_int32   maxwidth,
+                       l_int32   maxheight,
+                       BOXA    **pboxa,
+                       l_int32  *psize)
+{
+BOXA  *boxa1, *boxa2;
+PIX   *pixm;
+
+    PROCNAME("pixWordBoxesByDilation");
+
+    if (psize) *psize = 0;
+    if (!pixs || pixGetDepth(pixs) != 1)
+        return ERROR_INT("pixs undefined or not 1 bpp", procName, 1);
+    if (!pboxa)
+        return ERROR_INT("&boxa not defined", procName, 1);
+    *pboxa = NULL;
+
+        /* Make a first estimate of the word masks */
+    if (pixWordMaskByDilation(pixs, maxdil, &pixm, psize))
+        return ERROR_INT("pixWordMaskByDilation() failed", procName, 1);
+
+        /* Prune it.  Get the bounding boxes of the words.
+         * Remove the small ones, which can be due to punctuation
+         * that was not joined to a word.  Also remove the large ones,
+         * which are not likely to be words. */
+    boxa1 = pixConnComp(pixm, NULL, 8);
+    boxa2 = boxaSelectBySize(boxa1, minwidth, minheight, L_SELECT_IF_BOTH,
+                             L_SELECT_IF_GTE, NULL);
+    *pboxa = boxaSelectBySize(boxa2, maxwidth, maxheight, L_SELECT_IF_BOTH,
+                             L_SELECT_IF_LTE, NULL);
+    boxaDestroy(&boxa1);
+    boxaDestroy(&boxa2);
+    pixDestroy(&pixm);
+    return 0;
 }
 
 
@@ -1541,7 +1610,7 @@ PTA       *ptat, *pta;
     if (!pixaa)
         return (PIXA *)ERROR_PTR("pixaa not defined", procName, NULL);
 
-    n = pixaaGetCount(pixaa);
+    n = pixaaGetCount(pixaa, NULL);
     if ((ptat = ptaCreate(n)) == NULL)
         return (PIXA *)ERROR_PTR("ptat not made", procName, NULL);
     *pptat = ptat;
@@ -1554,7 +1623,7 @@ PTA       *ptat, *pta;
         nt = pixaGetCount(pixa);
         numaAddNumber(na, nt);
         if (nt == 0) {
-            L_WARNING("empty pixa found!", procName);
+            L_WARNING("empty pixa found!\n", procName);
             pixaDestroy(&pixa);
             continue;
         }
@@ -1649,7 +1718,7 @@ PIXA      *pixad;
 /*!
  *  jbClasserCreate()
  *
- *      Input:  method (JB_RANKHAUS, JB_CORRELATION) 
+ *      Input:  method (JB_RANKHAUS, JB_CORRELATION)
  *              components (JB_CONN_COMPS, JB_CHARACTERS, JB_WORDS)
  *      Return: jbclasser, or null on error
  */
@@ -1721,7 +1790,7 @@ JBCLASSER  *classer;
     *pclasser = NULL;
     return;
 }
-    
+
 
 /*!
  *  jbDataSave()
@@ -1754,8 +1823,9 @@ PIX     *pix;
 
         /* Write the templates into an array. */
     pixaSizeRange(classer->pixat, NULL, NULL, &maxw, &maxh);
-    if ((pix = pixaDisplayOnLattice(classer->pixat, maxw + 1, maxh + 1))
-            == NULL)
+    pix = pixaDisplayOnLattice(classer->pixat, maxw + 1, maxh + 1,
+                               NULL, NULL);
+    if (!pix)
         return (JBDATA *)ERROR_PTR("data not made", procName, NULL);
 
     if ((data = (JBDATA *)CALLOC(1, sizeof(JBDATA))) == NULL)
@@ -1799,7 +1869,7 @@ JBDATA  *data;
     *pdata = NULL;
     return;
 }
-    
+
 
 /*!
  *  jbDataWrite()
@@ -1821,7 +1891,7 @@ NUMA    *naclass, *napage;
 PTA     *ptaul;
 PIX     *pixt;
 FILE    *fp;
-    
+
     PROCNAME("jbDataWrite");
 
     if (!rootout)
@@ -1840,10 +1910,10 @@ FILE    *fp;
     napage = jbdata->napage;
     ptaul = jbdata->ptaul;
 
-    snprintf(buf, L_BUF_SIZE, "%s%s", rootout, JB_TEMPLATE_EXT); 
+    snprintf(buf, L_BUF_SIZE, "%s%s", rootout, JB_TEMPLATE_EXT);
     pixWrite(buf, pixt, IFF_PNG);
 
-    snprintf(buf, L_BUF_SIZE, "%s%s", rootout, JB_DATA_EXT); 
+    snprintf(buf, L_BUF_SIZE, "%s%s", rootout, JB_DATA_EXT);
     if ((fp = fopenWriteStream(buf, "wb")) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ncomp = ptaGetCount(ptaul);
@@ -1885,7 +1955,7 @@ NUMA     *naclass, *napage;
 PIX      *pixs;
 PTA      *ptaul;
 SARRAY   *sa;
-    
+
     PROCNAME("jbDataRead");
 
     if (!rootname)
@@ -1961,7 +2031,7 @@ SARRAY   *sa;
  *  jbDataRender()
  *
  *      Input:  jbdata
- *              debugflag (if TRUE, writes into 2 bpp pix and adds 
+ *              debugflag (if TRUE, writes into 2 bpp pix and adds
  *                         component outlines in color)
  *      Return: pixa (reconstruction of original images, using templates) or
  *              null on error
@@ -1979,7 +2049,7 @@ PIXA     *pixat;   /* pixa of templates */
 PIXA     *pixad;   /* pixa of output images */
 PIXCMAP  *cmap;
 PTA      *ptaul;
-    
+
     PROCNAME("jbDataRender");
 
     if (!data)
@@ -1996,16 +2066,16 @@ PTA      *ptaul;
     napage = data->napage;
     ptaul = data->ptaul;
     ncomp = numaGetCount(naclass);
-    
+
         /* Reconstruct the original set of images from the templates
          * and the data associated with each component.  First,
          * generate the output pixa as a set of empty pix. */
     if ((pixad = pixaCreate(npages)) == NULL)
         return (PIXA *)ERROR_PTR("pixad not made", procName, NULL);
     for (i = 0; i < npages; i++) {
-        if (debugflag == FALSE)
+        if (debugflag == FALSE) {
             pix = pixCreate(w, h, 1);
-        else {
+        } else {
             pix = pixCreate(w, h, 2);
             cmap = pixcmapCreate(2);
             pixcmapAddColor(cmap, 255, 255, 255);
@@ -2015,7 +2085,7 @@ PTA      *ptaul;
         }
         pixaAddPix(pixad, pix, L_INSERT);
     }
-    
+
         /* Put the class templates into a pixa. */
     if ((pixat = pixaCreateFromPix(pixt, nclass, cellw, cellh)) == NULL)
         return (PIXA *)ERROR_PTR("pixat not made", procName, NULL);
@@ -2029,9 +2099,9 @@ PTA      *ptaul;
         hp = pixGetHeight(pix);
         ptaGetIPt(ptaul, i, &x, &y);
         pixd = pixaGetPix(pixad, ipage, L_CLONE);   /* the output page */
-        if (debugflag == FALSE)
+        if (debugflag == FALSE) {
             pixRasterop(pixd, x, y, wp, hp, PIX_SRC | PIX_DST, pix, 0, 0);
-        else {
+        } else {
             pixt2 = pixConvert1To2Cmap(pix);
             pixRasterop(pixd, x, y, wp, hp, PIX_SRC | PIX_DST, pixt2, 0, 0);
             box = boxCreate(x, y, wp, hp);
@@ -2265,7 +2335,7 @@ JBFINDCTX  *state;
     PROCNAME("findSimilarSizedTemplatesDestroy");
 
     if (pstate == NULL) {
-        L_WARNING("ptr address is null", procName);
+        L_WARNING("ptr address is null\n", procName);
         return;
     }
     if ((state = *pstate) == NULL)
