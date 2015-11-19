@@ -1279,7 +1279,7 @@ PIX   *pix;
         return (PIX *)ERROR_PTR("cdata not defined", procName, NULL);
 
 #if HAVE_FMEMOPEN
-    if ((fp = fmemopen((void *)cdata, size, "r")) == NULL)
+    if ((fp = fmemopen((void *)cdata, size, "rb")) == NULL)
         return (PIX *)ERROR_PTR("stream not opened", procName, NULL);
 #else
     L_WARNING("work-around: writing to a temp file\n", procName);

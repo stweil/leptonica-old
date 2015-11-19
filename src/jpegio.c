@@ -982,7 +982,7 @@ PIX      *pix;
         return (PIX *)ERROR_PTR("data not defined", procName, NULL);
 
 #if HAVE_FMEMOPEN
-    if ((fp = fmemopen((l_uint8 *)data, size, "r")) == NULL)
+    if ((fp = fmemopen((l_uint8 *)data, size, "rb")) == NULL)
         return (PIX *)ERROR_PTR("stream not opened", procName, NULL);
 #else
     L_WARNING("work-around: writing to a temp file\n", procName);
@@ -1042,7 +1042,7 @@ FILE    *fp;
         return ERROR_INT("no results requested", procName, 1);
 
 #if HAVE_FMEMOPEN
-    if ((fp = fmemopen((l_uint8 *)data, size, "r")) == NULL)
+    if ((fp = fmemopen((l_uint8 *)data, size, "rb")) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
 #else
     L_WARNING("work-around: writing to a temp file\n", procName);
