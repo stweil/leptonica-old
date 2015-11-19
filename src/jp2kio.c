@@ -781,8 +781,8 @@ PIX      *pix;
     if (!data)
         return (PIX *)ERROR_PTR("data not defined", procName, NULL);
 
-#if 0  /* Avoid the crash for now */
-    if ((fp = fmemopen((void *)data, size, "r")) == NULL)
+#if HAVE_FMEMOPEN
+    if ((fp = fmemopen((void *)data, size, "rb")) == NULL)
         return (PIX *)ERROR_PTR("stream not opened", procName, NULL);
 #else
     L_WARNING("work-around: writing to a temp file\n", procName);
