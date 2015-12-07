@@ -553,11 +553,6 @@ RGBA_QUAD  *pquad;
 #include "config_auto.h"
 #endif  /* HAVE_CONFIG_H */
 
-#if HAVE_FMEMOPEN
-extern FILE *open_memstream(char **data, size_t *size);
-extern FILE *fmemopen(void *data, size_t size, const char *mode);
-#endif  /* HAVE_FMEMOPEN */
-
 /*!
  *  pixReadMemBmp()
  *
