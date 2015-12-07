@@ -283,7 +283,7 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     if (pnwarn) *pnwarn = 0;
     if (!fp)
         return (PIX *)ERROR_PTR("fp not defined", procName, NULL);
-    if (cmapflag != 0 && cmapflag != 1)
+    if (cmapflag != 1)
         cmapflag = 0;  /* default */
     if (reduction != 1 && reduction != 2 && reduction != 4 && reduction != 8)
         return (PIX *)ERROR_PTR("reduction not in {1,2,4,8}", procName, NULL);
