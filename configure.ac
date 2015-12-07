@@ -85,7 +85,7 @@ AS_IF([test "x$with_libwebp" != xno],
 AM_CONDITIONAL([HAVE_LIBWEBP], [test "x$ac_cv_lib_webp_WebPGetInfo" = xyes])
 
 AS_IF([test "x$with_libopenjpeg" != xno],
-  AC_CHECK_LIB([openjp2], [opj_create_decompress],
+  AC_CHECK_LIB([openjp2], [getc],
     [
       AC_DEFINE([HAVE_LIBJP2K], 1, [Define to 1 if you have libopenjp2.]) AC_SUBST([LIBJP2K_LIBS], [-lopenjp2])
       [AC_CHECK_HEADERS([openjpeg-2.2/openjpeg.h openjpeg-2.1/openjpeg.h openjpeg-2.0/openjpeg.h],
