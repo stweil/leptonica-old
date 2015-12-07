@@ -37,8 +37,10 @@ static void MakePtrasFromPixa(PIXA *pixa, L_PTRA **ppapix, L_PTRA **ppabox,
 static PIXA *ReconstructPixa(L_PTRA *papix, L_PTRA *pabox, l_int32 choose);
 static PIXA *ReconstructPixa1(L_PTRA *papix, L_PTRA *pabox);
 static PIXA *ReconstructPixa2(L_PTRA *papix, L_PTRA *pabox);
+#if 0
 static void CopyPtras(L_PTRA *papixs, L_PTRA *paboxs,
                       L_PTRA **ppapixd, L_PTRA **ppaboxd);
+#endif
 static void DisplayResult(PIXA *pixac, PIXA **ppixa, l_int32 w, l_int32 h,
                           l_int32 newline);
 
@@ -352,6 +354,7 @@ PIXA    *pixat;
 }
 
 
+#if 0
 static void
 CopyPtras(L_PTRA   *papixs,
           L_PTRA   *paboxs,
@@ -373,6 +376,7 @@ PIX     *pix;
     }
     return;
 }
+#endif
 
 
 static void
